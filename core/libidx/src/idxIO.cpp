@@ -37,10 +37,10 @@
 #include "idxIO.h"
 
 namespace ebl {
-  
+
   ////////////////////////////////////////////////////////////////
   // helper functions
-  
+
   // TODO: if types differ, print warning and cast to expected type
   // TODO: allow not knowing order in advance (just assign new idx to m)
   int get_matrix_type(const char *filename, std::string &type) {
@@ -62,7 +62,7 @@ namespace ebl {
       try {
 	read_matrix_header(fp, magic);
       } catch (ebl::eblexception &e) {}
-      return magic;      
+      return magic;
     } else {
       // header: read magic number
       try {
@@ -123,7 +123,7 @@ namespace ebl {
     fclose(fp);
     return d;
   }
-  
+
   idxdim read_matrix_header(FILE *fp, int &magic) {
     int ndim, v, magic_vincent;
     int ndim_min = 3; // std header requires at least 3 dims even empty ones.
@@ -136,7 +136,7 @@ namespace ebl {
     }
     magic_vincent = endian(magic);
     magic_vincent &= ~0xF; // magic contained in higher bits
-    
+
     // read number of dimensions
     if (is_magic(magic)) { // regular magic number, read next number
       if (fread(&ndim, sizeof (int), 1, fp) != 1) {
@@ -239,7 +239,7 @@ namespace ebl {
     if (pos.__pos != endpos.__pos)
 #endif
       return true;
-    return false;    
+    return false;
   }
-  
+
 } // end namespace ebl

@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -36,34 +36,33 @@
 #include <map>
 #include <string>
 #include <sstream>
-
-using namespace std;
+#include "stl.h"
 
 namespace ebl {
 
   template <typename T1, typename T2>
-  string map_to_string(map<T1,T2> &m) {
-    ostringstream s;
-    typename map<T1,T2>::iterator j;
+  std::string map_to_string(std::map<T1,T2> &m) {
+    std::string s;
+    typename std::map<T1,T2>::iterator j;
     for (j = m.begin(); j != m.end(); ++j)
       s << "(" << j->first << ", " << j->second << ") ";
-    return s.str();
+    return s;
   }
 
   template <typename T1, typename T2>
-  string map_to_string2(map<T1,T2> &m) {
-    ostringstream s;
-    typename map<T1,T2>::iterator j;
+  std::string map_to_string2(std::map<T1,T2> &m) {
+    std::ostringstream s;
+    typename std::map<T1,T2>::iterator j;
     for (j = m.begin(); j != m.end(); ++j)
-      s << j->first << ": " << j->second << endl;
+      s << j->first << ": " << j->second << std::endl;
     return s.str();
   }
 
   template <typename T>
-  void list_to_vector(list<T> &l, vector<T> &v) {
+  void list_to_vector(std::list<T> &l, std::vector<T> &v) {
     v.resize(l.size());
-    typename vector<T>::iterator iv = v.begin();
-    typename list<T>::iterator il = l.begin();
+    typename std::vector<T>::iterator iv = v.begin();
+    typename std::list<T>::iterator il = l.begin();
     for ( ; il != l.end(); ++iv, ++il) {
       *iv = *il;
     }
@@ -72,7 +71,7 @@ namespace ebl {
   template <typename T>
   idx<T> string_to_idx(const char *s_, char sep) {
     idx<T> d(1);
-    string s = s_;
+    std::string s = s_;
     int k = 0;
     bool found = false;
     while (s.size()) {
@@ -80,7 +79,7 @@ namespace ebl {
       for (j = 0; j < s.size(); ++j)
 	if (s[j] == sep)
 	  break ;
-      string s0 = s.substr(0, j);
+      std::string s0 = s.substr(0, j);
       if (j >= s.size())
 	s = "";
       else
@@ -100,13 +99,12 @@ namespace ebl {
       eblerror("expected at least 1 number in: " << s_);
     return d;
   }
-  
+
   template <typename T>
   T string_to_number(const char *s_) {
     return (T) string_to_double(s_);
   }
-  
+
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_HPP_ */
-

@@ -17,12 +17,13 @@ SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 # compile library
 ################################################################################
 ADD_LIBRARY (eblearn SHARED
-		     src/ebl_arch.cpp
-		     src/ebl_states.cpp
-		     src/ebl_utils.cpp
-		     src/ebl_logger.cpp
-#		     src/detector.cpp
 		     src/bbox.cpp
+#		     src/ebl_arch.cpp
+		     src/ebl_logger.cpp
+		     src/ebl_module.cpp
+		     src/ebl_parameters.cpp
+#		     src/ebl_state.cpp
+		     src/ebl_utils.cpp
 		     src/nms.cpp
 		     )
 
@@ -43,7 +44,8 @@ if (CUDA_FOUND)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
    SET(CUDA_NVCC_FLAGS " -g -G")
 endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  CUDA_ADD_LIBRARY(eblearn_cuda SHARED src/ebl_cudaops.cu src/ebl_cudautils.cu) #src/ebl_cudapooling.cu src/ebl_cudanormalization.cu)
+  CUDA_ADD_LIBRARY(eblearn_cuda SHARED src/ebl_cudaops.cu src/ebl_cudautils.cu)
+  #src/ebl_cudapooling.cu src/ebl_cudanormalization.cu)
   TARGET_LINK_LIBRARIES(eblearn_cuda ${CUDA_LIBRARIES})
   TARGET_LINK_LIBRARIES(eblearn eblearn_cuda)
 endif (CUDA_FOUND)

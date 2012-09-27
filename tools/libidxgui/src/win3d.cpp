@@ -40,7 +40,7 @@ using namespace std;
 namespace ebl {
 
   // text3d //////////////////////////////////////////////////////////////////
-  
+
   text3d::text3d(const char *s_, float x_, float y_, float z_,
 		 int r, int g, int b, int a)
     : s(s_), x(x_), y(y_), z(z_), col(r, g, b, a) {
@@ -48,7 +48,7 @@ namespace ebl {
   }
 
   text3d::~text3d() {
-  }    
+  }
 
   std::string text3d::describe() {
     std::string sd;
@@ -60,7 +60,7 @@ namespace ebl {
   }
 
   // sphere3d //////////////////////////////////////////////////////////////////
-  
+
   sphere3d::sphere3d(float x_, float y_, float z_, float rad,
 		     int r, int g, int b, int a)
     : x(x_), y(y_), z(z_), radius(rad), node(NULL), col(r, g, b, a) {
@@ -72,7 +72,7 @@ namespace ebl {
 
   sphere3d::~sphere3d() {
     if (node) delete node;
-  }    
+  }
 
   std::string sphere3d::describe() {
     std::string s;
@@ -84,7 +84,7 @@ namespace ebl {
   }
 
   // cylinder3d ////////////////////////////////////////////////////////////////
-  
+
   cylinder3d::cylinder3d(float x_, float y_, float z_, float length,
 			 float top_radius_, float base_radius_, float a1_,
 			 float a2_, int r, int g, int b, int a,
@@ -111,7 +111,7 @@ namespace ebl {
   }
 
   // line3d ////////////////////////////////////////////////////////////////
-  
+
   line3d::line3d(float x_, float y_, float z_, float x1_, float y1_, float z1_,
 		 int r, int g, int b, int a)
     : x(x_), y(y_), z(z_), x1(x1_), y1(y1_), z1(z1_), node(NULL),
@@ -165,17 +165,17 @@ namespace ebl {
     scaling = 1.0;
     update_window();
   }
-  
+
   win3d::~win3d() {
     clear();
   }
 
   // window matters ////////////////////////////////////////////////////////////
-  
+
   void win3d::show() {
     QGLWidget::show();
   }
-    
+
   void win3d::set_wupdate(bool ud) {
     // if (wupdate != ud) {
     //   wupdate = ud;
@@ -196,7 +196,7 @@ namespace ebl {
     if (wupdate) {
       QWidget::update();
       // saving pixmap if silent or show it otherwise
-      if (silent) 
+      if (silent)
 	save(savefname);
       else {
 	if (!isVisible())
@@ -208,11 +208,11 @@ namespace ebl {
     }
   }
 
-  void win3d::resize_window(uint h, uint w, bool force) {    
+  void win3d::resize_window(uint h, uint w, bool force) {
   }
 
   // objects adding ////////////////////////////////////////////////////////////
-  
+
   void win3d::add_sphere(float x, float y, float z, float radius,
 			 const char *label, int r, int g, int b, int a) {
     spheres.push_back(new sphere3d(x, y, z, radius, r, g, b, a));
@@ -236,7 +236,7 @@ namespace ebl {
     // float z = sqrt((z - z1) * (z - z1)) / 2;
     texts.push_back(new text3d(label, x, y, z, r, g, b, a));
   }
-  
+
   void win3d::add_text(float x, float y, float z, const char *s,
 		       int r, int g, int b, int a) {
     texts.push_back(new text3d(s, x, y, z, r, g, b, a));
@@ -258,7 +258,7 @@ namespace ebl {
     clear_lines();
     win::clear();
   }
-  
+
   void win3d::clear_spheres() {
     for (vector<sphere3d*>::iterator i = spheres.begin(); i != spheres.end();
 	 ++i)
@@ -295,35 +295,35 @@ namespace ebl {
 
     glEnable(GL_BLEND);
     // setFormat(QGLFormat(QGL::SampleBuffers)); // enable anti-aliasing support
- 
+
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
     // glShadeModel( GL_SMOOTH );
     // glDepthFunc( GL_LESS );
     // glEnable( GL_COLOR_SUM_EXT );
-  
+
     // GLfloat mat_ambient[] = { 0.5, 0.5, 0.5, 1.0 };
     // GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
     // GLfloat mat_shininess[] = { 30.0 };
-  
+
     // glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
     // glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
     // glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
     // glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-  
+
     // Used to display semi-transparent relection rectangle
     //  glBlendFunc(GL_ONE, GL_ONE);
     // glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-  
+
     // glEnable( GL_NORMALIZE );
     // glEnable( GL_LIGHTING );
-  
+
     // GLfloat ambientLight[] = { 0.4, 0.4, 0.4, 1.0 };
     // GLfloat diffuseLight[] = { 0.8, 0.8, 0.8, 1.0 };
     // GLfloat specularLight[] = { 1.0, 1.0, 1.0, 1.0 };
     // GLfloat position[] = { 0.8, 0.7, 1.0, 0.0 };
-  
+
     // glLightModeli( GL_LIGHT_MODEL_COLOR_CONTROL_EXT,
     //     GL_SEPARATE_SPECULAR_COLOR_EXT );
     // glLightfv( GL_LIGHT0, GL_AMBIENT, ambientLight );
@@ -362,7 +362,7 @@ namespace ebl {
     if (scaleIncr >= 1)
       pixmapScale = scaleIncr;
     else
-      pixmapScale = fabs(1 / scaleIncr);
+      pixmapScale = std::fabs(1 / scaleIncr);
     update();
   }
 
@@ -430,7 +430,7 @@ namespace ebl {
       ctrl_on = false;
     }
   }
-  
+
  static void qNormalizeAngle(int &angle)
  {
      while (angle < 0)
@@ -445,7 +445,7 @@ namespace ebl {
      if (angle != xRot)
          xRot = angle;
  }
-  
+
 
  void win3d::setYRotation(int angle)
  {
@@ -501,15 +501,15 @@ namespace ebl {
     paint_spheres(&p);
     paint_cylinders(&p);
     paint_lines(&p);
-    
+
     // finishing 3d painting
     p.disableEffect(); // text painting crashes without this
     p.end();
-    
+
     // 3D text painting
     glEnable(GL_DEPTH_TEST);
     paint_text();
-    
+
     // 2D painting
     glDisable(GL_CULL_FACE);
     //    glDisable(GL_BLEND);
@@ -546,7 +546,7 @@ namespace ebl {
       }
     }
   }
-  
+
   void win3d::paint_spheres(QGLPainter *painter) {
     for (vector<sphere3d*>::iterator i = spheres.begin(); i != spheres.end();
   	 ++i) {
@@ -559,7 +559,7 @@ namespace ebl {
 	// rotate
 	painter->modelViewMatrix().rotate(xRot / 16.0, 1.0, 0.0, 0.0);
 	painter->modelViewMatrix().rotate(yRot / 16.0, 0.0, 1.0, 0.0);
-	painter->modelViewMatrix().rotate(zRot / 16.0, 0.0, 0.0, 1.0);     
+	painter->modelViewMatrix().rotate(zRot / 16.0, 0.0, 0.0, 1.0);
         // translate
   	painter->modelViewMatrix().translate(s->x, s->y, s->z);
   	// set color
@@ -571,7 +571,7 @@ namespace ebl {
       }
     }
   }
-  
+
   void win3d::paint_cylinders(QGLPainter *painter) {
     for (vector<cylinder3d*>::iterator i = cylinders.begin();
   	 i != cylinders.end(); ++i) {

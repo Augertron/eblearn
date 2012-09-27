@@ -31,6 +31,7 @@
  ***************************************************************************/
 
 using namespace ebl;
+using namespace std;
 
 #ifdef __GUI__
 #include "libeblearngui.h"
@@ -38,16 +39,19 @@ using namespace ebl;
 
 template <typename Tnet>
 void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
+  cout << "initializing random seed with " << fixed_init_drand() << endl;
   typedef ubyte Tdata;
   typedef ubyte Tlab;
+#ifdef __GUI__
   bool display = true;
+#endif
   //uint ninternals = 1;
   cout << endl;
-  // for testing purposes, we always initialize the randomization with 0 so 
-  // that we know the exact results. 
+  // for testing purposes, we always initialize the randomization with 0 so
+  // that we know the exact results.
   // in the real world, init_drand should be called with time(NULL) as argument.
   CPPUNIT_ASSERT_MESSAGE(*errmsg, dir != NULL);
-  
+
   // load MNIST dataset
   mnist_datasource<Tnet,Tdata,Tlab>
     test_ds(dir->c_str(), false, 1000),
@@ -60,7 +64,7 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
   test_ds.set_epoch_show(500); // show progress every 100 samples
   train_ds.set_epoch_show(500); // show progress every 100 samples
   train_ds.ignore_correct(true);
-  
+
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   idx<Tnet> targets =
     create_target_matrix<Tnet>(1+idx_max(train_ds.labels), 1.0);
@@ -68,7 +72,7 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  parameter<Tnet> theparam(60000); // create trainable parameter
+  bbparameter<Tnet> theparam(60000); // create trainable parameter
   lenet5<Tnet> net(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   nclasses, true, false, true, false);
   cout << net.describe() << endl;
@@ -87,9 +91,9 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
   // a classifier-meter measures classification errors
   classifier_meter trainmeter;
   classifier_meter testmeter;
-   
+
   // initialize the network weights
-  forget_param_linear fgp(1, 0.5);
+  forget_param_linear fgp(1, 0.5, (int) 0 /* fixed seed */);
   trainable.forget(fgp);
 
   // gradient parameters
@@ -98,25 +102,26 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
 	       /* double l1 */ 	0.0,
 	       /* double l2 */ 	0.0,
 	       /* intg dtime */ 	0,
-	       /* double iner */0.0, 
+	       /* double iner */0.0,
 	       /* double anneal_value */ 0.001,
 	       /* intg anneal_period */ 2000,
 	       /* double g_t*/ 	0.0);
   cout << gdp << endl;
   infer_param infp;
-  fixed_init_drand(); // fixed randomization
 
   DEBUGMEM_PRETTY("before training");
   // estimate second derivative on 100 iterations, using mu=0.02
   // and set individual espilons
   // //printf("computing diagonal hessian and learning rates\n");
   thetrainer.compute_diaghessian(train_ds, 100, 0.02);
-//   CPPUNIT_ASSERT_DOUBLES_EQUAL(0.985363, 
+
+  EDEBUG(net.info());
+//   CPPUNIT_ASSERT_DOUBLES_EQUAL(0.985363,
 // 			       idx_min(thetrainer.param.epsilons), 0.000001);
-//   CPPUNIT_ASSERT_DOUBLES_EQUAL(49.851524, 
+//   CPPUNIT_ASSERT_DOUBLES_EQUAL(49.851524,
 // 			       idx_max(thetrainer.param.epsilons), 0.000001);
 
-	
+
 #ifdef __GUI__
   if (display) {
     stgui.display_datasource(thetrainer, test_ds, infp, 10, 10);
@@ -124,11 +129,11 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
     //    stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
   }
 #endif
-  
+
   // do training iterations
   cout << "training with " << train_ds.size() << " training samples and ";
   cout << test_ds.size() << " test samples" << endl;
-	
+
   thetrainer.test(train_ds, trainmeter, infp);
   thetrainer.test(test_ds, testmeter, infp);
 #ifdef __GUI__
@@ -161,9 +166,9 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
 #endif
   }
   CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, // old: 97.00
-			       ((trainmeter.total_correct * 100) 
+			       ((trainmeter.total_correct * 100)
 				/ (double) trainmeter.size), 1.5);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(95.4262, // 96.4630, // old: 95.90
-			       ((testmeter.total_correct * 100) 
+			       ((testmeter.total_correct * 100)
 				/ (double) testmeter.size), 1.5);
 }

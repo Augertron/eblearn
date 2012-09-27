@@ -35,8 +35,6 @@
 
 #include "bbox.h"
 
-using namespace std;
-
 namespace ebl {
 
   // nms types /////////////////////////////////////////////////////////////////
@@ -77,7 +75,7 @@ namespace ebl {
     //! Applies nms processing on 'in' boxes and puts results into 'out'.
     virtual void fprop(bboxes &in, bboxes &out);
     //! Returns a string decribing this nms.
-    virtual string describe();
+    virtual std::string describe();
 
     // friends /////////////////////////////////////////////////////////////////
     friend class voting_nms;
@@ -141,7 +139,7 @@ namespace ebl {
     virtual ~voting_nms();
 
     //! Returns a string decribing this nms.
-    virtual string describe();
+    virtual std::string describe();
 
   protected:
     // internal methods ////////////////////////////////////////////////////////
@@ -151,7 +149,7 @@ namespace ebl {
     //! Voting nms.
     virtual void vote_nms(bboxes &in, bboxes &out);
 
-    void dfs(bboxes &bb, vector<bool> &explored, uint i, float match,
+    void dfs(bboxes &bb, std::vector<bool> &explored, uint i, float match,
 	     float max_center_dist, bboxes &comp);
     //! Merge all boxes that vote for the same location.
     void merge_votes(bboxes &bb);

@@ -45,8 +45,24 @@ extern bool drand_ini;
     if (!drand_ini) printf("You have not initialized random sequence. \
 Please call init_drand(time(NULL)) before using this function !\n"); }
 
-#define fs(T) T,fstate_idx<T>
-#define bs(T) T,bstate_idx<T>
-#define bbs(T) T,bbstate_idx<T>
+#ifdef __DEBUG__
+// in debug mode, check that backward tensor has the right size
+#define DEBUG_CHECK_B(in) {                                             \
+    if (!in.allocated_b())                                              \
+      eblerror("state::b should have the same size as state::f in " << in); \
+  }
+#else
+#define DEBUG_CHECK_B(in)
+#endif
+
+#ifdef __DEBUG__
+// in debug mode, check that backward tensor has the right size
+#define DEBUG_CHECK_BB(in) {                                            \
+    if (!in.allocated_bb())                                             \
+      eblerror("state::b should have the same size as state::f in " << in); \
+  }
+#else
+#define DEBUG_CHECK_BB(in)
+#endif
 
 #endif /* EBL_DEFINES */

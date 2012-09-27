@@ -42,12 +42,12 @@ class ebl_machines_test : public CppUnit::TestFixture  {
   CPPUNIT_TEST_SUITE(ebl_machines_test);
   CPPUNIT_TEST(test_full_table);
   //CPPUNIT_TEST(test_lenet5_mnist_float);
-  CPPUNIT_TEST(test_lenet5_mnist_double); 
+  CPPUNIT_TEST(test_lenet5_mnist_double);
   CPPUNIT_TEST_SUITE_END();
 
 private:
   // member variables
-  
+
 public:
   //! This function is called before each test function is called.
   void setUp();
@@ -61,7 +61,7 @@ public:
 };
 
 template <typename Tnet>
-void test_lenet5_mnist(string *dir, string *errmsg, double eta);
+void test_lenet5_mnist(std::string *dir, std::string *errmsg, double eta);
 
 #include "ebl_machines_test.hpp"
 

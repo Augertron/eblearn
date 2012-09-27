@@ -60,7 +60,7 @@ namespace ebl {
 	  for (uint l = 0; l < e1.dim(0); ++l) {
 	    idx<T> e11 = e1.get(l), e22 = e2.get(l);
 	    for (int m = 0; m < e11.order(); ++m)
-	      s += abs(e11.dim(m) - e22.dim(m));
+	      s += std::abs(e11.dim(m) - e22.dim(m));
 	  }
 	}
 	if (d > dmax || s > smax) {

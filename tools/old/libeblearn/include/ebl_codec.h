@@ -35,7 +35,6 @@
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_arch.h"
-#include "ebl_states.h"
 #include "ebl_cost.h"
 
 namespace ebl {
@@ -79,30 +78,30 @@ namespace ebl {
     virtual void fprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
 		       fstate_idx<T> &energy);
     //! backward propagation
-    virtual void bprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+    VIRTUAL void bprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
 		       fstate_idx<T> &energy);
     //! second-derivative backward propagation
-    virtual void bbprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
+    VIRTUAL void bbprop(fstate_idx<T> &in1, fstate_idx<T> &in2,
 			fstate_idx<T> &energy);
     //! forgetting weights by replacing with random values
-    virtual void forget(forget_param_linear &fp);
+    VIRTUAL void forget(forget_param_linear &fp);
     //! normalize
-    virtual void normalize();
+    VIRTUAL void normalize();
 
   protected:
     //! forward propagation of in1 and in2, a simple one pass propagation
-    virtual void fprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+    virtual void fprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2,
 				fstate_idx<T> &energy);
     //! simple one-pass backward propagation
-    virtual void bprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+    VIRTUAL void bprop_one_pass(fstate_idx<T> &in1, fstate_idx<T> &in2,
 				fstate_idx<T> &energy);
     //! multiple-pass bprop on the decoder only to find the optimal code z
-    virtual void bprop_optimal_code(fstate_idx<T> &in1, fstate_idx<T> &in2, 
+    VIRTUAL void bprop_optimal_code(fstate_idx<T> &in1, fstate_idx<T> &in2,
 				    fstate_idx<T> &energy, gd_param &infp);
 
     //! returns true if the l2-norm of the gradient of z (z.dx) is above
     //! the infp.gradient_threshold
-    virtual bool check_code_threshold(fstate_idx<T> &z, gd_param &infp);
+    VIRTUAL bool check_code_threshold(fstate_idx<T> &z, gd_param &infp);
   };
 
   ////////////////////////////////////////////////////////////////
@@ -112,7 +111,7 @@ namespace ebl {
     distance_l2<T>	enc_cost_l2;
     penalty_l1<T>	z_cost_l1;
     distance_l2<T>	dec_cost_l2;
-    
+
     //! constructor.
     codec_lone(module_1_1<T>	&encoder_,
 	       module_1_1<T>	&decoder_,
@@ -126,7 +125,7 @@ namespace ebl {
   protected:
     using codec<T>::infp;
   };
-  
+
 } // namespace ebl {
 
 #include "ebl_codec.hpp"

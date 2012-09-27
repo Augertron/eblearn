@@ -40,7 +40,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // helper functions
 
-  // template functions returning the magic number associated with a 
+  // template functions returning the magic number associated with a
   // particular type
   template <class T> inline int get_magic() {
     eblerror("matrix type not implemented."); return 0; }
@@ -86,8 +86,8 @@ namespace ebl {
     case MAGIC_INT_VINCENT: 	return "int (pascal vincent)";
     case MAGIC_FLOAT_VINCENT: 	return "float (pascal vincent)";
     case MAGIC_DOUBLE_VINCENT: 	return "double (pascal vincent)";
-    default: 
-      string s;
+    default:
+      std::string s;
       s << "unknown type (magic: " << reinterpret_cast<void*>(magic) << ")";
       return s;
     }
@@ -143,10 +143,10 @@ namespace ebl {
     }
     res = 0; // just to avoid warning
   }
-  
+
   // loading ///////////////////////////////////////////////////////////////////
 
-  template <typename T> 
+  template <typename T>
   idx<T> load_matrix(const char *filename) {
     // open file
     FILE *fp = fopen(filename, "rb");
@@ -158,18 +158,17 @@ namespace ebl {
       m = load_matrix<T>(fp);
       fclose(fp);
     } catch(eblexception &e) {
-      e << " while loading " << filename;
-      throw e;
+      eblthrow(" while loading " << filename)
     }
     return m;
   }
 
-  template <typename T> 
+  template <typename T>
   idx<T> load_matrix(const std::string &filename) {
     return load_matrix<T>(filename.c_str());
   }
 
-  template <typename T> 
+  template <typename T>
   idx<T> load_matrix(const std::vector<std::string> &files, intg cdim) {
     if (files.size() == 0) eblerror("expected at least 1 file to load");
     idx<T> w = load_matrix<T>(files[0]);
@@ -261,7 +260,7 @@ namespace ebl {
       eblthrow("trying to load multiple matrices from single-matrix file "
 	       << filename);
     // open file
-    file *f = new file(filename.c_str(), "rb");
+    std::file *f = new std::file(filename.c_str(), "rb");
     FILE *fp = f->get_fp();
     // first read offsets matrix
     idx<int64> p = load_matrix<int64>(fp);
@@ -271,7 +270,7 @@ namespace ebl {
       midx<T> all(p.get_idxdim(), f, &p);
       return all;
     } else { // load all data now
-      cout << "Loading the whole dataset into memory" <<endl;
+      std::cout << "Loading the whole dataset into memory" <<std::endl;
       // read all present matrices
       midx<T> all(p.dim(0));
       for (uint i = 0; i < p.dim(0); ++i) {
@@ -297,10 +296,10 @@ namespace ebl {
       return all;
     }
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // saving
-  
+
   template <typename T>
   bool save_matrix(idx<T>& m, const std::string &filename) {
     return save_matrix(m, filename.c_str());
@@ -317,18 +316,18 @@ namespace ebl {
   template <typename T> bool save_matrix(idx<T>& m, const char *filename) {
     FILE *fp = fopen(filename, "wb");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
     bool ret = save_matrix(m, fp);
     if (!ret)
-      cerr << "failed to write matrix " << m << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << m << " to " << filename << "."
+	   << std::endl;
     fclose(fp);
     return ret;
   }
-  
+
   // TODO: intg support
   template <typename T> bool save_matrix(idx<T>& m, FILE *fp) {
     int v, i;
@@ -346,7 +345,7 @@ namespace ebl {
     }
     // write body
     int res;
-    idx_aloop1(k, m, T) 
+    idx_aloop1(k, m, T)
       res = fwrite(&(*k), sizeof (T), 1, fp);
     res = 0; // just to avoid compilation warning
     return true;
@@ -356,7 +355,7 @@ namespace ebl {
   bool save_matrix(midx<T> m, const std::string &filename) {
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
@@ -380,23 +379,23 @@ namespace ebl {
     // save matrix
     return save_matrix(all, filename);
   }
-  
+
   template <typename T>
   bool save_matrices(midx<T>& m, const std::string &filename) {
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
     // allocate offset matrix
     idx<int64> offsets(m.get_idxdim());
     idx_clear(offsets);
-    // save offsets matrix first    
+    // save offsets matrix first
     bool ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
     }
@@ -417,8 +416,8 @@ namespace ebl {
 	  idx<T> e = m.get(i);
 	  ret = save_matrix(e, fp);
 	  if (!ret) {
-	    cerr << "failed to write matrix " << e << " to " << filename << "."
-		 << endl;
+	    std::cerr << "failed to write matrix " << e << " to " << filename << "."
+		 << std::endl;
 	    fclose(fp);
 	    return false;
 	  }
@@ -439,8 +438,8 @@ namespace ebl {
 	    idx<T> e = m.get(i, j);
 	    ret = save_matrix(e, fp);
 	    if (!ret) {
-	      cerr << "failed to write matrix " << e << " to "
-		   << filename << "." << endl;
+	      std::cerr << "failed to write matrix " << e << " to "
+		   << filename << "." << std::endl;
 	      fclose(fp);
 	      return false;
 	    }
@@ -452,17 +451,17 @@ namespace ebl {
     // finally rewrite offset matrix at beginning of file
     fp = fopen(filename.c_str(), "rb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
     ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
-    }    
+    }
     fclose(fp);
     return ret;
   }
@@ -476,7 +475,7 @@ namespace ebl {
       for (uint i = 0; i < m.dim(0); ++i) {
 	if (m.exists(i)) {
 	  // save matrix to file
-	  string fname; fname << root << "_" << id++ << ".mat";
+	  std::string fname; fname << root << "_" << id++ << ".mat";
 	  idx<T> e = m.get(i);
 	  if (!save_matrix(e, fname)) return false;
 	  if (print) std::cout << "saved " << fname << std::endl;
@@ -487,7 +486,7 @@ namespace ebl {
 	for (uint j = 0; j < m.dim(1); ++j) {
 	  if (m.exists(i, j)) {
 	    // save matrix to file
-	    string fname; fname << root << "_" << id++ << ".mat";
+	    std::string fname; fname << root << "_" << id++ << ".mat";
 	    idx<T> e = m.get(i, j);
 	    if (!save_matrix(e, fname)) return false;
 	    if (print) std::cout << "saved " << fname << std::endl;
@@ -497,12 +496,12 @@ namespace ebl {
     }
     return true;
   }
-  
+
   template <typename T>
   bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename) {
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
@@ -518,11 +517,11 @@ namespace ebl {
     // allocate offset matrix
     idx<int64> offsets(dall);
     idx_clear(offsets);
-    // save offsets matrix first    
+    // save offsets matrix first
     bool ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
     }
@@ -549,8 +548,8 @@ namespace ebl {
 	  idx<T> e = m->get(k);
 	  ret = save_matrix(e, fp);
 	  if (!ret) {
-	    cerr << "failed to write matrix " << e << " to " << filename << "."
-		 << endl;
+	    std::cerr << "failed to write matrix " << e << " to " << filename << "."
+		 << std::endl;
 	    fclose(fp);
 	    return false;
 	  }
@@ -576,8 +575,8 @@ namespace ebl {
 	    idx<T> e = m->get(k, j);
 	    ret = save_matrix(e, fp);
 	    if (!ret) {
-	      cerr << "failed to write matrix " << e << " to "
-		   << filename << "." << endl;
+	      std::cerr << "failed to write matrix " << e << " to "
+		   << filename << "." << std::endl;
 	      fclose(fp);
 	      return false;
 	    }
@@ -589,28 +588,28 @@ namespace ebl {
     // finally rewrite offset matrix at beginning of file
     fp = fopen(filename.c_str(), "rb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
     ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
-    }    
+    }
     fclose(fp);
     return ret;
   }
-  
+
   template <typename T>
   bool save_matrices(std::list<std::string> &filenames,
 		     const std::string &filename) {
     if (filenames.size() == 0) eblerror("expected a non-empty list");
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
@@ -630,8 +629,8 @@ namespace ebl {
     // put this matrix first in the file
     bool ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
     }
@@ -642,7 +641,7 @@ namespace ebl {
 	 i != filenames.end(); ++i, ++j) {
       if (multi) { // each matrix is composed of multiple matrices
         // TODO: check if this is breakng in 32.bit, false);
-	midx<T> e = load_matrices<T>(*i); 
+	midx<T> e = load_matrices<T>(*i);
 	for (uint k = 0; k < e.dim(0); ++k) {
 	  // save offset of matrix
 	  fgetpos(fp, &pos);
@@ -655,8 +654,8 @@ namespace ebl {
 	  idx<T> ee = e.get(k);
 	  ret = save_matrix(ee, fp);
 	  if (!ret) {
-	    cerr << "failed to write matrix " << k << " to " << filename << "."
-		 << endl;
+	    std::cerr << "failed to write matrix " << k << " to " << filename << "."
+		 << std::endl;
 	    fclose(fp);
 	    return false;
 	  }
@@ -673,8 +672,8 @@ namespace ebl {
 	// save matrix into file
 	ret = save_matrix(e, fp);
 	if (!ret) {
-	  cerr << "failed to write matrix " << e << " to " << filename << "."
-	       << endl;
+	  std::cerr << "failed to write matrix " << e << " to " << filename << "."
+	       << std::endl;
 	  fclose(fp);
 	  return false;
 	}
@@ -684,28 +683,28 @@ namespace ebl {
     // finally rewrite offset matrix at beginning of file
     fp = fopen(filename.c_str(), "rb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
     ret = save_matrix(offsets, fp);
     if (!ret) {
-      cerr << "failed to write matrix " << offsets << " to " << filename << "."
-	   << endl;
+      std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
+	   << std::endl;
       fclose(fp);
       return false;
     }
     fclose(fp);
     return ret;
   }
-  
+
   template <typename T>
   bool save_matrix(std::list<std::string> &filenames,
 		   const std::string &filename) {
     if (filenames.size() == 0) eblerror("expected a non-empty list");
     FILE *fp = fopen(filename.c_str(), "wb+");
     if (!fp) {
-      cerr << "save_matrix failed (" << filename << "): ";
+      std::cerr << "save_matrix failed (" << filename << "): ";
       perror("");
       return false;
     }
@@ -727,7 +726,7 @@ namespace ebl {
     for (std::list<std::string>::iterator i = filenames.begin();
 	 i != filenames.end(); ++i, ++j) {
       if (multi)
-	eblerror("expected a single-matrix file in " << s.c_str());      
+	eblerror("expected a single-matrix file in " << s.c_str());
       idx<T> e = all.select(0, j);
       load_matrix<T>(e, *i);
     }

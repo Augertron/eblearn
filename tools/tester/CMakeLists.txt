@@ -20,7 +20,7 @@ IF (QT_FOUND)
 ENDIF (QT_FOUND)
 
 IF (CPPUNIT_FOUND) # compile only if cppunit is present
-  
+
   # compile executable
   ##############################################################################
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -71,9 +71,9 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries (${TESTER_BINARY_NAME} eblearngui)
   ENDIF (QT_FOUND) #------------------------------------------------------------
   LINK_MAGICKPP(${TESTER_BINARY_NAME})
-  
+
 ELSE (CPPUNIT_FOUND)
   MESSAGE("Error: CppUnit required to build tester")
-  
+
 ENDIF (CPPUNIT_FOUND) #---------------------------------------------------------
- 
+

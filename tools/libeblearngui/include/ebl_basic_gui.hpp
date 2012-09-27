@@ -39,25 +39,24 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // linear_module
+// linear_module ///////////////////////////////////////////////////////////////
 
-#define LINEAR_MODULE_GUI(dname, op, T, state)				\
-  template <typename T, class Tstate>					\
-  void linear_module_gui::dname(linear_module<T,Tstate> &nn,		\
-			       Tstate &in, Tstate &out,			\
-			       uint &h0, uint &w0,	\
-			       double zoom, T vmin, T vmax,		\
-			       bool show_out) {				\
+#define LINEAR_MODULE_GUI(dname, op, TYPE)                              \
+  template <typename T>                                                 \
+  void linear_module_gui::dname(linear_module<T> &nn,                   \
+                                state<T> &in, state<T> &out,            \
+                                uint &h0, uint &w0,                     \
+                                double zoom, T vmin, T vmax,		\
+                                bool show_out) {                        \
     /* run it */							\
     nn.op(in, out);							\
-    uint h = h0, w = w0;					\
+    uint h = h0, w = w0;                                                \
     /* display text */							\
-    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.TYPE[0];	\
     w += 150;								\
     zoom *= 3;								\
     /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
+    idx_bloop1(m, in.TYPE[0], T) {                                      \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
@@ -66,27 +65,27 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
   }
 
-  LINEAR_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
-  LINEAR_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
-  LINEAR_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
+LINEAR_MODULE_GUI(display_fprop, fprop, f)
+LINEAR_MODULE_GUI(display_bprop, bprop, b)
+LINEAR_MODULE_GUI(display_bbprop, bbprop, bb)
 
-  ////////////////////////////////////////////////////////////////
-  // convolution_module
+// convolution_module //////////////////////////////////////////////////////////
 
-#define CONVOLUTION_MODULE_GUI(dname, op, T, state)			\
-  template <typename T, class Tstate>					\
-  void convolution_module_gui::dname(convolution_module<T,Tstate> &nn,	\
+#define CONVOLUTION_MODULE_GUI(dname, op, TYPE)                         \
+  template <typename T>                                                 \
+  void convolution_module_gui::dname(convolution_module<T> &nn,         \
 				     uint &h0, uint &w0, double zoom,	\
 				     T vmin, T vmax, bool show_out) {	\
     uint h = h0, w = w0;						\
     vmin = 0; vmax = 0;							\
     /* display kernels text */						\
-    gui << gui_only() << at(h, w) << "kernels:" << nn.kernel.T		\
-	<< " min " << idx_min(nn.kernel.T) << " max " << idx_max(nn.kernel.T); \
+    gui << gui_only() << at(h, w) << "kernels:" << nn.kernel.TYPE[0]    \
+	<< " min " << idx_min(nn.kernel.TYPE[0])                        \
+        << " max " << idx_max(nn.kernel.TYPE[0]);                       \
     w += 150;								\
     /* display kernels */						\
     /* zoom *= 4; */	 						\
-    idx_bloop1(mk, nn.kernel.T, T) {					\
+    idx_bloop1(mk, nn.kernel.TYPE[0], T) {                              \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(mk, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (mk.dim(1) * zoom + 1);				\
@@ -95,29 +94,28 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-  CONVOLUTION_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
-  CONVOLUTION_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
-  CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
+CONVOLUTION_MODULE_GUI(display_fprop, fprop, f)
+CONVOLUTION_MODULE_GUI(display_bprop, bprop, b)
+CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, bb)
 
-  ////////////////////////////////////////////////////////////////
-  // subsampling_module
+// subsampling_module //////////////////////////////////////////////////////////
 
-#define SUBSAMPLING_MODULE_GUI(dname, op, T, state)			\
-  template <typename T, class Tstate>					\
-  void subsampling_module_gui::dname(subsampling_module<T,Tstate> &nn,	\
-				     Tstate &in, Tstate &out, uint &h0,	\
+#define SUBSAMPLING_MODULE_GUI(dname, op, TYPE)                         \
+  template <typename T>                                                 \
+  void subsampling_module_gui::dname(subsampling_module<T> &nn,         \
+				     state<T> &in, state<T> &out, uint &h0, \
 				     uint &w0, double zoom, T vmin, T vmax, \
 				     bool show_out) {			\
     /* run it */							\
     nn.op(in, out);							\
     uint h = h0, w = w0;						\
     /* display input text	*/					\
-    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
-    gui << at(h + 15, w) << "in min:" << idx_min(in.T);			\
-    gui << at(h + 30, w) << "in max:" << idx_max(in.T);			\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.TYPE[0];	\
+    gui << at(h + 15, w) << "in min:" << idx_min(in.TYPE[0]);           \
+    gui << at(h + 30, w) << "in max:" << idx_max(in.TYPE[0]);           \
     w += 150;								\
     /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
+    idx_bloop1(m, in.TYPE[0], T) {                                      \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
@@ -127,18 +125,18 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.sub.T.dim(0);	\
-    gui << "x" << in.T.dim(1) / nn.sub.T.dim(1);			\
-    gui << "x" << in.T.dim(2) / nn.sub.T.dim(2);			\
-    gui << at(h + 15, w) << "coeff min:" << idx_min(nn.coeff.T);	\
-    gui << at(h + 30, w) << "coeff max:" << idx_max(nn.coeff.T);	\
+    gui << gui_only()<< at(h, w) << "kernels:" << nn.sub.TYPE[0].dim(0); \
+    gui << "x" << in.TYPE[0].dim(1) / nn.sub.TYPE[0].dim(1);            \
+    gui << "x" << in.TYPE[0].dim(2) / nn.sub.TYPE[0].dim(2);            \
+    gui << at(h + 15, w) << "coeff min:" << idx_min(nn.coeff.TYPE[0]);	\
+    gui << at(h + 30, w) << "coeff max:" << idx_max(nn.coeff.TYPE[0]);	\
     w += 150;								\
     h0 += 45;								\
   }
 
-  SUBSAMPLING_MODULE_GUI(display_fprop, fprop, x, fstate_idx)
-  SUBSAMPLING_MODULE_GUI(display_bprop, bprop, dx, bstate_idx)
-  SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, ddx, bbstate_idx)
+SUBSAMPLING_MODULE_GUI(display_fprop, fprop, f)
+SUBSAMPLING_MODULE_GUI(display_bprop, bprop, b)
+SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, bb)
 
 }
 

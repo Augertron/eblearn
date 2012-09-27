@@ -88,9 +88,9 @@ namespace ebl {
 /*       //! fprop from in to out */
 /*       virtual void fprop(state_idx<T> &in, state_idx<T> &out); */
 /*       //! bprop */
-/*       virtual void bprop(state_idx<T> &in, state_idx<T> &out); */
+/*       VIRTUAL void bprop(state_idx<T> &in, state_idx<T> &out); */
 /*       //! bbprop */
-/*       virtual void bbprop(state_idx<T> &in, state_idx<T> &out); */
+/*       VIRTUAL void bbprop(state_idx<T> &in, state_idx<T> &out); */
 /*     }; */
 
 } // end namespace ebl

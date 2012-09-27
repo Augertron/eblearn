@@ -36,640 +36,610 @@
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_arch.h"
-#include "ebl_states.h"
 #include "ebl_utils.h"
 #include "bbox.h"
-#include "ebl_cudaops.h"
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // linear_module
-  //! This module applies a linears combination of the input <in>
-  //! with its internal weight matrix w and puts the result in the output.
-  //! This module has a replicable order of 1, if the input has a bigger order,
-  //! use the replicable version of this module: linear_module_replicable.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class linear_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //!        If p is null, a local buffer will be used.
-    //! \param in the size of the input to the linear combination.
-    //! \param out the size of the output to the linear combination.
-    linear_module(parameter<T,Tstate> *p, intg in, intg out,
-		  const char *name = "linear");
-    //! destructor
-    virtual ~linear_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! order of operation
-    virtual int replicable_order() { return 1; }
-    //! forgetting weights by replacing with random values
-    virtual void forget(forget_param_linear &fp);
-    //! normalize
-    virtual void normalize();
-    //! Return dimensions that are compatible with this module.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim fprop_size(fidxdim &i_size);
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim bprop_size(const fidxdim &o_size);
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual linear_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
-    //! Copy passed weights into x component of internal weights.
-    virtual void load_x(idx<T> &weights);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Calls fprop and then dumps internal buffers, inputs and outputs
-    //! into files. This can be useful for debugging.
-    virtual void dump_fprop(Tstate &in, Tstate &out);
+// linear_module ///////////////////////////////////////////////////////////////
 
-  /* bool resize_output(Tstate &in, Tstate &out); */
+//! This module applies a linears combination of the input <in>
+//! with its internal weight matrix w and puts the result in the output.
+//! This module has a replicable order of 1, if the input has a bigger order,
+//! use the replicable version of this module: linear_module_replicable.
+template <typename T> class linear_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param p is used to store all parametric variables in a single place.
+  //!        If p is null, a local buffer will be used.
+  //! \param in the size of the input to the linear combination.
+  //! \param out the size of the output to the linear combination.
+  linear_module(parameter<T> *p, intg in, intg out, const char *name ="linear");
+  //! destructor
+  virtual ~linear_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+  //! order of operation
+  virtual int replicable_order() { return 1; }
+  //! forgetting weights by replacing with random values
+  virtual void forget(forget_param_linear &fp);
+  //! normalize
+  virtual void normalize();
+  //! Return dimensions that are compatible with this module.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim fprop_size(fidxdim &i_size);
+  //! Return dimensions compatible with this module given output dimensions.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim bprop_size(const fidxdim &o_size);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual linear_module<T>* copy(parameter<T> *p = NULL);
+  //! Copy passed weights into x component of internal weights.
+  virtual void load_x(idx<T> &weights);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
 
+  // members
+ public:
+  state<T> w;
+};
 
-    // members ////////////////////////////////////////////////////////
-  public:
-    Tstate w;
-  };
+//! The replicable version of linear_module.
+//! If the input has a bigger order than the replicable_order() of
+//! linear_module, then this module loops on extra dimensions until
+//! it reaches the replicable order, and then calls the base module
+//! linear_module.
+//! For example, if the base module works on an order of 1, an input with
+//! dimensions <42x9x9> will produce a 9x9 grid where each box contains
+//! the output of the processing of each <42> slice.
+DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
+                              linear_module, T,
+                              (parameter<T> *p, intg in, intg out,
+                               const char *name = "linear_replicable"),
+                              (p, in, out, name));
 
-  //! The replicable version of linear_module.
-  //! If the input has a bigger order than the replicable_order() of
-  //! linear_module, then this module loops on extra dimensions until
-  //! it reaches the replicable order, and then calls the base module
-  //! linear_module.
-  //! For example, if the base module works on an order of 1, an input with
-  //! dimensions <42x9x9> will produce a 9x9 grid where each box contains
-  //! the output of the processing of each <42> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
-				linear_module, T, Tstate,
-				(parameter<T,Tstate> *p, intg in, intg out,
-				 const char *name = "linear_replicable"),
-				(p, in, out, name));
+// convolution_module //////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // convolution_module
-  //! This module applies 2D convolutions on dimensions 1 and 2
-  //! (0 contains different layers of information).
-  //! This module has a replicable order of 3, if the input has a bigger order,
-  //! use the replicable version of this module:
-  //! convolution_module_replicable.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class convolution_module : public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //!        If p is null, a local buffer will be used.
-    //! \param ker The convolution kernel sizes.
-    //! \param stride The convolution strides.
-    //! \param table is the convolution connection table.
-    //! \param crop If true, crop input when it does not match with the kernel.
-    //!          This allows to feed any input size to this module.
-    convolution_module(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
-		       idx<intg> &table, const char *name = "convolution",
-		       bool crop = true);
-    //! destructor
-    virtual ~convolution_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! forgetting weights by replacing with random values
-    virtual void forget(forget_param_linear &fp);
-    //! order of operation
-    virtual int replicable_order() { return 3; }
-    //! resize the output based on input dimensions
-    //! This returns true if output was resized/reallocated, false otherwise.
-    virtual bool resize_output(Tstate &in, Tstate &out);
-    //! Return dimensions that are compatible with this module.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim fprop_size(fidxdim &i_size);
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim bprop_size(const fidxdim &o_size);
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual convolution_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
-    //! Copy passed weights into x component of internal weights.
-    virtual void load_x(idx<T> &weights);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Calls fprop and then dumps internal buffers, inputs and outputs
-    //! into files. This can be useful for debugging.
-    virtual void dump_fprop(Tstate &in, Tstate &out);
+//! This module applies 2D convolutions on dimensions 1 and 2
+//! (0 contains different layers of information).
+//! This module has a replicable order of 3, if the input has a bigger order,
+//! use the replicable version of this module:
+//! convolution_module_replicable.
+template <typename T> class convolution_module : public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param p is used to store all parametric variables in a single place.
+  //!        If p is null, a local buffer will be used.
+  //! \param ker The convolution kernel sizes.
+  //! \param stride The convolution strides.
+  //! \param table is the convolution connection table.
+  //! \param crop If true, crop input when it does not match with the kernel.
+  //!          This allows to feed any input size to this module.
+  convolution_module(parameter<T> *p, idxdim &ker, idxdim &stride,
+                     idx<intg> &table, const char *name = "convolution",
+                     bool crop = true);
+  //! destructor
+  virtual ~convolution_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+  //! forgetting weights by replacing with random values
+  virtual void forget(forget_param_linear &fp);
+  //! order of operation
+  virtual int replicable_order() { return 3; }
+  //! resize the output based on input dimensions
+  //! This returns true if output was resized/reallocated, false otherwise.
+  virtual bool resize_output(idx<T> &in, idx<T> &out, idxdim *ignore = NULL);
+  //! Return dimensions that are compatible with this module.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim fprop_size(fidxdim &i_size);
+  //! Return dimensions compatible with this module given output dimensions.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim bprop_size(const fidxdim &o_size);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual convolution_module<T>* copy(parameter<T> *p = NULL);
+  //! Copy passed weights into x component of internal weights.
+  virtual void load_x(idx<T> &weights);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
 
-    // members /////////////////////////////////////////////////////////////////
-  public:
-    intg		tablemax;
-    Tstate	        kernel;
-    intg		thickness;
-    idxdim		ker;
-    idxdim		stride;
-    idx<intg>		table;	//!< table of connections btw input and output
-  protected:
-    bool		warnings_shown;
-    bool                fulltable; //!< indicating if full-table or not
-    bool                float_precision; //!< used for IPP and TH
-    bool                double_precision; //!< used for TH
-    bool                crop; //! Crop input when size mismatch or not.
-    // IPP members /////////////////////////////////////////////////////////////
-    idx<T>              revkernel; //!< a reversed kernel for IPP
-    idx<T>              outtmp; //!< a tmp buffer for IPP conv output
-    bool                ipp_err_printed; //!< Print an error msg only once.
-    bool                use_ipp; //!< IPP is useable or not.
-  };
+  // members /////////////////////////////////////////////////////////////////
+ public:
+  intg	    tablemax;
+  state<T>  kernel;
+  intg	    thickness;
+  idxdim    ker;
+  idxdim    stride;
+  idx<intg> table;             //!< table of connections btw input and output
+ protected:
+  bool	    warnings_shown;
+  bool      fulltable;         //!< indicating if full-table or not
+  bool      float_precision;   //!< used for IPP and TH
+  bool      double_precision;  //!< used for TH
+  bool      crop;              //! Crop input when size mismatch or not.
+  // IPP members /////////////////////////////////////////////////////////////
+  idx<T>    revkernel;         //!< a reversed kernel for IPP
+  idx<T>    outtmp;            //!< a tmp buffer for IPP conv output
+  bool      ipp_err_printed;   //!< Print an error msg only once.
+  bool      use_ipp;           //!< IPP is useable or not.
+};
 
-  //! The replicable version of convolution_module.
-  //! If the input has a bigger order than the replicable_order() of
-  //! convolution_module, then this module loops on extra dimensions until
-  //! it reaches the replicable order, and then calls the base module
-  //! convolution_module.
-  //! For example, if the base module works on an order of 3, an input with
-  //! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
-  //! the output of the processing of each <2x16x16> slice.
-  DECLARE_REPLICABLE_MODULE_1_1(convolution_module_replicable,
-				convolution_module, T, Tstate,
-				(parameter<T,Tstate> *p,
-				 idxdim &ker, idxdim &stride, idx<intg> &table,
-				 const char *name = "convolution_replicable"),
-				(p, ker, stride, table, name));
+//! The replicable version of convolution_module.
+//! If the input has a bigger order than the replicable_order() of
+//! convolution_module, then this module loops on extra dimensions until
+//! it reaches the replicable order, and then calls the base module
+//! convolution_module.
+//! For example, if the base module works on an order of 3, an input with
+//! dimensions <2x16x16x9x9> will produce a 9x9 grid where each box contains
+//! the output of the processing of each <2x16x16> slice.
+DECLARE_REPLICABLE_MODULE_1_1(
+    convolution_module_replicable, convolution_module, T,
+    (parameter<T> *p, idxdim &ker, idxdim &stride, idx<intg> &table,
+     const char *name = "convolution_replicable"),
+    (p, ker, stride, table, name));
 
-  ////////////////////////////////////////////////////////////////
-  // addc_module
-  //! The constant add module adds biases to the first dimension of the input
-  //! and puts the results in the output. This module is spatially replicable
-  //! (the input can have an order greater than 1 and the operation will apply
-  //! to all elements).
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class addc_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //!        If p is null, a local buffer will be used.
-    //! \param size is the number of biases, or the size of dimensions 0 of
-    //! inputs and outputs.
-    addc_module(parameter<T,Tstate> *p, intg size, const char *name = "addc");
-    //! destructor
-    virtual ~addc_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! forgetting weights by replacing with random values
-    virtual void forget(forget_param_linear &fp);
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual addc_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
-    //! Copy passed weights into x component of internal weights.
-    virtual void load_x(idx<T> &weights);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Calls fprop and then dumps internal buffers, inputs and outputs
-    //! into files. This can be useful for debugging.
-    virtual void dump_fprop(Tstate &in, Tstate &out);
+// addc_module /////////////////////////////////////////////////////////////////
 
-    // members ////////////////////////////////////////////////////////
-  public:
-    Tstate  bias; //!< the biases
-  };
+//! The constant add module adds biases to the first dimension of the input
+//! and puts the results in the output. This module is spatially replicable
+//! (the input can have an order greater than 1 and the operation will apply
+//! to all elements).
+template <typename T>
+class addc_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param p is used to store all parametric variables in a single place.
+  //!        If p is null, a local buffer will be used.
+  //! \param size is the number of biases, or the size of dimensions 0 of
+  //! inputs and outputs.
+  addc_module(parameter<T> *p, intg size, const char *name = "addc");
+  //! destructor
+  virtual ~addc_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+  //! forgetting weights by replacing with random values
+  virtual void forget(forget_param_linear &fp);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual addc_module<T>* copy(parameter<T> *p = NULL);
+  //! Copy passed weights into x component of internal weights.
+  virtual void load_x(idx<T> &weights);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // power_module
-  //! x^p module. p can be nay real number
-  //! the derivatives are implemented using
-  //! polynomial derivative rules, so they are exact
-  //! The derivative implementation divides output by input
-  //! to get x^(p-1), therefore this module assumes that
-  //! the :input:x and :output:x is not modified until bprop
-  // TODO: write specialized modules square and sqrt to run faster
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class power_module : public module_1_1<T,Tstate> {
-  public:
-    //! <p> is double number, every element of input is raised to
-    //! its <p>th power.
-    power_module(T p, const char *name = "power");
-    //! destructor
-    virtual ~power_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
+  // members
+ public:
+  state<T>  bias; //!< the biases
+};
 
-    // members ////////////////////////////////////////////////////////
-  protected:
-    T p;
-    idx<T> tt; //!< temporary buffer
-  };
+// power_module ////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // diff_module
-  //! Elementwise subtraction class.
-  //! Derived from module-2-1.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class diff_module : public module_2_1<T, Tstate> {
-  public:
-    //! constructor.
-    diff_module();
-    //! destructor
-    virtual ~diff_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in1, Tstate &in2, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in1, Tstate &in2, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in1, Tstate &in2, Tstate &out);
-  };
+//! x^p module. p can be nay real number
+//! the derivatives are implemented using
+//! polynomial derivative rules, so they are exact
+//! The derivative implementation divides output by input
+//! to get x^(p-1), therefore this module assumes that
+//! the :input:x and :output:x is not modified until bprop
+// TODO: write specialized modules square and sqrt to run faster
+template <typename T> class power_module : public module_1_1<T> {
+ public:
+  //! <p> is double number, every element of input is raised to
+  //! its <p>th power.
+  power_module(T p, const char *name = "power");
+  //! destructor
+  virtual ~power_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // mul_module
-  //! Elementwise multiplication class.
-  //! Derived from module-2-1.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class mul_module : public module_2_1<T, Tstate> {
-  private:
-    idx<T> tmp; //!< temporary buffer
+  // members
+ protected:
+  T p;
+  idx<T> tt; //!< temporary buffer
+};
 
-  public:
-    //! constructor.
-    mul_module();
-    //! destructor
-    virtual ~mul_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in1, Tstate &in2, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in1, Tstate &in2, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in1, Tstate &in2, Tstate &out);
-  };
+// diff_module /////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // thres_module
-  //! A thresholding module that filters the input and any entry that is
-  //! smaller then a given threshold is set to a specified value.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class thres_module : public module_1_1<T,Tstate> {
-  public:
-    T thres;
-    T val;
+//! Elementwise subtraction class.
+//! Derived from module-2-1.
+template <typename T> class diff_module : public module_2_1<T> {
+ public:
+  //! constructor.
+  diff_module();
+  //! destructor
+  virtual ~diff_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in1, idx<T> &in2, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in1, state<T> &in2, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in1, state<T> &in2, state<T> &out);
+};
 
-  public:
-    //! <thres> is the threshold value that is used to filter the
-    //! input.
-    //! <val> is the value that is used to replace any input entry.
-    //! smaller than <thres>.
-    thres_module(T thres, T val);
-    //! destructor
-    virtual ~thres_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-  };
+// mul_module //////////////////////////////////////////////////////////////////
 
+//! Elementwise multiplication class.
+//! Derived from module-2-1.
+template <typename T> class mul_module : public module_2_1<T> {
+ private:
+  idx<T> tmp; //!< temporary buffer
 
-  ////////////////////////////////////////////////////////////////
-  // cutborder_module
-  //! opposite of zero padding, sometimes one needs to
-  //! cut the borders of an input to make it usable with
-  //! a convolved output
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class cutborder_module : module_1_1<T,Tstate> {
-  private:
-    int nrow, ncol;
+ public:
+  //! constructor.
+  mul_module();
+  //! destructor
+  virtual ~mul_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in1, idx<T> &in2, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in1, state<T> &in2, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in1, state<T> &in2, state<T> &out);
+};
 
-  public:
-    //! <nrow> and <ncol> are the number of rows and colums
-    //! that is going to be removed from borders.
-    //! The output size is (nrow-2*nr and ncols-2*ncol)
-    //! for each feature map.
-    cutborder_module(int nr, int nc);
-    //! destructor
-    virtual ~cutborder_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-  };
+// thres_module ////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // zpad_module
-  //! a simple zero padding module that is mostly usefull for doing
-  //! same size output convolutions.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class zpad_module : public module_1_1<T,Tstate> {
-  public:
-    //! Empty constructor. User should set paddings via the set_paddings()
-    //! method.
-    zpad_module(const char *name = "zpad");
-    //! Constructs a zpad that adds same size borders on each side.
-    //! \param nrows The number of rows added on each side.
-    //! \param ncolumns The number of cols added on each side.
-    //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
-    //! for each feature map.
-    zpad_module(int nrows, int ncolumns);
-    //! Constructs a zpad module that adds padding on each side of a 2D input.
-    //! (the 1st (features) dimension is left unchanged).
-    //! \param top The number of rows added on to the top side.
-    //! \param left The number of rows added on to the left side.
-    //! \param bottom The number of rows added on to the bottom side.
-    //! \param right The number of rows added on to the right side.
-    zpad_module(int top, int left, int bottom, int right);
-    //! Constructor adding zero borders with same size on each size if the
-    //! kernel had odd size, otherwise adding 1 pixel less on the right
-    //! and bottom borders.
-    //! \param kernel_size The sizes of the kernel for which to pad.
-    zpad_module(idxdim &kernel_size, const char *name = "zpad");
-    //! Constructor adding zero borders with same size on each size if the
-    //! kernel had odd size, otherwise adding 1 pixel less on the right
-    //! and bottom borders. 
-    //! \param kernels A kernel for each input in case of multi-state input.
-    zpad_module(midxdim &kernels, const char *name = "zpad");
-    //! destructor
-    virtual ~zpad_module();
-    virtual void fprop(mstate<Tstate> &in, mstate<Tstate> &out);
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, idx<T> &out);
-    //! forward propagation from in to out
-    virtual void fprop(idx<T> &in, idx<T> &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Return all paddings in an idxdim: top,left,bottom,right.
-    virtual idxdim get_paddings();
-    //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
-    //! This does not set any internal parameters of this module.
-    virtual idxdim get_paddings(idxdim &kernel);
-    //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
-    //! This does not set any internal parameters of this module.
-    virtual midxdim get_paddings(midxdim &kernels);
-    //! Set all paddings for top, left, bottom and right sides.
-    virtual void set_paddings(int top, int left, int bottom, int right);
-    //! Set all paddings from 'pads' in this order: top,left,bottom,right.
-    virtual void set_paddings(idxdim &pads);
-    //! Set all paddings according to 'kernel'.
-    virtual void set_kernel(idxdim &kernel);
-    //! Set all paddings according to 'kernels' for multi-state inputs.
-    virtual void set_kernels(midxdim &kernels);
-    //! Return dimensions that are compatible with this module.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim fprop_size(fidxdim &i_size);
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    virtual fidxdim bprop_size(const fidxdim &o_size);
-    //! Returns multiple input dimensions corresponding to output dims 'osize'.
-    virtual mfidxdim fprop_size(mfidxdim &isize);
-    //! Returns multiple input dimensions corresponding to output dims 'osize'.
-    virtual mfidxdim bprop_size(mfidxdim &osize);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual zpad_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
+//! A thresholding module that filters the input and any entry that is
+//! smaller then a given threshold is set to a specified value.
+template <typename T> class thres_module : public module_1_1<T> {
+ public:
+  T thres;
+  T val;
 
-  protected:
-    idxdim pad; //!< Current padding (top,left,bottom,right).
-    midxdim pads; //!< Paddings (top,left,bottom,right) for all scales.
-  };
+ public:
+  //! <thres> is the threshold value that is used to filter the
+  //! input.
+  //! <val> is the value that is used to replace any input entry.
+  //! smaller than <thres>.
+  thres_module(T thres, T val);
+  //! destructor
+  virtual ~thres_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+};
 
-  ////////////////////////////////////////////////////////////////
-  // mirrorpad_module
-  //! A simple mirror padding module that is mostly usefull for doing
-  //! same size output convolutions.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class mirrorpad_module : public zpad_module<T,Tstate> {
-  public:
-    //! <nrow> is the number of rows in zero added border
-    //! <ncol> is the number of cols in zero added border
-    //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
-    //! for each feature map.
-    mirrorpad_module(int nr, int nc);
-    //! Constructor adding zero borders with same size on each size if the
-    //! kernel had odd size, otherwise adding 1 pixel less on the right
-    //! and bottom borders.
-    //! \param kernel_size The sizes of the kernel for which to pad.
-    mirrorpad_module(idxdim &kernel_size);
-    //! destructor
-    virtual ~mirrorpad_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, idx<T> &out);
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual mirrorpad_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
-  protected:
-    using zpad_module<T,Tstate>::pad;
-  };
+// cutborder_module ////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // fsum_module
-  //! This modules iterates of the last two dimenions and takes
-  //! the sum of the remaining dimensions.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class fsum_module : public module_1_1<T,Tstate> {
-  public:
-    //! constructor.
-    //! \param div If true, divide the sum by the number of elements used.
-    //! \param split If non-1, sum every consecutive groups of size
-    //!   (number of features) * split.
-    fsum_module(bool div = false, float split = 1.0);
-    //! destructor
-    virtual ~fsum_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-  protected:
-    bool div; //!< Normalize by number of elements used for sum.
-    float split; //!< Sum by groups of n elements, n = features * split.
-  };
+//! opposite of zero padding, sometimes one needs to
+//! cut the borders of an input to make it usable with
+//! a convolved output
+template <typename T> class cutborder_module : module_1_1<T> {
+ private:
+  int nrow, ncol;
 
-  ////////////////////////////////////////////////////////////////
-  // range_lut_module
-  //! This modules transforms its inputs to discrete values corresponding to a
-  //! range of values, as described a given lookup table (lut).
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class range_lut_module : public module_1_1<T,Tstate> {
-  public:
-    //! constructor.
-    //! @param value_range A matrix containing a series of value / range pairs.
-    //!        The matrix size is Nx2, with (n, 0) being the value, (n, 1)
-    //!        the maximum of the range. E.g. any value below (0, 1), will be
-    //!        assigned (0, 0), then anything below (1, 1), will be assigned
-    //!        (1, 0), etc.
-    //!        It is assumed that ranges are non overlapping and given in
-    //!        increasing order.
-    range_lut_module(idx<T> *value_range);
-    //! destructor
-    virtual ~range_lut_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    /* //! backward propagation from out to in */
-    /* virtual void bprop(Tstate &in, Tstate &out); */
-    /* //! second-derivative backward propagation from out to in */
-    /* virtual void bbprop(Tstate &in, Tstate &out); */
-  protected:
-    idx<T>	value_range;
-  };
+ public:
+  //! <nrow> and <ncol> are the number of rows and colums
+  //! that is going to be removed from borders.
+  //! The output size is (nrow-2*nr and ncols-2*ncol)
+  //! for each feature map.
+  cutborder_module(int nr, int nc);
+  //! destructor
+  virtual ~cutborder_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+};
 
-  ////////////////////////////////////////////////////////////////
-  // binarize_module
-  //! This modules transforms its inputs to binary outputs based on a given
-  //! threshold.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class binarize_module : public module_1_1<T,Tstate> {
-  public:
-    //! constructor.
-    binarize_module(T threshold, T false_value, T true_value);
-    //! destructor
-    virtual ~binarize_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    /* //! backward propagation from out to in */
-    /* virtual void bprop(Tstate &in, Tstate &out); */
-    /* //! second-derivative backward propagation from out to in */
-    /* virtual void bbprop(Tstate &in, Tstate &out); */
-  protected:
-    T	threshold;
-    T	false_value;
-    T	true_value;
-  };
+// zpad_module /////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // diag_module
-  //! This module applies a gain per unit (like a diagonal linear module).
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class diag_module : public module_1_1<T,Tstate> {
-  public:
-    //! Constructor.
-    //! \param p is used to store all parametric variables in a single place.
-    //!        If p is null, a local buffer will be used.
-    //! \param thickness The number of feature maps.
-    diag_module(parameter<T,Tstate> *p, intg thickness,
-	        const char *name = "diag");
-    //! Destructor.
-    virtual ~diag_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Calls fprop and then dumps internal buffers, inputs and outputs
-    //! into files. This can be useful for debugging.
-    virtual void dump_fprop(Tstate &in, Tstate &out);
-    //! resize the output based on input dimensions
-    //! This returns true if output was resized/reallocated, false otherwise.
-    virtual bool resize_output(Tstate &in, Tstate &out);
-    //! Copy passed weights into x component of internal weights.
-    virtual void load_x(idx<T> &weights);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Returns a deep copy of this module.
-    //! \param p If NULL, reuse current parameter space, otherwise allocate new
-    //!   weights on parameter 'p'.
-    virtual diag_module<T,Tstate>* copy(parameter<T,Tstate> *p = NULL);
-  protected:
-    Tstate	coeff;
-  };
+//! a simple zero padding module that is mostly usefull for doing
+//! same size output convolutions.
+template <typename T> class zpad_module : public module_1_1<T> {
+ public:
+  //! Empty constructor. User should set paddings via the set_paddings()
+  //! method.
+  zpad_module(const char *name = "zpad");
+  //! Constructs a zpad that adds same size borders on each side.
+  //! \param nrows The number of rows added on each side.
+  //! \param ncolumns The number of cols added on each side.
+  //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
+  //! for each feature map.
+  zpad_module(int nrows, int ncolumns);
+  //! Constructs a zpad module that adds padding on each side of a 2D input.
+  //! (the 1st (features) dimension is left unchanged).
+  //! \param top The number of rows added on to the top side.
+  //! \param left The number of rows added on to the left side.
+  //! \param bottom The number of rows added on to the bottom side.
+  //! \param right The number of rows added on to the right side.
+  zpad_module(int top, int left, int bottom, int right);
+  //! Constructor adding zero borders with same size on each size if the
+  //! kernel had odd size, otherwise adding 1 pixel less on the right
+  //! and bottom borders.
+  //! \param kernel_size The sizes of the kernel for which to pad.
+  zpad_module(idxdim &kernel_size, const char *name = "zpad");
+  //! Constructor adding zero borders with same size on each size if the
+  //! kernel had odd size, otherwise adding 1 pixel less on the right
+  //! and bottom borders.
+  //! \param kernels A kernel for each input in case of multi-state input.
+  zpad_module(midxdim &kernels, const char *name = "zpad");
+  //! destructor
+  virtual ~zpad_module();
 
-  ////////////////////////////////////////////////////////////////
-  // copy_module
-  //! This module does nothing but copying the input into the output.
-  //! This can be useful for parallel branching.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class copy_module : public module_1_1<T,Tstate> {
-  public:
-    //! Constructor.
-    copy_module(const char *name = "copy");
-    //! Destructor.
-    virtual ~copy_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-  };
+  //! forward propagation from in to out
+  void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // back_module
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class back_module : public module_1_1<T,Tstate> {
-  public:
-    //! Constructor.
-    back_module(const char *name = "back");
-    //! Destructor.
-    virtual ~back_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! resize the output based on input dimensions
-    //! This returns true if output was resized/reallocated, false otherwise.
-    virtual bool resize_output(Tstate &in, Tstate &out);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-    //! Return dimensions compatible with this module given output dimensions.
-    //! See module_1_1_gen's documentation for more details.
-    //! This module doesn't actually change the size, but we use it to know
-    //! the corresponding size of 1 output pixel at this point.
-    virtual fidxdim bprop_size(const fidxdim &o_size);
-    //! Apply boxes.
-    void bb(std::vector<bbox*> &boxes);
+  //! Resizes 'out' to the same dimensions as 'in'. If dimensions already
+  //! match, nothing is changed. If orders differ, then out is assigned a new
+  //! 'Tout' buffer if the correct order and dimensions.
+  //! \param d If not null, use these dimensions as target, otherwise use in.x
+  //! This returns true if output was resized/reallocated, false otherwise.
+  virtual bool resize_output(idx<T> &in, idx<T> &out, idxdim *d = NULL);
 
-  protected:
-    idx<T>	*s0;
-    idx<T>	*s1;
-    idx<T>	*s2;
-    idxdim       pixel_size;
-  };
+  //! Return all paddings in an idxdim: top,left,bottom,right.
+  virtual idxdim get_paddings();
+  //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
+  //! This does not set any internal parameters of this module.
+  virtual idxdim get_paddings(idxdim &kernel);
+  //! Returns all paddings associated with a 'kernel': top,left,bottom,right.
+  //! This does not set any internal parameters of this module.
+  virtual midxdim get_paddings(midxdim &kernels);
+  //! Set all paddings for top, left, bottom and right sides.
+  virtual void set_paddings(int top, int left, int bottom, int right);
+  //! Set all paddings from 'pads' in this order: top,left,bottom,right.
+  virtual void set_paddings(idxdim &pads);
+  //! Set all paddings according to 'kernel'.
+  virtual void set_kernel(idxdim &kernel);
+  //! Set all paddings according to 'kernels' for multi-state inputs.
+  virtual void set_kernels(midxdim &kernels);
+  //! Return dimensions that are compatible with this module.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim fprop_size(fidxdim &i_size);
+  //! Return dimensions compatible with this module given output dimensions.
+  //! See module_1_1_gen's documentation for more details.
+  virtual fidxdim bprop_size(const fidxdim &o_size);
+  //! Returns multiple input dimensions corresponding to output dims 'osize'.
+  virtual mfidxdim fprop_size(mfidxdim &isize);
+  //! Returns multiple input dimensions corresponding to output dims 'osize'.
+  virtual mfidxdim bprop_size(mfidxdim &osize);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual zpad_module<T>* copy(parameter<T> *p = NULL);
 
-  ////////////////////////////////////////////////////////////////
-  // printer_module
-  //! It prints input and output states to standard output.
-  //! useful for debugging
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class printer_module : module_1_1<T,Tstate> {
+ protected:
+  idxdim pad; //!< Current padding (top,left,bottom,right).
+  midxdim pads; //!< Paddings (top,left,bottom,right) for all scales.
+};
 
-  public:
-    printer_module(const char *name = "printer");
-    //! destructor
-    virtual ~printer_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-  };
+// mirrorpad_module ////////////////////////////////////////////////////////////
 
+//! A simple mirror padding module that is mostly usefull for doing
+//! same size output convolutions.
+template <typename T> class mirrorpad_module : public zpad_module<T> {
+ public:
+  //! <nrow> is the number of rows in zero added border
+  //! <ncol> is the number of cols in zero added border
+  //! the output size is enlarged by 2*nrow in rows and 2*ncols in cols
+  //! for each feature map.
+  mirrorpad_module(int nr, int nc);
+  //! Constructor adding zero borders with same size on each size if the
+  //! kernel had odd size, otherwise adding 1 pixel less on the right
+  //! and bottom borders.
+  //! \param kernel_size The sizes of the kernel for which to pad.
+  mirrorpad_module(idxdim &kernel_size);
+  //! destructor
+  virtual ~mirrorpad_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual mirrorpad_module<T>* copy(parameter<T> *p = NULL);
+ protected:
+  using zpad_module<T>::pad;
+};
 
+// fsum_module /////////////////////////////////////////////////////////////////
+
+//! This modules iterates of the last two dimenions and takes
+//! the sum of the remaining dimensions.
+template <typename T> class fsum_module : public module_1_1<T> {
+ public:
+  //! constructor.
+  //! \param div If true, divide the sum by the number of elements used.
+  //! \param split If non-1, sum every consecutive groups of size
+  //!   (number of features) * split.
+  fsum_module(bool div = false, float split = 1.0);
+  //! destructor
+  virtual ~fsum_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+ protected:
+  bool div; //!< Normalize by number of elements used for sum.
+  float split; //!< Sum by groups of n elements, n = features * split.
+};
+
+// range_lut_module ////////////////////////////////////////////////////////////
+
+//! This modules transforms its inputs to discrete values corresponding to a
+//! range of values, as described a given lookup table (lut).
+template <typename T> class range_lut_module : public module_1_1<T> {
+ public:
+  //! constructor.
+  //! @param value_range A matrix containing a series of value / range pairs.
+  //!        The matrix size is Nx2, with (n, 0) being the value, (n, 1)
+  //!        the maximum of the range. E.g. any value below (0, 1), will be
+  //!        assigned (0, 0), then anything below (1, 1), will be assigned
+  //!        (1, 0), etc.
+  //!        It is assumed that ranges are non overlapping and given in
+  //!        increasing order.
+  range_lut_module(idx<T> *value_range);
+  //! destructor
+  virtual ~range_lut_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+
+ protected:
+  idx<T>	value_range;
+};
+
+// binarize_module /////////////////////////////////////////////////////////////
+
+//! This modules transforms its inputs to binary outputs based on a given
+//! threshold.
+template <typename T> class binarize_module : public module_1_1<T> {
+ public:
+  //! constructor.
+  binarize_module(T threshold, T false_value, T true_value);
+  //! destructor
+  virtual ~binarize_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+
+ protected:
+  T	threshold;
+  T	false_value;
+  T	true_value;
+};
+
+// diag_module /////////////////////////////////////////////////////////////////
+
+//! This module applies a gain per unit (like a diagonal linear module).
+template <typename T> class diag_module : public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param p is used to store all parametric variables in a single place.
+  //!        If p is null, a local buffer will be used.
+  //! \param thickness The number of feature maps.
+  diag_module(parameter<T> *p, intg thickness,
+              const char *name = "diag");
+  //! Destructor.
+  virtual ~diag_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
+  //! resize the output based on input dimensions
+  //! This returns true if output was resized/reallocated, false otherwise.
+  virtual bool resize_output(idx<T> &in, idx<T> &out);
+  //! Copy passed weights into x component of internal weights.
+  virtual void load_x(idx<T> &weights);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, reuse current parameter space, otherwise allocate new
+  //!   weights on parameter 'p'.
+  virtual diag_module<T>* copy(parameter<T> *p = NULL);
+ protected:
+  state<T>	coeff;
+};
+
+// copy_module /////////////////////////////////////////////////////////////////
+
+//! This module does nothing but copying the input into the output.
+//! This can be useful for parallel branching.
+template <typename T> class copy_module : public module_1_1<T> {
+ public:
+  //! Constructor.
+  copy_module(const char *name = "copy");
+  //! Destructor.
+  virtual ~copy_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+};
+
+// back_module /////////////////////////////////////////////////////////////////
+
+template <typename T> class back_module : public module_1_1<T> {
+ public:
+  //! Constructor.
+  back_module(const char *name = "back");
+  //! Destructor.
+  virtual ~back_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! resize the output based on input dimensions
+  //! This returns true if output was resized/reallocated, false otherwise.
+  virtual bool resize_output(idx<T> &in, idx<T> &out, idxdim *ignore = NULL);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+  //! Return dimensions compatible with this module given output dimensions.
+  //! See module_1_1_gen's documentation for more details.
+  //! This module doesn't actually change the size, but we use it to know
+  //! the corresponding size of 1 output pixel at this point.
+  virtual fidxdim bprop_size(const fidxdim &o_size);
+  //! Apply boxes.
+  void bb(std::vector<bbox*> &boxes);
+
+ protected:
+  idx<T> *s0;
+  idx<T> *s1;
+  idx<T> *s2;
+  idxdim  pixel_size;
+};
+
+// printer_module //////////////////////////////////////////////////////////////
+
+//! It prints input and output states to standard output.
+//! useful for debugging
+template <typename T> class printer_module : module_1_1<T> {
+ public:
+  //! Constructor.
+  printer_module(const char *name = "printer");
+  //! Destructor.
+  virtual ~printer_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! backward propagation from out to in
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! second-derivative backward propagation from out to in
+  virtual void bbprop1(state<T> &in, state<T> &out);
+};
 
 } // namespace ebl {
 

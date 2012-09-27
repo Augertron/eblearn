@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -44,8 +44,6 @@
 using namespace boost::filesystem;
 using namespace boost;
 #endif
-
-using namespace std;
 
 namespace ebl {
 
@@ -78,8 +76,8 @@ namespace ebl {
 
   template <class Tdata>
   bool pascalbg_dataset<Tdata>::extract() {
-#ifdef __BOOST__    
-#ifdef __XML__    
+#ifdef __BOOST__
+#ifdef __XML__
     cout << "Extracting samples from files into dataset..." << endl;
     // adding data to dataset using all xml files in annroot
     path p(annroot);
@@ -88,7 +86,7 @@ namespace ebl {
     xtimer.start();
     processed_cnt = 0;
     // find all xml files recursively (and randomize list)
-    list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false, 
+    list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false,
 					 true, true);
     if (!files || files->size() == 0)
       eblerror("no xml files found in " << annroot << " using file pattern "
@@ -124,7 +122,7 @@ namespace ebl {
     string obj_classname, pose;
     bool pose_found = false;
     Node::NodeList::iterator oiter;
-      
+
     // parse xml file
     try {
       DomParser parser;
@@ -148,7 +146,7 @@ namespace ebl {
 	  image_fullname << "/" << folder << "/";
 	image_fullname += image_filename;
 	// include folder into filename to avoid conflicts
-	if (!folder.empty()) { 
+	if (!folder.empty()) {
 	  string tmp;
 	  tmp << folder << "_" << image_filename;
 	  tmp = string_replace(tmp, "/", "_");
@@ -183,7 +181,7 @@ namespace ebl {
 	    // parts
 	    if (useparts || usepartsonly) {
 	      string part_classname;
-      
+
 	      // add part's class to dataset
 	      for(oiter = olist.begin();oiter != olist.end(); ++oiter) {
 		if (!strcmp((*oiter)->get_name().c_str(), "part")) {
@@ -217,7 +215,7 @@ namespace ebl {
       return false;
     }
     try {
-      // load image 
+      // load image
       idx<ubyte> img = load_image<ubyte>(image_fullname);
       // extract patches given image and bounding boxes
       process_image(img, bboxes, image_filename);
@@ -228,14 +226,14 @@ namespace ebl {
     }
     return true;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // process 1 object of an xml file
 
   template <class Tdata>
   rect<int> pascalbg_dataset<Tdata>::get_object(Node* onode) {
     unsigned int xmin = 0, ymin = 0, xmax = 0, ymax = 0;
-    
+
     // parse object node
     Node::NodeList list = onode->get_children();
     for(Node::NodeList::iterator iter = list.begin();
@@ -260,7 +258,7 @@ namespace ebl {
     rect<int> r(ymin, xmin, ymax - ymin, xmax - xmin);
     return r;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // process object's image
 
@@ -273,7 +271,7 @@ namespace ebl {
     idxdim d(img);
     ostringstream fname;
     bool overlap;
-    
+
     // for each scale, find patches and save them
     for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
       patch_bboxes.clear();
@@ -306,7 +304,7 @@ namespace ebl {
       fname.str("");
       fname << image_filename << "_scale" << *i;
       if (patch_bboxes.size() == 0)
-	cout << "No background patches could be extracted at scale " 
+	cout << "No background patches could be extracted at scale "
 	     << *i << endl;
       else {
 	save_patches(img, image_filename, patch_bboxes, bboxes,
@@ -314,7 +312,7 @@ namespace ebl {
       }
     }
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // save patches
 
@@ -346,8 +344,8 @@ namespace ebl {
 	// TODO: fix nasty memory leak if assigning patch = pp(patch) by deleting
 	// references in destructor of midx
 	midx<Tdata> patch2 = this->preprocess_data(patch, &cname, image_filename.c_str(),
-						   &p, 0, NULL, NULL, 
-						   NULL, NULL, NULL, &inr);	
+						   &p, 0, NULL, NULL,
+						   NULL, NULL, NULL, &inr);
 	patch.clear();
 	// create folder if doesn't exist
 	folder.str("");
@@ -359,7 +357,7 @@ namespace ebl {
 	// switch saving behavior
 	fname.str("");
 	fname << folder.str() << filename << ".bg" << i+1;
-	if (!strcmp(save_mode.c_str(), "mat") 
+	if (!strcmp(save_mode.c_str(), "mat")
             || !strcmp(save_mode.c_str(), "dynset")) { // lush matrix mode
 	  fname << MATRIX_EXTENSION;
 	  //	  idx<Tdata> patch2 = patch.shift_dim(2, 0);
@@ -380,7 +378,7 @@ namespace ebl {
 	  // save_image(fname.str(), tmp, save_mode.c_str());
 	}
 	images_list.push_back(fname.str()); // add image to files list
-	cout << data_cnt++ << ": saved " << fname.str().c_str() 
+	cout << data_cnt++ << ": saved " << fname.str().c_str()
 	     << " " << patch2 << ", eta: " << xtimer.eta(data_cnt, max_data)
 	     << ", elapsed: " << xtimer.elapsed() << endl;
 	display_patch(patch2, img, image_filename, cname, p, inr,

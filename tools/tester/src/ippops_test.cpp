@@ -10,10 +10,10 @@
 using namespace ebl;
 
 bool approx_equals(float a, float b, float err = 1e-5) {
-  if (abs(a) == std::numeric_limits<float>::infinity() ||
-      abs(b) == std::numeric_limits<float>::infinity())
+  if (std::abs(a) == std::numeric_limits<float>::infinity() ||
+      std::abs(b) == std::numeric_limits<float>::infinity())
     return a == b;
-  else if (abs(a) > 1e-10 && abs(b) > 1e-10)
+  else if (std::abs(a) > 1e-10 && std::abs(b) > 1e-10)
     return (1.0f - err < a / b) && (a / b < 1.0f + err);
   else
     return (a - err < b) && (b < a + err);
@@ -909,7 +909,7 @@ void ippops_test::test_ipp_div_float() {
     for (int j = 0; j < ny; ++j) {
       A.set(((184993 * i + 15493 * j) % 7561) * 1.43 - 4000, i, j);
       B.set(((184993 * i + 15493 * j) % 2459) * 2.31 - 2000, i, j);
-      if (abs(B.get(i, j)) < 1e-10)
+      if (std::abs(B.get(i, j)) < 1e-10)
 	B.set(1e-10, i, j);
     }
   idx<float> AB(nx, ny), AB2(nx, ny);
@@ -931,7 +931,7 @@ void ippops_test::test_ipp_div_ubyte() {
     for (int j = 0; j < ny; ++j) {
       A.set(((184993 * i + 15493 * j) % 256), i, j);
       B.set(((19 * i + 15493 * j + 17) % 256), i, j);
-      if (abs(B.get(i, j)) == 0)
+      if (std::abs(B.get(i, j)) == 0)
 	B.set(1, i, j);
     }
   idx<ubyte> AB(nx, ny), AB2(nx, ny), ABtest(nx, ny);
@@ -966,7 +966,7 @@ void ippops_test::test_ipp_div_uint16() {
     for (int j = 0; j < ny; ++j) {
       A.set(((184993 * i + 15493 * j) % 65536), i, j);
       B.set(((19 * i + 15493 * j + 17) % 65536), i, j);
-      if (abs(B.get(i, j)) == 0)
+      if (std::abs(B.get(i, j)) == 0)
 	B.set(1, i, j);
     }
   A.set(10, 10, 10);
@@ -1005,7 +1005,7 @@ void ippops_test::test_ipp_div_int16() {
     for (int j = 0; j < ny; ++j) {
       A.set(((184993 * i + 15493 * j + 532) % 65536 - 32768), i, j);
       B.set(((19 * i + 15493 * j +  12) % 65536 - 32768), i, j);
-      if (abs(B.get(i, j)) == 0)
+      if (std::abs(B.get(i, j)) == 0)
 	B.set(1, i, j);
     }
   A.set(10, 10, 10);
@@ -1081,10 +1081,10 @@ void ippops_test::test_ipp_abs() {
   ipp_abs(Af, Bf);
   for (int i = 0; i < nx; ++i)
     for (int j = 0; j < ny; ++j) {
-      CPPUNIT_ASSERT(B.get(i, j) == abs(A.get(i, j)));
-      CPPUNIT_ASSERT(B2.get(i, j) == abs(A.get(i, j)));
-      CPPUNIT_ASSERT(Bf.get(i, j) == abs(Af.get(i, j)));
-      CPPUNIT_ASSERT(Bf2.get(i, j) == abs(Af.get(i, j)));
+      CPPUNIT_ASSERT(B.get(i, j) == std::abs(A.get(i, j)));
+      CPPUNIT_ASSERT(B2.get(i, j) == std::abs(A.get(i, j)));
+      CPPUNIT_ASSERT(Bf.get(i, j) == std::abs(Af.get(i, j)));
+      CPPUNIT_ASSERT(Bf2.get(i, j) == std::abs(Af.get(i, j)));
     }
 }
 
@@ -1266,8 +1266,8 @@ void ippops_test::test_ipp_sumabs() {
     r8u += A8u.get(i);
     for (int j = 0; j < ny; ++j) {
       r16u += A16u.get(i, j);
-      r16s += abs(A16s.get(i, j));
-      r32f += abs(A32f.get(i, j));
+      r16s += std::abs(A16s.get(i, j));
+      r32f += std::abs(A32f.get(i, j));
     }
   }
   CPPUNIT_ASSERT(approx_equals(ipp_sumabs(A8u),  r8u ));

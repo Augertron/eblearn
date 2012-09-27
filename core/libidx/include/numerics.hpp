@@ -33,52 +33,46 @@
 #define NUMERICS_HPP_
 
 namespace ebl {
-  
-  ////////////////////////////////////////////////////////////////
-  
-  template <typename T>
-  T limits<T>::max() {
+
+////////////////////////////////////////////////////////////////
+
+template <typename T>
+T limits<T>::max() {
 #ifdef __NOSTL__
-    eblerror("limits::max not implemented for this type");
+  eblerror("limits::max not implemented for this type");
 #else
-    return (std::numeric_limits<T>::max)();
+  return (std::numeric_limits<T>::max)();
 #endif
-  }
-  
-  template <typename T>
-  T limits<T>::min() {
+}
+
+template <typename T>
+T limits<T>::min() {
 #ifdef __NOSTL__
-      eblerror("limits::min not implemented for this type");
+  eblerror("limits::min not implemented for this type");
 #else
-      return (std::numeric_limits<T>::min)();
+  return (std::numeric_limits<T>::min)();
 #endif
-  }
+}
 
-  template <typename T> template <typename T2>
-  T saturator<T>::saturate (T2 in) {
-      if (in > limits<T>::max())
-	return limits<T>::max();
-      else if (in < limits<T>::min())
-	return limits<T>::min();
-      else
-	return (T)in;
-  }
+template <typename T> template <typename T2>
+T saturator<T>::saturate (T2 in) {
+  if (in > limits<T>::max()) return limits<T>::max();
+  else if (in < limits<T>::min()) return limits<T>::min();
+  else return (T)in;
+}
 
-  template <typename T>
-  T angle_distance(T a1, T a2) {
-    double d = (double) a1 - (double) a2;
-    double fd = fabs(d);
-    if (fd < TWOPI - fd)
-      return (T) d;
-    else {
-      if (d < 0)
-	return (T) (TWOPI - fd);
-      else
-	return (T) (fd - TWOPI);
-    }
+template <typename T>
+T angle_distance(T a1, T a2) {
+  double d = (double) a1 - (double) a2;
+  double fd = std::fabs(d);
+  if (fd < TWOPI - fd) return (T) d;
+  else {
+    if (d < 0) return (T) (TWOPI - fd);
+    else return (T) (fd - TWOPI);
   }
+}
 
-#define saturate(in, T) (saturator<T>::saturate(in))  
+#define saturate(in, T) (saturator<T>::saturate(in))
 
 } // end namespace ebl
 

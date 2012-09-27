@@ -58,8 +58,6 @@
 
 #define STRING_BUFFER (int)4096	/* string operations buffer size */
 
-using namespace std;
-
 namespace ebl {
 
   INIT_TIMING()
@@ -81,7 +79,7 @@ namespace ebl {
   };
 
   char string_buffer[STRING_BUFFER];
-  
+
   ////////////////////////////////////////////////////////////////
   // file IO utilities
 
@@ -120,7 +118,7 @@ namespace ebl {
     try {
       res = new char[strlen(buffer) + 1];
       strcpy(res, buffer);
-    } catch (exception &e) { eblerror("error allocating memory"); }
+    } eblcatcherror();
     return res;
   }
 
@@ -128,17 +126,17 @@ namespace ebl {
   // directory utilities
 
 #define FILELEN 512
-  
-  bool mkdir_full(string &dir) {
+
+  bool mkdir_full(std::string &dir) {
     return mkdir_full(dir.c_str());
   }
-  
+
   bool mkdir_full(const char *dir) {
     if (dir_exists(dir))
       return true;
 #ifdef __WINDOWS__
     // recursive directory creation, check if parent exists first
-    string parent = dirname(dir);
+    std::string parent = dirname(dir);
     if (!dir_exists(parent.c_str()))
       mkdir_full(parent.c_str());
     // parents are created or already exist, make current directory.
@@ -147,7 +145,7 @@ namespace ebl {
     return false;
 #else
     // recursive directory creation, check if parent exists first
-    string parent = dirname(dir);
+    std::string parent = dirname(dir);
     if (!dir_exists(parent.c_str()))
       mkdir_full(parent.c_str());
     // parents are created or already exist, make current directory.
@@ -155,11 +153,11 @@ namespace ebl {
       return false;
     return true;
 
-//     string cmd = "mkdir -p ";
+//     std::string cmd = "mkdir -p ";
 //     cmd += dir;
 //     int ret = system(cmd.c_str());
 //     if (ret != 0) {
-//       cerr << "warning: (error " << ret 
+//       cerr << "warning: (error " << ret
 // 	   << ") failed to create directory " << dir;
 //       return false;
 //     }
@@ -178,8 +176,8 @@ namespace ebl {
     char *last;
     char buffer[FILELEN];
     struct _stat buf;
-    if ((s[0]=='/' || s[0]=='\\') && 
-	(s[1]=='/' || s[1]=='\\') && !s[2]) 
+    if ((s[0]=='/' || s[0]=='\\') &&
+	(s[1]=='/' || s[1]=='\\') && !s[2])
       return true;
     if (strlen(s) > sizeof(buffer) - 4)
       eblerror("Filename too long");
@@ -203,13 +201,13 @@ namespace ebl {
     struct stat buf;
     if (stat(s, &buf) == -1)
       return false;
-    if (buf.st_mode & S_IFREG) 
+    if (buf.st_mode & S_IFREG)
       return true;
 #else /* WINDOWS */
     struct _stat buf;
     if (_stat(s, &buf) == -1)
       return false;
-    if (buf.st_mode & S_IFREG) 
+    if (buf.st_mode & S_IFREG)
       return true;
 #endif
     return false;
@@ -227,7 +225,7 @@ namespace ebl {
 #else /* WINDOWS */
     struct _stat buf;
     if (_stat(s, &buf) == -1)
-      return 0; // file not found    
+      return 0; // file not found
 #endif
     return buf.st_size;
   }
@@ -244,7 +242,7 @@ namespace ebl {
 #else /* WINDOWS */
     struct _stat buf;
     if (_stat(s, &buf) == -1)
-      return 0; // file not found    
+      return 0; // file not found
 #endif
     return buf.st_mtime;
   }
@@ -293,13 +291,13 @@ namespace ebl {
     return true;
   }
 
-//     string dirname(const char *s_) {
+//     std::string dirname(const char *s_) {
 // #ifdef __LINUX__
 //     char c = '/';
 // #else /* __WINDOWS__ */
 //     char c = '\\';
 // #endif
-//     string s = s_;
+//     std::string s = s_;
 //     size_t pos = s.find_last_of(c);
 //     // if there is no dirname, return local dirname .
 //     if (pos == string::npos) {
@@ -308,7 +306,7 @@ namespace ebl {
 //       return s;
 //     }
 //     return s.substr(0, pos);
-//   }  
+//   }
 
   const char *dirname(const char *fname) {
 #ifndef __WINDOWS__ // UNIX and MAC
@@ -391,7 +389,7 @@ namespace ebl {
       return strcpy(d,s);
     return d;
   }
-  
+
   const char *basename(const char *fname, const char *suffix) {
 #ifndef __WINDOWS__ // LINUX and MAC
     int sl;
@@ -425,7 +423,7 @@ namespace ebl {
       strcpyif(string_buffer,fname);
       if (fname[2]==0)
 	return string_buffer;
-      string_buffer[2] = '\\'; 
+      string_buffer[2] = '\\';
       if (fname[3]==0 && (fname[2]=='/' || fname[2]=='\\'))
 	return string_buffer;
     }
@@ -448,7 +446,7 @@ namespace ebl {
     if (suffix[0]=='.')
       suffix += 1;
     if (suffix[0]==0)
-      return string_buffer;    
+      return string_buffer;
     sl = strlen(suffix);
     if (s > string_buffer + sl) {
       s = s - (sl + 1);
@@ -475,7 +473,7 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // timing utilities
 
-  string tstamp() {
+  std::string tstamp() {
     time_t rawtime;
     struct tm * timeinfo;
     char buffer [80];
@@ -484,15 +482,15 @@ namespace ebl {
     timeinfo = localtime ( &rawtime );
 
     strftime (buffer,80,"%Y%m%d.%H%M%S",timeinfo);
-    string s = buffer;
+    std::string s = buffer;
     return s;
-  }  
+  }
 
-//   string tstamp() {
+//   std::string tstamp() {
 //     static time_t t = time(NULL);
 //     static struct tm *lt = localtime(&t);
 // #ifdef __NOSTL__
-//     string ts;
+//     std::string ts;
 //     ts << lt->tm_year + 1900 << lt->tm_mon << lt->tm_mday
 //        << "." << lt->tm_hour << lt->tm_min << lt->tm_sec;
 //     return ts;
@@ -545,7 +543,7 @@ namespace ebl {
     total_micros = 0;
     last_micros = 0;
   }
-  
+
   double timer::elapsed_minutes() {
     if (!running) return last_micros / 60000000;
 #ifdef __WINDOWS__
@@ -555,7 +553,7 @@ namespace ebl {
     return (t1.tv_sec - t0.tv_sec) / (double) 60;
 #endif
   }
-  
+
   long timer::elapsed_seconds() {
     if (!running) return last_micros / 1000000;
 #ifdef __WINDOWS__
@@ -565,7 +563,7 @@ namespace ebl {
     return t1.tv_sec - t0.tv_sec;
 #endif
   }
-  
+
   long timer::elapsed_milliseconds() {
     if (!running) return last_micros / 1000;
 #ifdef __WINDOWS__
@@ -596,22 +594,22 @@ namespace ebl {
     pretty_secs(elapsed_seconds());
   }
 
-  string timer::elapsed() {
+  std::string timer::elapsed() {
     return elapsed(elapsed_seconds());
   }
-  
-  string timer::elapsed_ms() {
+
+  std::string timer::elapsed_ms() {
     return elapsed_ms(elapsed_milliseconds());
   }
-  
-  string timer::accumulated_ms() {
+
+  std::string timer::accumulated_ms() {
     return elapsed_ms(accumulated_milliseconds());
   }
-  
+
   void timer::pretty_secs(long seconds) {
-    cout << elapsed(seconds);
+    std::cout << elapsed(seconds);
   }
-  
+
   // second equivalences
 #define SECMIN 60
 #define SECHOUR 3600
@@ -673,7 +671,7 @@ namespace ebl {
       sout << (int) div << "w ";
       pretty = true;
     }
-    div = mod / MSDAY; mod = mod % MSDAY; 
+    div = mod / MSDAY; mod = mod % MSDAY;
     if (div > 0 || pretty) {
       sout << (int) div << "d ";
       pretty = true;
@@ -696,15 +694,15 @@ namespace ebl {
     sout << (int) mod << "ms";
     return sout;
   }
-  
+
   void millisleep(long millis) {
 #ifdef __WINDOWS__
     Sleep(millis);
 #else
     usleep(millis * 1000);
 #endif
-  } 
-  
+  }
+
   void secsleep(long seconds) {
 #ifdef __WINDOWS__
     Sleep(seconds * 1000);
@@ -713,11 +711,11 @@ namespace ebl {
 #endif
   }
 
-  string timer::eta(uint n, uint total) {
+  std::string timer::eta(uint n, uint total) {
     return elapsed((long)((total - n)
-			  * (elapsed_seconds() / (float)max((uint)1,n))));
+			  * (elapsed_seconds() / (float)std::max((uint)1,n))));
   }
-  
+
   /////////////////////////////////////////////////////////////////////////////
   // process utilities
 

@@ -37,7 +37,7 @@
 #include "geometry.h"
 
 namespace ebl {
-  
+
   //////////////////////////////////////////////////////////////////////////////
   // padder
 
@@ -54,11 +54,11 @@ namespace ebl {
     //! This method resizes idx 'out' if necessary with extra zero pads
     //! accomodating the kernel, copies 'in' to the center and returns the idx.
     virtual void pad(idx<T> &in, idx<T> &out);
-    
+
   protected:
     //! Fills padded areas in 'padded' with mirrors of 'in'.
     virtual void mirror(idx<T> &in, idx<T> &padded);
-    
+
   protected: // members ////////////////////////////////////////////////////////
     int nrow, ncol, nrow2, ncol2;
     bool bmirror;
@@ -66,7 +66,7 @@ namespace ebl {
 
   //////////////////////////////////////////////////////////////////////////////
   // padding utilities
-  
+
   //! Returns the rectangular image of size hxw centered on region 'r'.
   //! Padding is filled with zeros.
   //! \param cropped If not null, cropped is set to the region in the output
@@ -79,8 +79,8 @@ namespace ebl {
 				uint dh = 0, uint dw = 1);
   //! Copies 'in' to the center of 'out' (expected to be 3d idx).
   template<typename T>
-    void image_paste_center(idx<T> &in, idx<T> &out);  
-  
+    void image_paste_center(idx<T> &in, idx<T> &out);
+
 } // end namespace ebl
 
 #include "padder.hpp"

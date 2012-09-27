@@ -201,10 +201,11 @@ namespace ebl {
 	  float hh = h0 + flow->dim(1) - h;
 	  float ww = w0 + flow->dim(2) - w;
 	  if (fh != 0 && fw != 0) {
-	    arrow *a = new arrow(ww, hh, ww + fw, hh + fh, false);
+	    arrow *a = new arrow((int) ww, (int) hh, (int) (ww + fw),
+				 (int) (hh + fh), false);
 	    if (!wupdate) arrows_tmp.push_back(a);
 	    else arrows.push_back(a);
-	  } 
+	  }
 	}
       }
       update_window();
@@ -213,7 +214,7 @@ namespace ebl {
   }
 
   void win::add_box(float h0, float w0, float h, float w, ubyte r, ubyte g,
-		       ubyte b, ubyte a, string *s) {
+		    ubyte b, ubyte a, string *s) {
     box *bb = new box(h0, w0, h, w, r, g, b, a);
     // add box
     if (!wupdate)
@@ -235,7 +236,7 @@ namespace ebl {
   }
 
   void win::add_cross(float h0, float w0, float length, ubyte r, ubyte g,
-			 ubyte b, ubyte a, string *s) {
+		      ubyte b, ubyte a, string *s) {
     cross *c = new cross(w0, h0, length, r, g, b, a);
     // add cross
     if (!wupdate)
@@ -250,7 +251,7 @@ namespace ebl {
   }
 
   void win::add_ellipse(float h0, float w0, float h, float w,
-			   ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
+			ubyte r, ubyte g, ubyte b, ubyte a, string *s) {
     box *c = new box(w0, h0, h, w, r, g, b, a);
     // add ellipse
     if (!wupdate)
@@ -274,7 +275,7 @@ namespace ebl {
   }
 
   void win::add_mask(idx<ubyte> *img, unsigned int h0, unsigned int w0,
-			ubyte r, ubyte g, ubyte b, ubyte a) {
+		     ubyte r, ubyte g, ubyte b, ubyte a) {
     imask *m = new imask(img, h0, w0, r, g, b, a);
     if (!wupdate)
       masks_tmp.push_back(m);
@@ -506,7 +507,7 @@ namespace ebl {
     if (scaleIncr >= 1)
       pixmapScale = scaleIncr;
     else
-      pixmapScale = fabs(1 / scaleIncr);
+      pixmapScale = std::fabs(1 / scaleIncr);
     qw->update();
   }
 

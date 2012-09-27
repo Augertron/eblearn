@@ -48,13 +48,13 @@ namespace ebl {
     class cuda_linear_merge_module : public flat_merge_module<T, Tstate> {
   public:
     //! \param nout Number of outputs of linear combination.
-    //! \param dins The input sizes for each state, including the features 
+    //! \param dins The input sizes for each state, including the features
     //!   dimension.
     //! \param scales Specifies to which input scale each input corresponds to.
     //! \param features Number of features of each input state.
-  cuda_linear_merge_module(parameter<T,Tstate> *p, intg nout, 
+  cuda_linear_merge_module(parameter<T,Tstate> *p, intg nout,
 			midxdim &ins, mfidxdim &strides,
-			const char *name_ = "linear_merge", 
+			const char *name_ = "linear_merge",
 			mfidxdim *scales = NULL, int gpu_id_ = -1);
     virtual ~cuda_linear_merge_module();
 

@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -46,13 +46,11 @@
 #include <unistd.h>
 #endif
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // job
-  
+
   //! Jobs to be executed.
   class EXPORT job {
   public:
@@ -88,12 +86,12 @@ namespace ebl {
     //! Return pid of this job.
     virtual int getpid();
     //! Return the name of this job (its configuration filename).
-    virtual string &name();
+    virtual std::string &name();
     //! Return the short name of this job.
-    virtual string shortname();
+    virtual std::string shortname();
 
     //! Return root directory of this job.
-    virtual string get_root();
+    virtual std::string get_root();
     //! Return job's running time in minutes.
     virtual double minutes();
     //! Force the start flag to be on. This is be useful to mpi job manager.
@@ -101,7 +99,7 @@ namespace ebl {
     //! Force the start flag to be off. This is be useful to mpi job manager.
     virtual void reset_started();
     //! Return elapsed running time string.
-    virtual string elapsed();
+    virtual std::string elapsed();
     //! Returns true if this job is being resumed from before.
     virtual bool resumed();
     //! Returns true if this job is finished, false otherwise.
@@ -146,7 +144,7 @@ namespace ebl {
 			       const char *additional = NULL,
 			       const char *root = NULL);
     //! Returns the filename where progress info is written by write_progress().
-    static string get_progress_filename(const char *root = NULL);
+    static std::string get_progress_filename(const char *root = NULL);
     //! Write the file 'finished' in current directory or in root directory
     //! if specified. If 'progress' file already exists, move it to 'finished'
     //! (to avoid having too many files, otherwise, just touch file 'finished'.
@@ -154,7 +152,7 @@ namespace ebl {
     //! Figure out resume parameters from existing weights files.
     //! \param dir If null, use job's output directory.
     virtual void figure_resume_from_weights(const char *dir = NULL);
-    
+
   protected:
     //! Execute child's code.
     virtual void run_child();
@@ -168,10 +166,10 @@ namespace ebl {
   protected:
     configuration	conf; //!< Job's configuration.
     configuration	rconf; //!< Resolved job's configuration.
-    string		exe;	//!< executable full path
-    string		outdir;	//!< job's output directory
-    string		confname;	//!< job's configuration filename
-    string		oconffname_;	//!< job's original conf filename
+    std::string		exe;	//!< executable full path
+    std::string		outdir;	//!< job's output directory
+    std::string		confname;	//!< job's configuration filename
+    std::string		oconffname_;	//!< job's original conf filename
     timer               t;
     bool                _locally_started; //!< This job is/was started.
     bool                _started; //!< This job is/was started.
@@ -181,8 +179,8 @@ namespace ebl {
     bool                resumed_; //!< This job is being resumed or not.
     bool                _finished; //!< This is is finished or not.
     int                 _progress; //!< Progress percentage.
-    string              progress_fname; //!< Filename of progress file.
-    string              finished_fname; //!< Filename of finished file.
+    std::string         progress_fname; //!< Filename of progress file.
+    std::string         finished_fname; //!< Filename of finished file.
   };
 
   //! Job comparison definintion based on their progress.
@@ -209,18 +207,18 @@ namespace ebl {
     //!                  conf file otherwise.
     //! \param maxjobs Limit the number of concurrent jobs to maxjobs. If -1,
     //!                defaut, use conf's 'meta_max_jobs' instead if defined.
-    virtual bool read_metaconf(const char *fname, const string *tstamp = NULL,
-			       const char *resume_name = NULL, 
+    virtual bool read_metaconf(const char *fname, const std::string *tstamp = NULL,
+			       const char *resume_name = NULL,
 			       bool resumedir = false,
 			       bool nomax = false, int maxjobs = -1);
     //! Enable recursive copy of this path into jobs folders.
-    virtual void set_copy(const string &path);
+    virtual void set_copy(const std::string &path);
     //! Prepare all jobs (create folders and copy/create files).
     //! \param reset_progress If true, ignore existing progress in target dir.
     virtual void prepare(bool reset_progress = false);
     //! Set the weights initialization for each job given corresponding jobs
     //! found in 'other' directory.
-    virtual void initialize_other(const string &other);
+    virtual void initialize_other(const std::string &other);
     //! Run all jobs (assumes a call to prepare() beforehand).
     virtual void run(bool force_start = false);
     //! Monitor progress of jobs given existing directories and
@@ -238,19 +236,19 @@ namespace ebl {
     virtual void report();
     //! Print stopping message and send last report.
     virtual void last_report();
-    //! List all job directories found in conf's root directory and 
+    //! List all job directories found in conf's root directory and
     //! return that list. Caller is responsible for delete the list.
-    virtual list<string> *list_job_dirs(const char *conffname);
+    virtual std::list<std::string> *list_job_dirs(const char *conffname);
 
     ////////////////////////////////////////////////////////////////
     // members
   protected:
     meta_configuration	mconf;	   //!< (unresolved) Meta configuration
     meta_configuration	rmconf;	   //!< (resolved) Meta configuration
-    string		mconf_fullfname;//!< Full filename of metaconf
-    string		mconf_fname;	//!< Filename of metaconf
-    vector<job*>	jobs;	   //!< A vector of jobs to run
-    string              copy_path; //!< Copy path to jobs folders.
+    std::string		mconf_fullfname;//!< Full filename of metaconf
+    std::string		mconf_fname;	//!< Filename of metaconf
+    std::vector<job*>	jobs;	   //!< A vector of jobs to run
+    std::string         copy_path; //!< Copy path to jobs folders.
     int                 max_jobs;  //!< Max number of jobs at the same time.
     metaparser          parser;
     int			maxiter;
@@ -263,8 +261,8 @@ namespace ebl {
     uint                finished;
     uint                unfinished;
     int		        ready_slots;
-    ostringstream       infos;
-    ostringstream       summary; //!< Jobs status summary.
+    std::ostringstream  infos;
+    std::ostringstream  summary; //!< Jobs status summary.
     varmaplist          best; //!< best results
     varmaplist          besteach; //!< best result of each job
     uint                swait; //!< Waiting time when looping, in seconds.

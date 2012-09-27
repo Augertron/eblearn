@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -34,8 +34,6 @@
 #define CAMERA_MAC_H_
 
 #include "camera.h"
-
-using namespace std;
 
 namespace ebl {
 
@@ -73,7 +71,7 @@ namespace ebl {
     /* virtual idx<Tdata> grab_yuv(); */
     /* //! Return a new RGB frame. */
     /* virtual idx<Tdata> grab_rgb(); */
-    
+
   private:
 
 #ifdef __LINUX__
@@ -82,12 +80,12 @@ namespace ebl {
     void set_integer_control(int id, int val);
     void set_boolean_control(int id, bool val);
     void start();
-#endif    
+#endif
 
 
     // members ////////////////////////////////////////////////////////
   protected:
-    using camera<Tdata>::frame;		//!< frame buffer 
+    using camera<Tdata>::frame;		//!< frame buffer
     using camera<Tdata>::frame_id_;	//!< frame counter
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
     using camera<Tdata>::height;	//!< height

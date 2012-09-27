@@ -40,22 +40,19 @@
 #include <sstream>
 
 using namespace xmlpp;
-using namespace std;
 
 namespace ebl {
-  
+
 ////////////////////////////////////////////////////////////////
 // extract xml values
 
 //! return unsigned int value from text content
 unsigned int	xml_get_uint(Node *element);
-
 //! return int value from text content
 int	        xml_get_int(Node *element);
-
 //! set string s from text content
-void		xml_get_string(Node *element, string &s);
- 
+void		xml_get_string(Node *element, std::string &s);
+
 } // end namespace ebl
 
 #endif /* __XML__ */

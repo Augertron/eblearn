@@ -56,7 +56,7 @@ namespace ebl {
   //! Therefore any image format supported by ImageMagick is supported.
   //! This throws string exceptions upon errors.
   template <class T>
-    void load_image(const string &fname, idx<T> &out);
+    void load_image(const std::string &fname, idx<T> &out);
 
   //! Load the image in 'fname' and return it.
   //! First we check if the file is a matrix, if yes we load it and return it.
@@ -74,18 +74,18 @@ namespace ebl {
   //! Therefore any image format supported by ImageMagick is supported.
   //! This throws string exceptions upon errors.
   template <class T>
-    idx<T> load_image(const string &fname);
+    idx<T> load_image(const std::string &fname);
 
   ////////////////////////////////////////////////////////////////
   // saving
   
   // format is the desired image format. e.g.: "JPG", "PNG", etc.
-  template <class T> bool save_image(const string &fname, idx<T> &in,
+  template <class T> bool save_image(const std::string &fname, idx<T> &in,
 				    const char *format);
-  template <class T> bool save_image_ppm(const string &fname, idx<T> &in);
+  template <class T> bool save_image_ppm(const std::string &fname, idx<T> &in);
   template <class T> bool save_image_ppm(const char *fname, idx<T> &in);
   template <class T> bool save_image_ppm(FILE *fp, idx<T> &in);
-  template <class T> bool save_image_jpg(const string &fname, idx<T> &in);
+  template <class T> bool save_image_jpg(const std::string &fname, idx<T> &in);
   
   ////////////////////////////////////////////////////////////////
   // helper functions

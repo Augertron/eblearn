@@ -46,7 +46,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // mutex
-  
+
   //! A mutex abstraction class.
   class EXPORT mutex {
   public:
@@ -58,7 +58,7 @@ namespace ebl {
     //! false otherwise.
     bool trylock();
 
-    //! Lock the mutex (wait if necessary until mutex is available).   
+    //! Lock the mutex (wait if necessary until mutex is available).
     void lock();
 
     //! Unlock the mutex.
@@ -73,7 +73,7 @@ namespace ebl {
     pthread_mutex_t m;
 #endif
   };
-  
+
   ////////////////////////////////////////////////////////////////
   // sbuf
 
@@ -87,17 +87,17 @@ namespace ebl {
     //! \param prefix If not null, prefix is printed before each new line.
     sbuf(std::ostream &o, mutex *m = NULL, const char *prefix = NULL);
     ~sbuf();
-    
-    // When we sync the stream with the output. 
+
+    // When we sync the stream with the output.
     // 1) Output prefix then the buffer
     // 2) Reset the buffer
-    // 3) flush the actual output stream we are using. 
+    // 3) flush the actual output stream we are using.
     virtual int sync();
     //! Put sequence of characters in buffer.
-    virtual streamsize xsputn(const char *s, streamsize n);
+    virtual std::streamsize xsputn(const char *s, std::streamsize n);
 
     friend class mutex_ostream;
-    
+
   protected:
     std::ostream& out;
     bool new_line; //! Indicate if we are starting new line or not.
@@ -120,14 +120,14 @@ namespace ebl {
     ~mutex_ostream();
     // update buffer's prefix string
     void update_prefix(const char *p);
-    
+
   protected:
     sbuf buffer;
   };
-  
+
   ////////////////////////////////////////////////////////////////
-  // thread 
-  
+  // thread
+
   //! A thread abstraction class
   class EXPORT thread {
   public:
@@ -162,13 +162,13 @@ namespace ebl {
     static void* entrypoint(void *pthis);
     virtual void execute() = 0;
 
-  protected:    
+  protected:
     bool 		_stop;
     std::string      	_name;  //! Name of this thread.
     mutex_ostream       mutout; // synchronized cout
     mutex_ostream       muterr; // synchronized cerr
-    ostream             &mout; // may contained synced or standard output
-    ostream             &merr; // may contained synced or standard err output
+    std::ostream       &mout; // may contained synced or standard output
+    std::ostream       &merr; // may contained synced or standard err output
   private:
 #ifdef __PTHREAD__
     pthread_t 		threadptr;

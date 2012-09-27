@@ -36,42 +36,42 @@
 #include <libxml++/libxml++.h>
 
 using namespace xmlpp;
+using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // extract xml values
+// extract xml values //////////////////////////////////////////////////////////
 
-  unsigned int xml_get_uint(Node *element) {
-    unsigned int u = 0;
-    
-    const Element* e = dynamic_cast<const Element*>(element);
-    const TextNode* txt = dynamic_cast<const TextNode*>
+unsigned int xml_get_uint(Node *element) {
+  unsigned int u = 0;
+
+  const Element* e = dynamic_cast<const Element*>(element);
+  const TextNode* txt = dynamic_cast<const TextNode*>
       (e->get_child_text());
-    if (!txt)
-      eblthrow("could not get uint from xml");
-    istringstream iss(txt->get_content(), istringstream::in);
-    iss >> u;
-    return u;
-  }
-  
-  int xml_get_int(Node *element) {
-    int u = 0;
-    
-    const Element* e = dynamic_cast<const Element*>(element);
-    const TextNode* txt = dynamic_cast<const TextNode*>
+  if (!txt)
+    eblthrow("could not get uint from xml");
+  istringstream iss(txt->get_content(), istringstream::in);
+  iss >> u;
+  return u;
+}
+
+int xml_get_int(Node *element) {
+  int u = 0;
+
+  const Element* e = dynamic_cast<const Element*>(element);
+  const TextNode* txt = dynamic_cast<const TextNode*>
       (e->get_child_text());
-    istringstream iss(txt->get_content(), istringstream::in);
-    iss >> u;
-    return u;
-  }
-  
-  void xml_get_string(Node *element, string &s) {
-    const Element* e = dynamic_cast<const Element*>(element);
-    const TextNode* txt = dynamic_cast<const TextNode*>
+  istringstream iss(txt->get_content(), istringstream::in);
+  iss >> u;
+  return u;
+}
+
+void xml_get_string(Node *element, string &s) {
+  const Element* e = dynamic_cast<const Element*>(element);
+  const TextNode* txt = dynamic_cast<const TextNode*>
       (e->get_child_text());
-    s = txt->get_content();
-  }
+  s = txt->get_content();
+}
 
 } // end namespace ebl
 

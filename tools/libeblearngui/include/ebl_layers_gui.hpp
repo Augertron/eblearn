@@ -39,59 +39,56 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // full_layer
+// full_layer //////////////////////////////////////////////////////////////////
 
-#define FULL_LAYER_GUI(dname, T, op, state)				\
-  template <typename T, class Tstate>					\
-  void full_layer_gui::dname(full_layer<T,Tstate> &nn,			\
-			    Tstate &in, Tstate &out,			\
-			    unsigned int &h0, unsigned int &w0,		\
-			    double zoom, T vmin, T vmax,		\
-			    bool show_out) {				\
+#define FULL_LAYER_GUI(dname, TYPE, op)                                 \
+  template <typename T>                                                 \
+  void full_layer_gui::dname(full_layer<T> &nn,                         \
+                             state<T> &in, state<T> &out,               \
+                             uint &h0, uint &w0,                        \
+                             double zoom, T vmin, T vmax,		\
+                             bool show_out) {				\
     /* run it */							\
     nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;                                                \
     /* display text */							\
     gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
     w += 150;								\
     zoom *= 3;								\
     /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
+    idx_bloop1(m, in.TYPE[0], T) {                                      \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
       }									\
     }									\
     h0 += (uint) (std::max((uint) 10, (uint) (m.dim(0) * zoom + 1)));	\
-  }									
-  
-  FULL_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
-  FULL_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
-  FULL_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
-  
-  ////////////////////////////////////////////////////////////////
-  // convolution_layer
+  }
 
-#define CONVOLUTION_LAYER_GUI(dname, T, op, state)			\
-  template <typename T, class Tstate>					\
-  void convolution_layer_gui::dname(convolution_layer<T,Tstate> &nn,	\
-				   Tstate &in, Tstate &out,		\
-				   unsigned int &h0,			\
-				   unsigned int &w0,			\
-				   double zoom, T vmin, T vmax,		\
-				   bool show_out, bool run) {		\
+FULL_LAYER_GUI(display_fprop, f, fprop)
+FULL_LAYER_GUI(display_bprop, b, bprop)
+FULL_LAYER_GUI(display_bbprop, bb, bbprop)
+
+// convolution_layer ///////////////////////////////////////////////////////////
+
+#define CONVOLUTION_LAYER_GUI(dname, TYPE, op)                          \
+  template <typename T>                                                 \
+  void convolution_layer_gui::dname(convolution_layer<T> &nn,           \
+                                    state<T> &in, state<T> &out,        \
+                                    uint &h0, uint &w0,			\
+                                    double zoom, T vmin, T vmax,        \
+                                    bool show_out, bool run) {		\
     /* run it */							\
     if (run)								\
       nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;                                                \
     /* display text */							\
-    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T	\
-	<< at(h + 15, w) << "min:" << idx_min(in.T)			\
-	<< at(h + 30, w) << "max:" << idx_max(in.T);			\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.TYPE[0]	\
+	<< at(h + 15, w) << "min:" << idx_min(in.TYPE[0])               \
+	<< at(h + 30, w) << "max:" << idx_max(in.TYPE[0]);              \
     w += 150;								\
     /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
+    idx_bloop1(m, in.TYPE[0], T) {                                      \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
@@ -101,11 +98,11 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.convol.kernel.T;	\
+    gui << gui_only()<< at(h, w) << "kernels:" << nn.convol.kernel.TYPE[0]; \
     w += 150;								\
     /* display kernels */						\
     /* zoom *= 4; */	 						\
-    idx_bloop1(mk, nn.convol.kernel.T, T) {				\
+    idx_bloop1(mk, nn.convol.kernel.TYPE[0], T) {                       \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(mk, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (mk.dim(1) * zoom + 1);				\
@@ -114,33 +111,32 @@ namespace ebl {
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-  CONVOLUTION_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
-  CONVOLUTION_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
-  CONVOLUTION_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
-  
-  ////////////////////////////////////////////////////////////////
-  // convabsnorm_layer
-  
-#define CONVABSNORM_LAYER_GUI(dname, T, op, state)			\
-  template <typename T, class Tstate>					\
-  void convabsnorm_layer_gui::dname(convabsnorm_layer<T,Tstate> &layer,	\
-				   Tstate &in, Tstate &out,		\
-				   unsigned int &h0,			\
-				   unsigned int &w0,			\
-				   double zoom, T vmin, T vmax,		\
-				   bool show_out) {			\
+CONVOLUTION_LAYER_GUI(display_fprop, f, fprop)
+CONVOLUTION_LAYER_GUI(display_bprop, b, bprop)
+CONVOLUTION_LAYER_GUI(display_bbprop, bb, bbprop)
+
+// convabsnorm_layer ///////////////////////////////////////////////////////////
+
+#define CONVABSNORM_LAYER_GUI(dname, TYPE, op)                          \
+  template <typename T>                                                 \
+  void convabsnorm_layer_gui::dname(convabsnorm_layer<T> &layer,	\
+                                    state<T> &in, state<T> &out,        \
+                                    uint &h0, uint &w0,                 \
+                                    double zoom, T vmin, T vmax,        \
+                                    bool show_out) {			\
     convolution_layer_gui::dname(layer.lconv, in, out, h0, w0,		\
 				 zoom, vmin, vmax, show_out, false);	\
     /* run it */							\
     layer.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;                                                \
     /* display text */							\
-    gui << gui_only() << at(h, w) << layer.name() << " out:" << layer.tmp->T \
-	<< at(h + 15, w) << "min:" << idx_min(layer.tmp->T)		\
-	<< at(h + 30, w) << "max:" << idx_max(layer.tmp->T);		\
+    gui << gui_only() << at(h, w) << layer.name()                       \
+        << " out:" << layer.tmp->TYPE[0]                                \
+	<< at(h + 15, w) << "min:" << idx_min(layer.tmp->TYPE[0])       \
+	<< at(h + 30, w) << "max:" << idx_max(layer.tmp->TYPE[0]);      \
     w += 150;								\
     /* display output of convolution */					\
-    idx_bloop1(m, layer.tmp->T, T) {					\
+    idx_bloop1(m, layer.tmp->TYPE[0], T) {                              \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
@@ -150,12 +146,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "abs out:" << layer.tmp2->T	\
-	<< at(h + 15, w) << "min:" << idx_min(layer.tmp2->T)		\
-	<< at(h + 30, w) << "max:" << idx_max(layer.tmp2->T);		\
+    gui << gui_only() << at(h, w) << "abs out:" << layer.tmp2->TYPE[0]	\
+	<< at(h + 15, w) << "min:" << idx_min(layer.tmp2->TYPE[0])      \
+	<< at(h + 30, w) << "max:" << idx_max(layer.tmp2->TYPE[0]);     \
     w += 150;								\
     /* display output of abs */						\
-    idx_bloop1(m2, layer.tmp2->T, T) {					\
+    idx_bloop1(m2, layer.tmp2->TYPE[0], T) {                            \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m2, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m2.dim(1) * zoom + 1);				\
@@ -169,29 +165,27 @@ namespace ebl {
 				    zoom, vmin, vmax, show_out, false);	\
   }
 
-  CONVABSNORM_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
-  CONVABSNORM_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
-  CONVABSNORM_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
-  
-  ////////////////////////////////////////////////////////////////
-  // subsampling_layer
+CONVABSNORM_LAYER_GUI(display_fprop, f, fprop)
+CONVABSNORM_LAYER_GUI(display_bprop, b, bprop)
+CONVABSNORM_LAYER_GUI(display_bbprop, bb, bbprop)
 
-#define SUBSAMPLING_LAYER_GUI(dname, T, op, state)			\
-  template <typename T, class Tstate>					\
-  void subsampling_layer_gui::dname(subsampling_layer<T,Tstate> &nn,	\
-				   Tstate &in, Tstate &out,		\
-				   unsigned int &h0,			\
-				   unsigned int &w0,			\
-				   double zoom, T vmin, T vmax,		\
-				   bool show_out) {			\
+// subsampling_layer ///////////////////////////////////////////////////////////
+
+#define SUBSAMPLING_LAYER_GUI(dname, TYPE, op)                          \
+  template <typename T>                                                 \
+  void subsampling_layer_gui::dname(subsampling_layer<T> &nn,           \
+                                    state<T> &in, state<T> &out,        \
+                                    uint &h0, uint &w0,			\
+                                    double zoom, T vmin, T vmax,        \
+                                    bool show_out) {			\
     /* run it */							\
     nn.op(in, out);							\
-    unsigned int h = h0, w = w0;					\
+    uint h = h0, w = w0;                                                \
     /* display input text	*/					\
-    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.T;	\
+    gui << gui_only() << at(h, w) << nn.name() << " in:" << in.TYPE[0];	\
     w += 150;								\
     /* display inputs */						\
-    idx_bloop1(m, in.T, T) {						\
+    idx_bloop1(m, in.TYPE[0], T) {                                      \
       if (w - w0 < MAXWIDTH) {						\
 	draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	w += (uint) (m.dim(1) * zoom + 1);				\
@@ -201,17 +195,18 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display kernels text */						\
-    gui << gui_only()<< at(h, w) << "kernels:" << nn.subsampler.sub.T.dim(0); \
-    gui << "x" << in.T.dim(1) / nn.subsampler.sub.T.dim(1);		\
-    gui << "x" << in.T.dim(2) / nn.subsampler.sub.T.dim(2);		\
+    gui << gui_only()<< at(h, w) << "kernels:"                          \
+        << nn.subsampler.sub.TYPE[0].dim(0);                            \
+    gui << "x" << in.TYPE[0].dim(1) / nn.subsampler.sub.TYPE[0].dim(1); \
+    gui << "x" << in.TYPE[0].dim(2) / nn.subsampler.sub.TYPE[0].dim(2); \
     w += 150;								\
     h0 += 10;								\
   }
-  
-  SUBSAMPLING_LAYER_GUI(display_fprop, x, fprop, fstate_idx)
-  SUBSAMPLING_LAYER_GUI(display_bprop, dx, bprop, bstate_idx)
-  SUBSAMPLING_LAYER_GUI(display_bbprop, ddx, bbprop, bbstate_idx)
+
+SUBSAMPLING_LAYER_GUI(display_fprop, f, fprop)
+SUBSAMPLING_LAYER_GUI(display_bprop, b, bprop)
+SUBSAMPLING_LAYER_GUI(display_bbprop, bb, bbprop)
 
 }
-  
+
 #endif /* ELB_LAYERS_GUI_HPP_ */

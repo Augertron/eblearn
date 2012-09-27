@@ -69,8 +69,8 @@ namespace ebl {
     MEDEBUG("Pruned " << in.size() << " bboxes to " << out.size() << " bboxes.");
   }
 
-  string nms::describe() {
-    string s;
+  std::string nms::describe() {
+    std::string s;
     s << "Traditional overlap NMS, ignoring matching bboxes "
       << "(intersection/union) beyond "
       << "the max_overlap threshold (" << max_overlap << ") and centers "
@@ -197,8 +197,8 @@ namespace ebl {
     if (tnms) delete tnms;
   }
 
-  string voting_nms::describe() {
-    string s;
+  std::string voting_nms::describe() {
+    std::string s;
     s << "Voting NMS, matching windows when overlap is less than "
       << max_overlap << " and centers are closer than "
       << max_hcenter_dist << " * height and "
@@ -323,8 +323,8 @@ namespace ebl {
 				(b.height / 2) * max_hcenter_dist);
       float maxwdist = std::max((a.width  / 2) * max_wcenter_dist,
 				(b.width  / 2) * max_wcenter_dist);
-      float hcenter_dist = fabs(a.hcenter() - b.hcenter());
-      float wcenter_dist = fabs(a.wcenter() - b.wcenter());
+      float hcenter_dist = std::fabs(a.hcenter() - b.hcenter());
+      float wcenter_dist = std::fabs(a.wcenter() - b.wcenter());
       float match = 1 - a.match(b);
       //      if (p.first > maxdist || a.match(*b) < match)
       if (hcenter_dist > maxhdist || wcenter_dist > maxwdist

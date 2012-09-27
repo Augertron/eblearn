@@ -33,8 +33,8 @@ void datasource_test::test_mnist_LabeledDataSource() {
     idx<ubyte> data = load_matrix<ubyte>(datafile);
     idx<ubyte> labels = load_matrix<ubyte>(labelfile);
     labeled_datasource<double,ubyte,ubyte> ds(data, labels);
-    fstate_idx<double> datum(28, 28);
-    fstate_idx<ubyte> label;
+    state<double> datum(28, 28);
+    state<ubyte> label;
     for (int i = 0; i < 5; i++) {
       ds.fprop_data(datum);
       ds.fprop_label(label);
@@ -46,8 +46,8 @@ void datasource_test::test_mnist_LabeledDataSource() {
       ds.next();
     }
   // briefly test some values of the 5th element of mnist
-    CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.x.get());
-    CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.x.get(9, 9));
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 4, (unsigned int) label.get());
+    CPPUNIT_ASSERT_EQUAL((unsigned int) 236, (unsigned int) datum.get(9, 9));
   } catch(string &err) {
     err = err;
     CPPUNIT_ASSERT(false); // error

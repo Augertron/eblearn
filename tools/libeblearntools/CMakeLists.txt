@@ -20,19 +20,20 @@ SET(EBLEARN_TOOLS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 ################################################################################
 add_library (eblearntools SHARED
   src/configuration.cpp
-#  src/gdb.cpp
-  src/tools_utils.cpp
-  src/opencv.cpp
-  src/metaparser.cpp
-  src/job.cpp
-  src/mpijob.cpp
-  src/sort.cpp
-  src/thread.cpp
-  src/netconf.cpp
-  src/xml_utils.cpp
   src/dataset.cpp
+  src/job.cpp
+  src/metaparser.cpp
+  src/mpijob.cpp
+  src/netconf.cpp
+  src/opencv.cpp
   src/pascal_dataset.cpp
   src/pascal_xml.cpp
+  src/sort.cpp
+  src/thread.cpp
+  src/tools_utils.cpp
+  src/xml_utils.cpp
+#  src/detector.cpp
+#  src/gdb.cpp
 #  src/vfw.cpp
   )
 

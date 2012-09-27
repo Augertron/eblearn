@@ -35,28 +35,29 @@
 using namespace std;
 
 namespace ebl {
-  
-  ////////////////////////////////////////////////////////////////
 
-#define CONTRAST_NORM_MODULE_GUI(name, T, op)				\
-  template <typename T, class Tstate>					\
-  void contrast_norm_module_gui::name(contrast_norm_module<T,Tstate> &wsm, \
-				     Tstate &in, Tstate &out,		\
-				     unsigned int &h0,			\
-				     unsigned int &w0,			\
-				     double zoom, T vmin, T vmax,	\
-				     bool show_out, bool run) {		\
+////////////////////////////////////////////////////////////////////////////////
+
+#define CONTRAST_NORM_MODULE_GUI(name, TYPE, op)                        \
+  template <typename T>                                                 \
+  void contrast_norm_module_gui::name(contrast_norm_module<T> &wsm,     \
+                                      state<T> &in, state<T> &out,      \
+                                      unsigned int &h0,			\
+                                      unsigned int &w0,			\
+                                      double zoom, T vmin, T vmax,	\
+                                      bool show_out, bool run) {        \
     /* run it */							\
     if (run)								\
       wsm.op(in, out);							\
     uint h = h0, w = w0;						\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "inmean out:" << wsm.subnorm.inmean.T \
-	<< at(h + 15, w) << "min:" << idx_min(wsm.subnorm.inmean.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.subnorm.inmean.T);	\
+    gui << gui_only() << at(h, w) << "inmean out:"                      \
+        << wsm.subnorm.inmean.TYPE[0]                                   \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.subnorm.inmean.TYPE[0]) \
+	<< at(h + 30, w) << "max:" << idx_max(wsm.subnorm.inmean.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.subnorm.inmean.T, T) {				\
+    {idx_bloop1(m, wsm.subnorm.inmean.TYPE[0], T) {                     \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -67,12 +68,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "insq out:" << wsm.divnorm.insq.T	\
-	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.insq.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.insq.T);	\
+    gui << gui_only() << at(h, w) << "insq out:" << wsm.divnorm.insq.TYPE[0] \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.insq.TYPE[0])	\
+	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.insq.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.divnorm.insq.T, T) {				\
+    {idx_bloop1(m, wsm.divnorm.insq.TYPE[0], T) {                       \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -83,12 +84,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "invar out:" << wsm.divnorm.invar.T \
-	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.invar.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.invar.T);	\
+    gui << gui_only() << at(h, w) << "invar out:" << wsm.divnorm.invar.TYPE[0] \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.invar.TYPE[0]) \
+	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.invar.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.divnorm.invar.T, T) {				\
+    {idx_bloop1(m, wsm.divnorm.invar.TYPE[0], T) {                      \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -99,12 +100,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "instd out:" << wsm.divnorm.instd.T \
-	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.instd.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.instd.T);	\
+    gui << gui_only() << at(h, w) << "instd out:" << wsm.divnorm.instd.TYPE[0] \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.instd.TYPE[0]) \
+	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.instd.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.divnorm.instd.T, T) {				\
+    {idx_bloop1(m, wsm.divnorm.instd.TYPE[0], T) {                      \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -115,12 +116,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "thstd out:" << wsm.divnorm.thstd.T \
-	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.thstd.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.thstd.T);	\
+    gui << gui_only() << at(h, w) << "thstd out:" << wsm.divnorm.thstd.TYPE[0] \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.thstd.TYPE[0]) \
+	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.thstd.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.divnorm.thstd.T, T) {				\
+    {idx_bloop1(m, wsm.divnorm.thstd.TYPE[0], T) {                      \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -131,12 +132,12 @@ namespace ebl {
     w = w0;								\
     h = h0;								\
     /* display text */							\
-    gui << gui_only() << at(h, w) << "invstd out:" << wsm.divnorm.invstd.T \
-	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.invstd.T)	\
-	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.invstd.T);	\
+    gui << gui_only() << at(h, w) << "invstd out:" << wsm.divnorm.invstd.TYPE[0] \
+	<< at(h + 15, w) << "min:" << idx_min(wsm.divnorm.invstd.TYPE[0]) \
+	<< at(h + 30, w) << "max:" << idx_max(wsm.divnorm.invstd.TYPE[0]); \
     w += 150;								\
     /* display image */							\
-    {idx_bloop1(m, wsm.divnorm.invstd.T, T) {				\
+    {idx_bloop1(m, wsm.divnorm.invstd.TYPE[0], T) {                     \
 	if (w - w0 < MAXWIDTH) {					\
 	  draw_matrix(m, h, w, zoom, zoom, vmin, vmax);			\
 	  w += (uint) (m.dim(1) * zoom + 1);				\
@@ -148,8 +149,8 @@ namespace ebl {
     h = h0;								\
   }
 
-  CONTRAST_NORM_MODULE_GUI(display_fprop, x, fprop)
-  CONTRAST_NORM_MODULE_GUI(display_bprop, dx, bprop)
-  CONTRAST_NORM_MODULE_GUI(display_bbprop, ddx, bbprop)
-  
+CONTRAST_NORM_MODULE_GUI(display_fprop, f, fprop)
+CONTRAST_NORM_MODULE_GUI(display_bprop, b, bprop)
+CONTRAST_NORM_MODULE_GUI(display_bbprop, bb, bbprop)
+
 } // end namespace ebl

@@ -151,7 +151,7 @@ namespace ebl {
 	     channel_buffer->dim(1) != buffer->dim(1)))
 	  channel_buffer->resize(buffer->dim(0), buffer->dim(1), 1);
 	if (!channel_buffer)
-	  channel_buffer = new idx<ubyte>(buffer->dim(0), buffer->dim(1), 1);	
+	  channel_buffer = new idx<ubyte>(buffer->dim(0), buffer->dim(1), 1);
 	// copy channel into contiguous buffer
 	idx<ubyte> slice = buffer->select(2, mode - 1);
 	idx_copy(slice, *channel_buffer);
@@ -336,10 +336,10 @@ namespace ebl {
 
   void win2d::repaint_pixmap() {
     update_qimage(drawing_mode);
-    if (qimage) *pixmap = QPixmap::fromImage(*qimage);	
-    update_window();    
+    if (qimage) *pixmap = QPixmap::fromImage(*qimage);
+    update_window();
   }
-  
+
   void win2d::set_bg_colors(ubyte r, ubyte g, ubyte b) {
     if (frozen_style)
       return ;
@@ -560,7 +560,7 @@ namespace ebl {
   }
 
   void win2d::draw_masks(QPainter &painter) {
-    if (masks.size() > 0) 
+    if (masks.size() > 0)
       buffer_resize(buffer_maxh, buffer_maxw); // resize to maximum size first
     // then display all images not displayed
     for (vector<imask*>::iterator i = masks.begin(); i != masks.end(); ++i)
@@ -591,7 +591,7 @@ namespace ebl {
     if (scaleIncr >= 1)
       pixmapScale = scaleIncr;
     else
-      pixmapScale = fabs(1 / scaleIncr);
+      pixmapScale = std::fabs(1 / scaleIncr);
     update();
   }
 

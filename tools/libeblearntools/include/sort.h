@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -44,8 +44,6 @@
 #include <list>
 #include <map>
 #include "defines.h"
-
-using namespace std;
 
 namespace ebl {
 
@@ -86,58 +84,64 @@ namespace ebl {
 
   //! Compare two strings in the natural way, returns true if a < b,
   //! false otherwise.
-  EXPORT bool natural_compare_less(const string& a, const string& b);
+  EXPORT bool natural_compare_less(const std::string& a, const std::string& b);
   //! Compare two strings in the natural way.
-  EXPORT int natural_compare(const string& a, const string& b);
+  EXPORT int natural_compare(const std::string& a, const std::string& b);
   //! Compare two strings in the natural way.
-  EXPORT int natural_compare(const string& a, const string* b);
+  EXPORT int natural_compare(const std::string& a, const std::string* b);
 
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
-  struct EXPORT natural_less: binary_function<string, string, bool> {
-    bool operator()(const string& a, const string& b) const;
+  struct EXPORT natural_less:
+      std::binary_function<std::string, std::string, bool> {
+    bool operator()(const std::string& a, const std::string& b) const;
   };
 
   //! Compare two strings using the natural comparison of numbers
   //! ("2" is less than "10").
-  struct EXPORT natural_less_pointer: binary_function<string, string*, bool> {
-    bool operator()(const string& a, const string* b) const;
+  struct EXPORT natural_less_pointer:
+      std::binary_function<std::string, std::string*, bool> {
+    bool operator()(const std::string& a, const std::string* b) const;
   };
 
   //! Compare two maps of var/val strings using the comparison keys list
   //! and using the natural comparison of numbers ("2" is less than "10").
   struct EXPORT map_natural_less
-    : binary_function<map<string,string>, map<string,string>, bool> {
-    map_natural_less(list<string> &keys);
-    bool operator()(const map<string,string>& m1, 
-		    const map<string,string>& m2) const;
+      : std::binary_function<std::map<std::string,std::string>,
+                             std::map<std::string,std::string>, bool> {
+    map_natural_less(std::list<std::string> &keys);
+    bool operator()(const std::map<std::string,std::string>& m1,
+		    const std::map<std::string,std::string>& m2) const;
     // members
-    list<string> keys;
+    std::list<std::string> keys;
   };
-  
+
   //! Compare two maps of var/val strings using the comparison keys list
   //! and using the natural comparison of numbers ("2" is less than "10").
   struct EXPORT map_natural_less_pointer
-    : binary_function<map<string,string*>, map<string,string*>, bool> {
-    map_natural_less_pointer(list<string> &keys);
-    bool operator()(const map<string,string*>& m1, 
-		    const map<string,string*>& m2) const;
+      : std::binary_function<std::map<std::string,std::string*>,
+                             std::map<std::string,std::string*>, bool> {
+    map_natural_less_pointer(std::list<std::string> &keys);
+    bool operator()(const std::map<std::string,std::string*>& m1,
+		    const std::map<std::string,std::string*>& m2) const;
     // members
-    list<string> keys;
+    std::list<std::string> keys;
   };
-  
+
   //! Compare two maps of var/val strings using the comparison keys list
   //! and using the natural comparison of numbers ("2" is less than "10").
   struct EXPORT map_natural_less_uint
-    : binary_function<map<uint,uint>, map<uint,uint>, bool> {
-    map_natural_less_uint(list<uint> &keys, vector<string> &vals);
-    bool operator()(const map<uint,uint>& m1, 
-		    const map<uint,uint>& m2) const;
+      : std::binary_function<std::map<uint,uint>,
+                             std::map<uint,uint>, bool> {
+    map_natural_less_uint(std::list<uint> &keys,
+                          std::vector<std::string> &vals);
+    bool operator()(const std::map<uint,uint>& m1,
+		    const std::map<uint,uint>& m2) const;
     // members
-    list<uint> &keys;
-    vector<string> &vals;
+    std::list<uint> &keys;
+    std::vector<std::string> &vals;
   };
-  
+
 } // end namespace ebl
 
 #endif /* METAPLOT_H_ */

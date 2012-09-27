@@ -11,35 +11,35 @@ void idxops_test2::tearDown() {
 const float64 epsilon = 1e-4;
 template <typename T> bool EQUAL_UTEST(T a1, T a2) {
   float64 amax, amin;
-  if (abs((float64)a1) < abs((float64)a2)) {
+  if (std::abs((float64) a1) < std::abs((float64)a2)) {
     amax = (float64)a2;
     amin = (float64)a1;
   } else {
     amax = (float64)a1;
     amin = (float64)a2;
   }
-  if (isinf(abs(amax)))
+  if (isinf(std::abs(amax)))
     return amin == amax;
-  if (abs(amax) > 1e-30)
+  if (std::abs(amax) > 1e-30)
     return (1.0 - epsilon < amin / amax) && (amin / amax < 1.0 + epsilon);
   return true;
 }
 
 template <typename T> void ASSERT_EQUAL(T a1, T a2) {
   if (!EQUAL_UTEST(a1, a2)) {
-      cout << endl
+      std::cout << std::endl
 	   << a1 << " (" << (int)a1 << ") "
-	   << a2 << " (" << (int)a2 << ")" << endl;
+	   << a2 << " (" << (int)a2 << ")" << std::endl;
       CPPUNIT_ASSERT(false);
   }
 }
 
 template <typename T> void ASSERT_EQUAL2(T a1, T a2, T a3) {
   if (!(EQUAL_UTEST(a1, a2) || EQUAL_UTEST(a1, a3))) {
-    cout << endl
+    std::cout << std::endl
 	 << a1 << " (" << (int)a1 << ") "
 	 << a2 << " (" << (int)a2 << ") "
-	 << a3 << " (" << (int)a3 << ")" << endl;
+	 << a3 << " (" << (int)a3 << ")" << std::endl;
     CPPUNIT_ASSERT(false);
   }
 }
@@ -1065,7 +1065,7 @@ template <typename T> void test_abs(intg i1, intg i2, intg i3, intg i4,
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
 	  if (mt.get(it1, it2, it3, it4) !=
-	      (T)abs((double)m1.get(it1, it2, it3, it4))) {
+	      (T)std::abs((double)m1.get(it1, it2, it3, it4))) {
 	    CPPUNIT_ASSERT(mt.get(it1, it2, it3, it4) ==
 			   std::numeric_limits<T>::max());
 	    CPPUNIT_ASSERT(m1.get(it1, it2, it3, it4) ==
@@ -1322,7 +1322,7 @@ template <> void test_power(intg i1, intg i2, intg i3, intg i4,
       for (intg it3 = 0; it3 < i3; ++it3)
 	for (intg it4 = 0; it4 < i4; ++it4) {
 	  ASSERT_EQUAL(mt2.get(it1, it2, it3, it4),
-		       pow(mt.get(it1,it2,it3,it4), p));
+		       (float) pow(mt.get(it1,it2,it3,it4), p));
 	}
 }
 

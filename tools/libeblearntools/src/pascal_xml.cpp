@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -47,16 +47,16 @@ namespace ebl {
 
   pascal_xml::pascal_xml() {
   }
-  
+
   pascal_xml::~pascal_xml() {
   }
 
   // bboxes extraction /////////////////////////////////////////////////////////
 
-  bboxes pascal_xml::get_bboxes(const string &xml_fname,
-				vector<string>& labels) {
-    string imgroot = dirname(xml_fname.c_str());
-    string fname, fullname, folder;
+  bboxes pascal_xml::get_bboxes(const std::string &xml_fname,
+				vector<std::string>& labels) {
+    std::string imgroot = dirname(xml_fname.c_str());
+    std::string fname, fullname, folder;
     int height, width, depth;
     vector<object*> objs;
     bboxes bb;
@@ -78,13 +78,13 @@ namespace ebl {
     objs.clear();
     return bb;
   }
-  
+
   bboxes pascal_xml::get_filtered_bboxes
-  (const string &xml_fname, float minvisibility, float min_aspect_ratio,
+  (const std::string &xml_fname, float minvisibility, float min_aspect_ratio,
    float max_aspect_ratio, idxdim &mindims, idxdim &minborders,
-   vector<string> &included, bboxes &filtered, vector<string> *labels) {
-    string imgroot = dirname(xml_fname.c_str());
-    string fname, fullname, folder;
+   vector<std::string> &included, bboxes &filtered, vector<std::string> *labels) {
+    std::string imgroot = dirname(xml_fname.c_str());
+    std::string fname, fullname, folder;
     int height = -1, width = -1, depth = -1;
     vector<object*> objs;
     bboxes bb;
@@ -162,12 +162,12 @@ namespace ebl {
     objs.clear();
     return bb;
   }
-  
+
   // xml extraction ////////////////////////////////////////////////////////////
 
-  bool pascal_xml::get_properties(const string &imgroot,
-				  const string &xmlfile, string &image_filename,
-				  string &image_fullname, string &folder,
+  bool pascal_xml::get_properties(const std::string &imgroot,
+				  const std::string &xmlfile, std::string &image_filename,
+				  std::string &image_fullname, std::string &folder,
 				  int &height, int &width, int &depth,
 				  vector<object*> &objs, rect<int> **cropr,
 				  bool ignore) {
@@ -177,7 +177,7 @@ namespace ebl {
     try {
       DomParser parser;
       //    parser.set_validate();
-      parser.parse_file(xmlfile); 
+      parser.parse_file(xmlfile);
       if (parser) {
 	// initialize root node and list
 	const Node* pNode = parser.get_document()->get_root_node();
@@ -238,7 +238,7 @@ namespace ebl {
     return false;
 #endif
   }
-  
+
 #ifdef __XML__
   void pascal_xml::get_objects(Node::NodeList &list, vector<object*> &objs,
 			       rect<int> *cropr, bool ignore) {
@@ -321,7 +321,7 @@ namespace ebl {
 		o.centroid->first -= cropr->h0;
 		o.centroid->second -= cropr->w0;
 	      }
-	    } catch(ebl::eblexception &e) { 
+	    } catch(ebl::eblexception &e) {
 	      cerr << "warning: no centroid found." << endl; }
 	  } // else get object class name
 	  else if (!strcmp((*iter)->get_name().c_str(), "name"))
@@ -377,7 +377,7 @@ namespace ebl {
       }
     }
   }
-    
+
 #endif /* __XML__ */
 
 } // end namespace ebl

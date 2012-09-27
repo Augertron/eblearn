@@ -49,8 +49,6 @@
 //#include "FastMatchTemplate.h"
 #endif
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -63,17 +61,17 @@ namespace ebl {
     //! @param dt The detection thread that will provide templates to track.
     tracking_thread(configuration &conf, const char *arg2);
     ~tracking_thread();
-    
+
     //! Execute the tracking thread.
     virtual void execute();
     //! Return true if new data was copied from the thread, false otherwise.
-    virtual bool get_data(vector<bbox*> &bboxes, idx<ubyte> &frame,
+    virtual bool get_data(std::vector<bbox*> &bboxes, idx<ubyte> &frame,
 			  idx<ubyte> &tpl);
-    
+
   private:
     //! Copy passed bounding boxes into bboxes class member
     //! (allocating new 'bbox' objects).
-    void copy_bboxes(vector<bbox*> &bb);
+    void copy_bboxes(std::vector<bbox*> &bb);
     //! Turn 'out_updated' flag on, so that other threads know we just outputed
     //! new data.
     void set_out_updated();
@@ -88,8 +86,8 @@ namespace ebl {
     pthread_mutex_t		 mutex_out;	//! mutex for thread output
     idx<ubyte>			 frame;         //! tracking frame
     idx<ubyte>			 detframe;      //! detection frame
-    vector<bbox*>		 bboxes;
-    vector<bbox*>::iterator	 ibox;
+    std::vector<bbox*>		 bboxes;
+    std::vector<bbox*>::iterator ibox;
     bool			 out_updated;	//! thread output updated
     detection_thread<Tnet>       dt;
     idx<ubyte>                   tpl;

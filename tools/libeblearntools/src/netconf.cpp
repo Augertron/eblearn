@@ -32,11 +32,13 @@
 
 #include "netconf.h"
 
+using namespace std;
+
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  bool load_table(configuration &conf, const string &module_name,
+  bool load_table(configuration &conf, const std::string &module_name,
 		  idx<intg>& table, intg thickness, intg noutputs) {
     std::string name = module_name; name << "_table"; // table name
     std::string name_in = name; name_in << "_in"; // table max input
@@ -44,7 +46,7 @@ namespace ebl {
 
     if (conf.exists(name)) { // request to load table from file
       std::string filename = conf.get_string(name.c_str());
-      if (!file_exists(filename)) 
+      if (!file_exists(filename))
 	eblerror("cannot find table file declared in variable " << name
 		 << ": " << filename);
       table = load_matrix<intg>(filename);
@@ -98,5 +100,5 @@ namespace ebl {
     // printing parameters
     cout << gdp << endl;
   }
-  
+
 } /* namespace ebl */
