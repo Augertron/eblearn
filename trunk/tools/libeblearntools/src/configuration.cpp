@@ -64,34 +64,34 @@ namespace ebl {
 
   textlist::textlist(const textlist &txt) {
     // deep copy
-    for (list<pair<string,string> >::const_iterator i = txt.begin();
+    for (list<pair<std::string,std::string> >::const_iterator i = txt.begin();
 	 i != txt.end(); ++i) {
-      push_back(pair<string,string>(i->first, i->second));
+      push_back(pair<std::string,std::string>(i->first, i->second));
     }
   }
 
   textlist::~textlist() {
   }
 
-  void textlist::update(const string &varname, const string &value) {
+  void textlist::update(const std::string &varname, const std::string &value) {
     bool found = false;
-    ostringstream s;
+    std::string s;
     s << varname << "=" << value;
-    for (list< pair<string,string> >::iterator i = this->begin();
+    for (list< pair<std::string,std::string> >::iterator i = this->begin();
 	 i != this->end(); ++i) {
       if (i->second == varname) {
-	i->first = s.str();
+	i->first = s;
 	found = true;
       }
     }
     if (!found) {
       s << " # variable added by metarun";
-      push_back(pair<string,string>(s.str(), varname));
+      push_back(pair<std::string,std::string>(s, varname));
     }
   }
 
   void textlist::print(ostream &out) {
-    for (list< pair<string,string> >::iterator i = this->begin();
+    for (list< pair<std::string,std::string> >::iterator i = this->begin();
 	 i != this->end(); ++i) {
       out << i->first << endl;
     }
@@ -100,11 +100,11 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
   // utility functions
 
-  void remove_trailing_whitespaces(string &s) {
-    string::size_type pos;
+  void remove_trailing_whitespaces(std::string &s) {
+    std::string::size_type pos;
     char whites[] = " \t";
     pos = s.find_first_not_of(whites);
-    if (pos == string::npos)
+    if (pos == std::string::npos)
       s = "";
     else {
       s = s.substr(pos);
@@ -114,10 +114,10 @@ namespace ebl {
   }
 
   //! Remove quotes, except if they are preceded by a \.
-  string replace_quotes(const string &s) {
-    string res(s), tmp;
+  std::string replace_quotes(const std::string &s) {
+    std::string res(s), tmp;
     size_t qpos = res.find(DQ);
-    while (qpos != string::npos) {
+    while (qpos != std::string::npos) {
       if (qpos > 0 && res[qpos - 1] == '\\') {
 	qpos--;
 	tmp = res.substr(qpos + 2);
@@ -134,31 +134,31 @@ namespace ebl {
     return res;
   }
 
-  string configuration::resolve0(string_map_t &m, const string &variable,
-				 const string &v,
+  std::string configuration::resolve0(string_map_t &m, const std::string &variable,
+				 const std::string &v,
 				 bool firstonly) {
-    string res(v);
+    std::string res(v);
     if (v.size() == 0)
       return res;
     // 1. if we find quotes, resolve each unquoted string and concatenate res
     size_t qpos = v.find(DQ);
     // skip all quotes preceded by slash
-    while (qpos != string::npos && qpos > 0 && v[qpos - 1] == '\\') {
+    while (qpos != std::string::npos && qpos > 0 && v[qpos - 1] == '\\') {
       qpos = res.find(DQ, qpos + 1);
     }
-    if (qpos != string::npos) { // quote found
+    if (qpos != std::string::npos) { // quote found
       // find matching quote
       size_t qpos2 = res.find(DQ, qpos + 1);
       // skip all quotes preceded by slash
-      while (qpos2 != string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
+      while (qpos2 != std::string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
 	qpos2 = res.find(DQ, qpos2 + 1);
       }
-      if (qpos2 == string::npos)
+      if (qpos2 == std::string::npos)
 	eblerror("unmatched quote in: " << res);
       // resolve both sides of quoted section
-      string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
-      string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
-      string s2 = res.substr(qpos2 + 1);
+      std::string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
+      std::string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
+      std::string s2 = res.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
 	s0 = resolve0(m, variable, s0);
@@ -180,31 +180,31 @@ namespace ebl {
   }
 
   //! Resolve single quotes blocs, or entire string if not present.
-  string configuration::
-  resolve_backquotes(string_map_t &m, const string &variable,
-		    const string &v, bool firstonly) {
-    string res(v);
+  std::string configuration::
+  resolve_backquotes(string_map_t &m, const std::string &variable,
+		    const std::string &v, bool firstonly) {
+    std::string res(v);
     if (v.size() == 0)
       return res;
     // if we find quotes, resolve each unquoted string and concatenate res
     size_t qpos = res.find(BQ);
     // skip all quotes preceded by slash
-    while (qpos != string::npos && qpos > 0 && v[qpos - 1] == '\\') {
+    while (qpos != std::string::npos && qpos > 0 && v[qpos - 1] == '\\') {
       qpos = res.find(BQ, qpos + 1);
     }
-    if (qpos != string::npos) { // quote found
+    if (qpos != std::string::npos) { // quote found
       // find matching quote
       size_t qpos2 = res.find(BQ, qpos + 1);
       // skip all quotes preceded by slash
-      while (qpos2 != string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
+      while (qpos2 != std::string::npos && qpos2 > 0 && res[qpos2 - 1] == '\\') {
 	qpos2 = res.find(BQ, qpos2 + 1);
       }
-      if (qpos2 == string::npos)
+      if (qpos2 == std::string::npos)
 	eblerror("unmatched single quote in: " << res);
       // resolve both sides of quoted section
-      string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
-      string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
-      string s2 = res.substr(qpos2 + 1);
+      std::string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
+      std::string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
+      std::string s2 = res.substr(qpos2 + 1);
       res = "";
       if (qpos != 0) {
 	res += s0;
@@ -218,42 +218,42 @@ namespace ebl {
   }
 
   //! Resolve an unquoted string (just variables).
-  string configuration::resolve_string(string_map_t &m, const string &variable,
-				       const string &v, bool firstonly) {
-    string res(v);
+  std::string configuration::resolve_string(string_map_t &m, const std::string &variable,
+				       const std::string &v, bool firstonly) {
+    std::string res(v);
     if (v.size() == 0)
       return res;
     size_t pos = res.find("${");
     size_t pos2, pos3;
     uint cnt = 0;
     // loop until it's all resolved
-    while (pos != string::npos) {
+    while (pos != std::string::npos) {
       if (cnt == 1 && firstonly)
 	break ; // only process first found variable
       pos2 = res.find("}", pos);
       pos3 = res.find("${", pos + 2);
-      string rest0 = "";
-      while (pos3 != string::npos && pos3 < pos2) {
+      std::string rest0 = "";
+      while (pos3 != std::string::npos && pos3 < pos2) {
 	// there is another variable and it's before the closing of current
 	// recursively call on rest of the string
-	string rest = res.substr(pos + 2);
+	std::string rest = res.substr(pos + 2);
 	//  	  if (!strcmp(rest0.c_str(), rest.c_str()))
 	// 	    break ; // we are looping because we could not resolve a var
 	rest0 = rest;
-	string var = resolve0(m, variable, rest, true);
+	std::string var = resolve0(m, variable, rest, true);
 	res = res.substr(0, pos + 2);
 	res += var;
 	pos2 = res.find("}", pos);
 	pos3 = res.find("${", pos + 2);
       }
-      if (pos2 == string::npos) {
+      if (pos2 == std::string::npos) {
 	cerr << "unmatched closing bracket in: " << v << endl;
 	eblerror("error resolving variables in configuration");
       }
       // variable to replace
-      string var = res.substr(pos + 2, pos2 - (pos + 2));
+      std::string var = res.substr(pos + 2, pos2 - (pos + 2));
       if (m.find(var) != m.end() && (var != variable)) {
-	string val = resolve0(m, var, m[var]);
+	std::string val = resolve0(m, var, m[var]);
 	res = res.replace(pos, pos2 - pos + 1, val);
 	pos2 = pos;
       } else { // not found locally, check environment
@@ -282,12 +282,12 @@ namespace ebl {
 					textlist &txt,
 					string_map_t *meta_smap, bool bresolve,
 					bool replquotes, bool silent) {
-    string s0, s;
+    std::string s0, s;
     char separator = '=';
     char comment1 = '#';
-    string comment2 = ";;";
-    string::size_type pos;
-    string name, value;
+    std::string comment2 = ";;";
+    std::string::size_type pos;
+    std::string name, value;
 
     ifstream in(fname);
     if (!in) {
@@ -301,15 +301,15 @@ namespace ebl {
       // remove comments first
       s = s0;
       pos = s.find(comment1);
-      if (pos != string::npos) // comment found, remove it
+      if (pos != std::string::npos) // comment found, remove it
 	s = s.erase(pos);
       pos = s.find(comment2);
-      if (pos != string::npos) // comment found, remove it
+      if (pos != std::string::npos) // comment found, remove it
 	s = s.erase(pos);
       if (s.size() > 0) {
 	// look for separator
 	pos = s.find(separator);
-	if (pos != string::npos) {
+	if (pos != std::string::npos) {
 	  name = s.substr(0, pos);
 	  if (pos >= s.size() - 1) value = ""; // empty variable
 	  else value = s.substr(pos + 1);
@@ -318,7 +318,7 @@ namespace ebl {
 	  remove_trailing_whitespaces(value);
 	  // forbid spaces in names
 	  pos = name.find(' ');
-	  if (pos != string::npos && !silent) {
+	  if (pos != std::string::npos && !silent) {
 	    cerr << "warning: variable name cannot contain an empty space,";
 	    cerr << " ignoring this line: " << s0 << endl;
 	    continue ;
@@ -342,7 +342,7 @@ namespace ebl {
 	}
       }
       // add original line and variable name (if any) to txt
-      txt.push_back(pair<string,string>(s0, name));
+      txt.push_back(pair<std::string,std::string>(s0, name));
     }
     in.close();
     // resolve variables
@@ -357,24 +357,24 @@ namespace ebl {
   // transform each value containing whitespaces into a list of values
   void variables_to_variables_list(string_map_t &smap,
 				   string_list_map_t &lmap) {
-    string::size_type pos, qpos, qpos2;
-    string s, stmp;
+    std::string::size_type pos, qpos, qpos2;
+    std::string s, stmp;
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi) {
       s = smi->second;
-      vector<string> &vs = lmap[smi->first];
+      std::vector<std::string> &vs = lmap[smi->first];
       // loop over list of elements
       pos = s.find_first_of(' ');
-      while ((pos != string::npos) && (pos < s.size())) {
+      while ((pos != std::string::npos) && (pos < s.size())) {
 	// check for double quotes
 	qpos = s.find(DQ);
-	if ((qpos != string::npos) && (qpos < pos)) { // quote before space
+	if ((qpos != std::string::npos) && (qpos < pos)) { // quote before space
 	  // look for matching quote
 	  qpos2 = s.find(DQ, qpos + 1);
-	  while (qpos2 != string::npos && qpos2 > 0 && s[qpos2 - 1] == '\\') {
+	  while (qpos2 != std::string::npos && qpos2 > 0 && s[qpos2 - 1] == '\\') {
 	    qpos2 = s.find(DQ, qpos2 + 1);
 	  }
-	  if (qpos2 == string::npos) {
+	  if (qpos2 == std::string::npos) {
 	    cerr << "unmatched quote in: " << s << endl;
 	    eblerror("unmatched quote");
 	  }
@@ -385,13 +385,13 @@ namespace ebl {
 	}
 	// check for single quotes
 	qpos = s.find(BQ);
-	if ((qpos != string::npos) && (qpos < pos)) { // quote before space
+	if ((qpos != std::string::npos) && (qpos < pos)) { // quote before space
 	  // look for matching quote
 	  qpos2 = s.find(BQ, qpos + 1);
-	  while (qpos2 != string::npos && qpos2 > 0 && s[qpos2 - 1] == '\\') {
+	  while (qpos2 != std::string::npos && qpos2 > 0 && s[qpos2 - 1] == '\\') {
 	    qpos2 = s.find(BQ, qpos2 + 1);
 	  }
-	  if (qpos2 == string::npos) {
+	  if (qpos2 == std::string::npos) {
 	    cerr << "unmatched single quote in: " << s << endl;
 	    eblerror("unmatched single quote");
 	  }
@@ -421,17 +421,17 @@ namespace ebl {
 
   // increment the conf_indices by 1 when there is room (based the size of the
   // lmap lists).
-  bool config_indices_incr(vector<size_t> &conf_indices,
+  bool config_indices_incr(std::vector<size_t> &conf_indices,
 			   string_list_map_t &lmap) {
     // find first index that can be increased (less that list size)
     string_list_map_t::iterator lmi = lmap.begin();
-    vector<size_t>::iterator ci_incr = conf_indices.begin();
+    std::vector<size_t>::iterator ci_incr = conf_indices.begin();
     for ( ; lmi != lmap.end(); ++lmi, ++ci_incr) {
       if (*ci_incr < lmi->second.size() - 1) { // did not reach end of list yet
 	// we found the first index that can be increased.
 	// increase it and clear all preceding indices
 	(*ci_incr)++; // increment index
-	vector<size_t>::iterator ci_prev = conf_indices.begin();
+	std::vector<size_t>::iterator ci_prev = conf_indices.begin();
 	for ( ; ci_prev != ci_incr; ++ci_prev)
 	  *ci_prev = 0;
 	return true; // we incremented the configuration indices by 1, return
@@ -440,12 +440,12 @@ namespace ebl {
     return false;
   }
 
-  void set_conf_name(vector<size_t> &conf_indices, string_list_map_t &lmap,
+  void set_conf_name(std::vector<size_t> &conf_indices, string_list_map_t &lmap,
 		     int combination_id, bool no_conf_id,
 		     uint conf_combinations,
-		     string &fullname, string &shortname, string &variables) {
+		     std::string &fullname, std::string &shortname, std::string &variables) {
     string_list_map_t::iterator lmi = lmap.begin();
-    vector<size_t>::iterator ci = conf_indices.begin();
+    std::vector<size_t>::iterator ci = conf_indices.begin();
     ostringstream name;
 
     // short name
@@ -467,9 +467,9 @@ namespace ebl {
     fullname << "_" << variables;
   }
 
-  void print_conf(vector<size_t> &conf_indices, string_list_map_t &lmap) {
+  void print_conf(std::vector<size_t> &conf_indices, string_list_map_t &lmap) {
     string_list_map_t::iterator lmi = lmap.begin();
-    vector<size_t>::iterator ci = conf_indices.begin();
+    std::vector<size_t>::iterator ci = conf_indices.begin();
 
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       cout << lmi->first << " = " << lmi->second[*ci] << endl;
@@ -487,7 +487,7 @@ namespace ebl {
     string_list_map_t::iterator lmi = lmap.begin();
     for ( ; lmi != lmap.end(); ++lmi) {
       cout << lmi->first << " : ";
-      vector<string>::iterator vi = lmi->second.begin();
+      std::vector<std::string>::iterator vi = lmi->second.begin();
       for ( ; vi != lmi->second.end(); ++vi) {
 	cout << *vi << ", ";
       }
@@ -495,10 +495,10 @@ namespace ebl {
     }
   }
 
-  void assign_current_smap(string_map_t &new_smap, vector<size_t> &conf_indices,
+  void assign_current_smap(string_map_t &new_smap, std::vector<size_t> &conf_indices,
 			   string_list_map_t &lmap) {
     string_list_map_t::iterator lmi = lmap.begin();
-    vector<size_t>::iterator ci = conf_indices.begin();
+    std::vector<size_t>::iterator ci = conf_indices.begin();
 
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       new_smap[lmi->first] = lmi->second[*ci];
@@ -516,7 +516,7 @@ namespace ebl {
       eblerror("failed to open configuration file");
   }
 
-  configuration::configuration(const string &filename, bool replquotes,
+  configuration::configuration(const std::string &filename, bool replquotes,
 			       bool silent_, bool bresolve) : silent(silent_) {
     if (!read(filename.c_str(), bresolve, replquotes, silent_))
       eblerror("failed to open configuration file");
@@ -529,7 +529,7 @@ namespace ebl {
   }
 
   configuration::configuration(string_map_t &smap_, textlist &txt,
-			       string &name_, string &output_dir_)
+			       std::string &name_, std::string &output_dir_)
     : smap(smap_), name(name_), output_dir(output_dir_), otxt(txt),
       silent(false) {
   }
@@ -580,7 +580,7 @@ namespace ebl {
   void configuration::resolve_variables(string_map_t &m, bool replquotes) {
     string_map_t::iterator mi = m.begin();
     for ( ; mi != m.end(); ++mi) {
-      string val = mi->second;
+      std::string val = mi->second;
       mi->second = resolve0(m, mi->first, val);
       if (replquotes)
 	mi->second = replace_quotes(mi->second);
@@ -594,24 +594,24 @@ namespace ebl {
   void configuration::resolve_bq() {
     string_map_t::iterator mi = smap.begin();
     for ( ; mi != smap.end(); ++mi) {
-      string val = mi->second;
+      std::string val = mi->second;
       mi->second = resolve_backquotes(smap, mi->first, val);
     }
   }
 
-  const string &configuration::get_name() {
+  const std::string &configuration::get_name() {
     return name;
   }
 
-  void configuration::set_name(const string &n) {
+  void configuration::set_name(const std::string &n) {
     name = n;
   }
 
-  const string &configuration::get_output_dir() {
+  const std::string &configuration::get_output_dir() {
     return output_dir;
   }
 
-  void configuration::set_output_dir(const string &d) {
+  void configuration::set_output_dir(const std::string &d) {
     output_dir = d;
   }
 
@@ -640,7 +640,7 @@ namespace ebl {
     v = string_to_float(get_cstr(varname));
   }
 
-  void configuration::get(string &v, const char *varname) {
+  void configuration::get(std::string &v, const char *varname) {
     exists_throw(varname);
     v = get_string(varname);
   }
@@ -650,22 +650,22 @@ namespace ebl {
     v = string_to_bool(get_cstr(varname));
   }
 
-  const string &configuration::get_string(const char *varname) {
+  const std::string &configuration::get_string(const char *varname) {
     exists_throw(varname);
     // remove quotes if present
-    string s = get_cstr(varname);
+    std::string s = get_cstr(varname);
     if ((s[0] == DQ) && (s[s.size() - 1] == DQ))
       s = s.substr(1, s.size() - 2);
     // remove slash preceding quotes
     size_t pos;
-    while ((pos = s.rfind("\\\"")) != string::npos) {
+    while ((pos = s.rfind("\\\"")) != std::string::npos) {
       s.replace(pos, 2, "\"");
     }
     tmp_smap[varname] = s;
     return tmp_smap[varname];
   }
 
-  const string &configuration::get_string(const string &varname) {
+  const std::string &configuration::get_string(const std::string &varname) {
     return get_string(varname.c_str());
   }
 
@@ -708,9 +708,9 @@ namespace ebl {
     return string_to_intg(get_cstr(varname));
   }
 
-  string configuration::try_get_string(const char *varname,
+  std::string configuration::try_get_string(const char *varname,
 				       const char *default_val) {
-    string s = default_val;
+    std::string s = default_val;
     if (!exists(varname)) return s;
     return s = get_cstr(varname);
   }
@@ -739,7 +739,7 @@ namespace ebl {
 
   char configuration::get_char(const char *varname) {
     exists_throw(varname);
-    string s = get_cstr(varname);
+    std::string s = get_cstr(varname);
     return s[0];
   }
 
@@ -759,7 +759,7 @@ namespace ebl {
     return true;
   }
 
-  bool configuration::exists_true(const string &varname) {
+  bool configuration::exists_true(const std::string &varname) {
     return exists_true(varname.c_str());
   }
 
@@ -788,11 +788,11 @@ namespace ebl {
     return NULL;
   }
 
-  vector<string> configuration::get_all_strings(const string &s) {
+  std::vector<std::string> configuration::get_all_strings(const std::string &s) {
     string_map_t::iterator smi = smap.begin();
-    vector<string> all;
+    std::vector<std::string> all;
     for ( ; smi != smap.end(); ++smi)
-      if (smi->first.find(s) != string::npos)
+      if (smi->first.find(s) != std::string::npos)
 	all.push_back(smi->first);
     return all;
   }
@@ -824,10 +824,10 @@ namespace ebl {
     cout << "_________________________________________________________" << endl;
   }
 
-  void configuration::pretty_match(const string &s) {
+  void configuration::pretty_match(const std::string &s) {
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
-      if (s.find(smi->first) != string::npos)
+      if (s.find(smi->first) != std::string::npos)
 	cout << smi->first << "=" << smi->second << endl;
   }
 
@@ -841,7 +841,7 @@ namespace ebl {
   }
 
   bool meta_configuration::read(const char *fname, bool bresolve,
-				const string *stamp, bool replacequotes,
+				const std::string *stamp, bool replacequotes,
 				const char *resume_name, bool silent) {
     if (!silent)
       cout << "Reading meta configuration file: " << fname << endl;
@@ -883,15 +883,15 @@ namespace ebl {
     return true;
   }
 
-  vector<configuration>& meta_configuration::configurations() {
+  std::vector<configuration>& meta_configuration::configurations() {
     cout << "Creating all " << conf_combinations
 	 << " possible configurations..." << endl;
     // create all possible configurations
     confs.clear();
     conf_indices.assign(lmap.size(), 0); // reset conf
     for (int i = 0; i < conf_combinations; ++i) {
-      string conf_name = name;
-      string shortname, fullname, variables;
+      std::string conf_name = name;
+      std::string shortname, fullname, variables;
       set_conf_name(conf_indices, lmap, i, exists_true("meta_no_conf_id"),
 		    conf_combinations, fullname, shortname, variables);
       conf_name << fullname;
@@ -914,9 +914,10 @@ namespace ebl {
   }
 
   void meta_configuration::pretty_combinations() {
-    cout << "Configuration has " << conf_combinations << " combinations:" << endl;
+    cout << "Configuration has " << conf_combinations
+         << " combinations:" << endl;
     string_list_map_t::iterator lmi = lmap.begin();
-    vector<string>::iterator lmj;
+    std::vector<std::string>::iterator lmj;
     for ( ; lmi != lmap.end(); ++lmi) {
       if (lmi->second.size() > 1) {
 	cout << lmi->second.size() << " " << lmi->first << ":";

@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -43,8 +43,6 @@
 using namespace boost::filesystem;
 using namespace boost;
 #endif
-
-using namespace std;
 
 namespace ebl {
 
@@ -73,7 +71,7 @@ namespace ebl {
 		     std::ostream &out = std::cout,
 		     std::ostream &err = std::cerr,
 		     const char *file_pattern = IMAGE_PATTERN_MAT,
-		     const list<string> *files = NULL);
+		     const std::list<std::string> *files = NULL);
     //! Initialize a directory camera without a root directory. This constructor
     //! requires a subsequent call to read_directory to initialize images.
     //! height and width are optional parameters that resize the input image
@@ -91,7 +89,7 @@ namespace ebl {
 		     std::ostream &err = std::cerr,
 		     const char *file_pattern = IMAGE_PATTERN_MAT);
     //! Find all images recursively from this directory.
-    bool read_directory(const char *directory);    
+    bool read_directory(const char *directory);
     //! Destructor.
     virtual ~camera_directory();
 
@@ -100,7 +98,7 @@ namespace ebl {
     //! Return a new frame.
     virtual idx<Tdata> grab();
     //! Do not read the file, instead return the filename to be grabbed.
-    virtual string grab_filename();
+    virtual std::string grab_filename();
     //! Move to the next frame, without returning the frame.
     //! This is called by grab before grabbing.
     //! This can be used to get frames infos without grabbing.
@@ -112,12 +110,12 @@ namespace ebl {
     //! Skip n frames.
     virtual void skip(uint n);
     //! Return a name for current frame.
-    virtual string frame_name();
+    virtual std::string frame_name();
     //! Return the complete filename for current frame (including path).
-    virtual string frame_fullname();
+    virtual std::string frame_fullname();
     //! Return the subdirectory name for the current frame,
     //! relative to the global input directory.
-    virtual string get_subdir();
+    virtual std::string get_subdir();
     //! Return the number of frames left to process, -1 if unknown.
     virtual int remaining();
     //! Return the total number of frames to process from the initialization,
@@ -126,18 +124,18 @@ namespace ebl {
 
     // members /////////////////////////////////////////////////////////////////
   protected:
-    using camera<Tdata>::frame;	//!< frame buffer 
+    using camera<Tdata>::frame;	//!< frame buffer
     using camera<Tdata>::frame_id_;	//!< frame counter
     using camera<Tdata>::frame_name_;	//!< frame name
     using camera<Tdata>::out;	//!< output stream
     using camera<Tdata>::err;	//!< error output stream
     files_list		*fl;	//!< list of images
     files_list::iterator fli;   //!< Iterator on the list of images.
-    string		 indir; //!< input directory name
-    string		 fdir;	//!< directory name
-    string		 fname;	//!< file name
-    string               subdir;//!< subdirs to indir.
-    ostringstream	 oss;	//!< temporary string
+    std::string		 indir; //!< input directory name
+    std::string		 fdir;	//!< directory name
+    std::string		 fname;	//!< file name
+    std::string          subdir;//!< subdirs to indir.
+    std::ostringstream	 oss;	//!< temporary string
     uint                 flsize;	//!< original size of list
     bool                 randomize; //!< Randomize order of images or not.
     uint                 npasses; //!< Number of passes on the list.

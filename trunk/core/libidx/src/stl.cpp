@@ -40,236 +40,235 @@
 #include <string.h>
 
 namespace std {
-  
-  ////////////////////////////////////////////////////////////////
-  // string
 
-  string strip_num(const string &str) {
-    string ret;
-    const char *s = str.c_str();
-    for (uint i = 0; i < str.size(); ++i, s++) {
-      if (!isdigit(*s))
-	ret << *s;
-    }
-    return ret;
-  }
-  
-  string strip_last_num(const string &str) {
-    string ret;
-    const char *s = str.c_str();
-    int i = (int) str.size();
-    for ( ; i > 0; i--) {
-      if (!isdigit(s[i - 1]))
-	break ;
-    }
-    ret = str.substr(0, i);
-    return ret;
-  }
+// string //////////////////////////////////////////////////////////////////////
 
-  string return_last_num(const string &str) {
-    string ret;
-    const char *s = str.c_str();
-    int i = (int) str.size();
-    for ( ; i > 0; i--) {
-      if (!isdigit(s[i - 1]))
-	break ;
-    }
-    ret = str.substr(i, (int)str.size() - i);
-    return ret;
+string strip_num(const string &str) {
+  string ret;
+  const char *s = str.c_str();
+  for (uint i = 0; i < str.size(); ++i, s++) {
+    if (!isdigit(*s))
+      ret << *s;
   }
-  
-  string string_replace(const string &s,
-			const char *toreplace, 
-			const char *replacement) {
-    string ret;
-    size_t pos = 0, pos0 = 0;
-    size_t tolen = strlen(toreplace);
-    pos = s.find(toreplace, pos);
-    while (pos != string::npos) {
-      if (pos > 0)
-	ret += s.substr(pos0, pos - pos0);
-      ret += replacement;
-      pos0 = pos + tolen;
-      pos = s.find(toreplace, pos + tolen);
-    }
-    ret += s.substr(pos0, s.size() - pos0);
-    return ret;
+  return ret;
+}
+
+string strip_last_num(const string &str) {
+  string ret;
+  const char *s = str.c_str();
+  int i = (int) str.size();
+  for ( ; i > 0; i--) {
+    if (!isdigit(s[i - 1]))
+      break ;
   }
+  ret = str.substr(0, i);
+  return ret;
+}
+
+string return_last_num(const string &str) {
+  string ret;
+  const char *s = str.c_str();
+  int i = (int) str.size();
+  for ( ; i > 0; i--) {
+    if (!isdigit(s[i - 1]))
+      break ;
+  }
+  ret = str.substr(i, (int)str.size() - i);
+  return ret;
+}
+
+string string_replace(const string &s,
+                      const char *toreplace,
+                      const char *replacement) {
+  string ret;
+  size_t pos = 0, pos0 = 0;
+  size_t tolen = strlen(toreplace);
+  pos = s.find(toreplace, pos);
+  while (pos != string::npos) {
+    if (pos > 0)
+      ret += s.substr(pos0, pos - pos0);
+    ret += replacement;
+    pos0 = pos + tolen;
+    pos = s.find(toreplace, pos + tolen);
+  }
+  ret += s.substr(pos0, s.size() - pos0);
+  return ret;
+}
 
 #ifdef __NOSTL__
-  
-  string::string() : s(NULL) {
-  }
 
-  string::string(char *v) : s(NULL) {
-    *this = v;
-  }
+string::string() : s(NULL) {
+}
 
-  string::string(const char *v) : s(NULL) {
-    *this = v;
-  }
+string::string(char *v) : s(NULL) {
+  *this = v;
+}
 
-  string::~string() {
-    if (s)
-      free(s);
-  }
+string::string(const char *v) : s(NULL) {
+  *this = v;
+}
 
-  const char* string::c_str() const {
-    return s;
-  }
-    
-  size_t string::size() const {
-    if (!s)
-      return 0;
-    return strlen(s);
-  }
+string::~string() {
+  if (s)
+    free(s);
+}
 
-  size_t string::length() const {
-    if (!s)
-      return 0;
-    return strlen(s);
-  }
+const char* string::c_str() const {
+  return s;
+}
 
-  void string::clear() {
-    if (s) {
-      free(s);
-      s = NULL;
-    }
-  }
+size_t string::size() const {
+  if (!s)
+    return 0;
+  return strlen(s);
+}
 
-  bool string::resize(size_t newsize) {
-    if (newsize == 0)
-      return true;
-    if (newsize == size())
-      return true;
-    void *ns;
-    if (!s)
-      ns = malloc(newsize);
-    else
-      ns = realloc((void*) s, newsize);
-    if (!ns)
-      return false;
-    s = (char *) ns;
+size_t string::length() const {
+  if (!s)
+    return 0;
+  return strlen(s);
+}
+
+void string::clear() {
+  if (s) {
+    free(s);
+    s = NULL;
+  }
+}
+
+bool string::resize(size_t newsize) {
+  if (newsize == 0)
     return true;
+  if (newsize == size())
+    return true;
+  void *ns;
+  if (!s)
+    ns = malloc(newsize);
+  else
+    ns = realloc((void*) s, newsize);
+  if (!ns)
+    return false;
+  s = (char *) ns;
+  return true;
+}
+
+string& string::operator=(const char *v) {
+  if (!v)
+    return *this;
+  size_t lv = strlen(v);
+  if (lv == 0)
+    return *this;
+  if (!resize(lv + 1))
+    eblthrow("failed to resize string");
+  strcpy(s, v);
+  return *this;
+}
+
+string& string::operator=(char *v) {
+  if (!v)
+    return *this;
+  size_t lv = strlen(v);
+  if (lv == 0)
+    return *this;
+  if (!resize(lv + 1))
+    eblthrow("failed to resize string");
+  strcpy(s, v);
+  return *this;
+}
+
+string& string::operator<<(const string &v) {
+  this->append(v.s);
+  return *this;
+}
+
+string& string::operator+=(const char *v) {
+  this->append(v);
+  return *this;
+}
+
+string& string::operator+=(char *v) {
+  this->append(v);
+  return *this;
+}
+
+string& string::operator+=(const string &v) {
+  *this << v.s;
+  return *this;
+}
+
+string& string::operator<<(char *v) {
+  if (v == NULL)
+    return *this;
+  size_t lv = strlen(v), le = size();
+  if (lv == 0)
+    return *this;
+  lv += le + 1;
+  if (!resize(lv))
+    eblthrow("failed to resize string");
+  strcpy(s + le, v);
+  return *this;
+}
+
+string& string::operator<<(const char *v) {
+  if (v == NULL)
+    return *this;
+  size_t lv = strlen(v), le = size();
+  if (lv == 0)
+    return *this;
+  lv += le + 1;
+  if (!resize(lv))
+    eblthrow("failed to resize string");
+  strcpy(s + le, v);
+  return *this;
+}
+
+#define CONCAT_SPRINTF(type, specifier, type_cast)      \
+  string& string::operator<<(type v) {                  \
+    char buf[1024];                                     \
+    sprintf(buf, specifier, (type_cast) v);             \
+    this->append(buf);                                  \
+    return *this;                                       \
   }
 
-  string& string::operator=(const char *v) {
-    if (!v)
-      return *this;
-    size_t lv = strlen(v);
-    if (lv == 0)
-      return *this;
-    if (!resize(lv + 1))
-      eblthrow("failed to resize string");
-    strcpy(s, v);
-    return *this;
-  }
-  
-  string& string::operator=(char *v) {
-    if (!v)
-      return *this;
-    size_t lv = strlen(v);
-    if (lv == 0)
-      return *this;
-    if (!resize(lv + 1))
-      eblthrow("failed to resize string");
-    strcpy(s, v);
-    return *this;
-  }
-  
-  string& string::operator<<(const string &v) {
-    *this << v.s;
-    return *this;
-  }
-  
-  string& string::operator+=(const char *v) {
-    *this << v;
-    return *this;
-  }
-  
-  string& string::operator+=(char *v) {
-    *this << v;
-    return *this;
-  }
-  
-  string& string::operator+=(const string &v) {
-    *this << v.s;
-    return *this;
-  }
-
-  string& string::operator<<(char *v) {
-    if (v == NULL)
-      return *this;
-    size_t lv = strlen(v), le = size();
-    if (lv == 0)
-      return *this;
-    lv += le + 1;
-    if (!resize(lv))
-      eblthrow("failed to resize string");
-    strcpy(s + le, v);
-    return *this;
-  }
-
-  string& string::operator<<(const char *v) {
-    if (v == NULL)
-      return *this;
-    size_t lv = strlen(v), le = size();
-    if (lv == 0)
-      return *this;
-    lv += le + 1;
-    if (!resize(lv))
-      eblthrow("failed to resize string");
-    strcpy(s + le, v);
-    return *this;
-  }
-
-#define CONCAT_SPRINTF(type, specifier, type_cast)	  \
-  string& string::operator<<(type v) {			  \
-    char buf[64];					  \
-    sprintf(buf, specifier, (type_cast) v);		  \
-    *this << buf;					  \
-    return *this;					  \
-  }
-
-  CONCAT_SPRINTF(void*, "%p", void*)
-  CONCAT_SPRINTF(int, "%d", int)
-  CONCAT_SPRINTF(uint, "%u", uint)
-  CONCAT_SPRINTF(char, "%c", char)
-  CONCAT_SPRINTF(float, "%f", float)
-  CONCAT_SPRINTF(double, "%f", double)
-  CONCAT_SPRINTF(long, "%ld", long)
-  CONCAT_SPRINTF(unsigned char, "%c", unsigned char)
+CONCAT_SPRINTF(void*, "%p", void*)
+CONCAT_SPRINTF(int, "%d", int)
+CONCAT_SPRINTF(uint, "%u", uint)
+CONCAT_SPRINTF(char, "%c", char)
+CONCAT_SPRINTF(float, "%f", float)
+CONCAT_SPRINTF(double, "%f", double)
+CONCAT_SPRINTF(long, "%ld", long)
+CONCAT_SPRINTF(unsigned char, "%c", unsigned char)
 #ifndef __ANDROID__
-  CONCAT_SPRINTF(size_t, "%u", uint)
+CONCAT_SPRINTF(size_t, "%u", uint)
 #endif
-  
+
 #else // extending STL
 
-#define CONCAT_SPRINTF(type, specifier, type_cast)	  \
-  template <>						  \
-  string& operator<<(string &e, type v) {		  \
-    char buf[64];					  \
-    sprintf(buf, specifier, (type_cast) v);		  \
-    e << buf;						  \
-    return e;						  \
+#define CONCAT_SPRINTF(type, specifier, type_cast)      \
+  template <>                                           \
+  string& operator<<(string &e, type v) {               \
+    char buf[1024];                                     \
+    sprintf(buf, specifier, (type_cast) v);             \
+    e.append(buf);                                      \
+    return e;                                           \
   }
 
-  CONCAT_SPRINTF(void*, "%p", void*)
-  CONCAT_SPRINTF(const int, "%d", const int)
-  CONCAT_SPRINTF(const uint, "%u", const uint)
-  CONCAT_SPRINTF(const char, "%c", const char)
-  CONCAT_SPRINTF(const float, "%f", const float)
-  CONCAT_SPRINTF(const double, "%f", const double)
-  CONCAT_SPRINTF(const long, "%ld", const long)
-  CONCAT_SPRINTF(const unsigned char, "%c", const unsigned char)
+CONCAT_SPRINTF(void*, "%p", void*)
+CONCAT_SPRINTF(const int, "%d", const int)
+CONCAT_SPRINTF(const uint, "%u", const uint)
+CONCAT_SPRINTF(const char, "%c", const char)
+CONCAT_SPRINTF(const float, "%f", const float)
+CONCAT_SPRINTF(const double, "%f", const double)
+CONCAT_SPRINTF(const long, "%ld", const long)
+CONCAT_SPRINTF(const unsigned char, "%c", const unsigned char)
  #ifndef __ANDROID__
   CONCAT_SPRINTF(const size_t, "%u", const uint)
  #endif
-  
+
 #endif
 
-  ////////////////////////////////////////////////////////////////
-  // ostream
+////////////////////////////////////////////////////////////////
+// ostream
 
 #ifdef __ANDROID__
 
@@ -278,144 +277,143 @@ namespace std {
     LOGE(buf); buf.clear();			\
   } else if (fp == stdout) {			\
     LOGI(buf); buf.clear();			\
-  } else     
+  } else
 
 #define ANDROID_ACC(v)				\
   if (fp == stderr || fp == stdout)		\
     buf << v;					\
   else
 
-#endif	
-  
-#ifdef __NOSTL__
-  
-  // global variables
-
-  ostream cout;
-  ostream cerr(stderr);
-  t_endl endl;
-  
-  ostream::ostream(FILE *f) {
-    fp = f;
-  }
-
-  ostream::~ostream() {
-  }
-
-  ostream& ostream::operator<<(const ebl::eblexception &v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v.c_str());
-    return *this;
-  }
-  
-  ostream& ostream::operator<<(ebl::eblexception &v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v.c_str());
-    return *this;
-  }
-  
-  ostream& ostream::operator<<(const string &v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v.c_str());
-    return *this;
-  }
-  
-  ostream& ostream::operator<<(string &v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v.c_str());
-    return *this;
-  }
-  
-  ostream& ostream::operator<<(char *v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v);
-    return *this;
-  }
-
-  ostream& ostream::operator<<(const char *v) {
-    ANDROID_ACC(v)
-    fprintf(fp, "%s", v);
-    return *this;
-  }
-
-  ostream& ostream::operator<<(t_endl v) {
-    ANDROID_OUT(v)
-    fprintf(fp, "\n");
-    return *this;
-  }
-  
-#define CONCAT_FPRINTF(type, specifier, type_cast)		  \
-  ostream& ostream::operator<<(type v) {			  \
-    ANDROID_ACC(v)						  \
-    fprintf(fp, specifier, (type_cast) v);			  \
-    return *this;						  \
-  }
-
-  CONCAT_FPRINTF(void*, "%p", void*)
-  CONCAT_FPRINTF(int, "%d", int)
-  CONCAT_FPRINTF(uint, "%u", uint)
-  CONCAT_FPRINTF(char, "%c", char)
-  CONCAT_FPRINTF(float, "%f", float)
-  CONCAT_FPRINTF(double, "%f", double)
-  CONCAT_FPRINTF(short, "%d", int)
-  CONCAT_FPRINTF(long, "%ld", long)
-  CONCAT_FPRINTF(unsigned char, "%c", unsigned char)
-#ifndef __ANDROID__
-  CONCAT_FPRINTF(size_t, "%u", uint)
 #endif
-  
+
+#ifdef __NOSTL__
+
+// global variables
+
+ostream cout;
+ostream cerr(stderr);
+t_endl endl;
+
+ostream::ostream(FILE *f) {
+  fp = f;
+}
+
+ostream::~ostream() {
+}
+
+ostream& ostream::operator<<(const ebl::eblexception &v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v.c_str());
+  return *this;
+}
+
+ostream& ostream::operator<<(ebl::eblexception &v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v.c_str());
+  return *this;
+}
+
+ostream& ostream::operator<<(const string &v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v.c_str());
+  return *this;
+}
+
+ostream& ostream::operator<<(string &v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v.c_str());
+  return *this;
+}
+
+ostream& ostream::operator<<(char *v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v);
+  return *this;
+}
+
+ostream& ostream::operator<<(const char *v) {
+  ANDROID_ACC(v)
+      fprintf(fp, "%s", v);
+  return *this;
+}
+
+ostream& ostream::operator<<(t_endl v) {
+  ANDROID_OUT(v)
+      fprintf(fp, "\n");
+  return *this;
+}
+
+#define CONCAT_FPRINTF(type, specifier, type_cast)      \
+  ostream& ostream::operator<<(type v) {                \
+    ANDROID_ACC(v)                                      \
+        fprintf(fp, specifier, (type_cast) v);          \
+    return *this;                                       \
+  }
+
+CONCAT_FPRINTF(void*, "%p", void*)
+CONCAT_FPRINTF(int, "%d", int)
+CONCAT_FPRINTF(uint, "%u", uint)
+CONCAT_FPRINTF(char, "%c", char)
+CONCAT_FPRINTF(float, "%f", float)
+CONCAT_FPRINTF(double, "%f", double)
+CONCAT_FPRINTF(short, "%d", int)
+CONCAT_FPRINTF(long, "%ld", long)
+CONCAT_FPRINTF(unsigned char, "%c", unsigned char)
+#ifndef __ANDROID__
+CONCAT_FPRINTF(size_t, "%u", uint)
+#endif
+
 #endif /* __NOSTL__ */
 
-  //////////////////////////////////////////////////////////////////////////////
-  // file
+//////////////////////////////////////////////////////////////////////////////
+// file
 
-  file::file(const char *filename, const char *mode) : refcounter(0) {
-    fp = fopen(filename, mode);
-    if (!fp)
-      eblthrow("failed to open " << filename);    
-  }
+file::file(const char *filename, const char *mode) : refcounter(0) {
+  fp = fopen(filename, mode);
+  if (!fp)
+    eblthrow("failed to open " << filename);
+}
 
-  file::~file() {
-    fclose(fp);
-  }
+file::~file() {
+  fclose(fp);
+}
 
-  FILE *file::get_fp() {
-    return fp;
-  }
+FILE *file::get_fp() {
+  return fp;
+}
 
-  void file::incr_ref() {
-    refcounter++;
-  }
+void file::incr_ref() {
+  refcounter++;
+}
 
-  void file::decr_ref() {
-    if (refcounter > 0)
-      refcounter--;
-  }
+void file::decr_ref() {
+  if (refcounter > 0)
+    refcounter--;
+}
 
-  bool file::no_references() {
-    return refcounter == 0;
-  }
+bool file::no_references() {
+  return refcounter == 0;
+}
 
-  uint file::references() {
-    return refcounter;
-  }
+uint file::references() {
+  return refcounter;
+}
 
 } // namespace std
 
 namespace ebl {
-    
-  ////////////////////////////////////////////////////////////////
-  // error reporting
 
-  eblexception::eblexception() {
-  }
+////////////////////////////////////////////////////////////////
+// error reporting
 
-  eblexception::~eblexception() {
-  }
+eblexception::eblexception() {
+}
 
-  eblexception::eblexception(const std::string &s) {
-    *this << s;
-  }
+eblexception::~eblexception() {
+}
+
+eblexception::eblexception(const std::string &s) {
+  *this << s;
+}
 
 } // namespace ebl
-

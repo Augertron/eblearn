@@ -42,17 +42,15 @@
 #include "idx.h"
 #include "stl.h"
 
-using namespace std;
-
 namespace ebl {
 
   bool collide_rect(int x1, int y1, int w1, int h1,
 		    int x2, int y2, int w2, int h2) {
     int x,y,w,h;
-    x = max(x1,x2);
-    y = max(y1,y2);
-    w = min(x1+w1,x2+w2)-x;
-    h = min(y1+h1,y2+h2)-y;
+    x = std::max(x1,x2);
+    y = std::max(y1,y2);
+    w = std::min(x1+w1,x2+w2)-x;
+    h = std::min(y1+h1,y2+h2)-y;
     if (w>0 && h>0)
       return true;
     else
@@ -62,10 +60,10 @@ namespace ebl {
   double common_area(int x1, int y1, int w1, int h1,
 		     int x2, int y2, int w2, int h2) {
     int x,y,w,h;
-    x = max(x1,x2);
-    y = max(y1,y2);
-    w = min(x1+w1,x2+w2)-x;
-    h = min(y1+h1,y2+h2)-y;
+    x = std::max(x1,x2);
+    y = std::max(y1,y2);
+    w = std::min(x1+w1,x2+w2)-x;
+    h = std::min(y1+h1,y2+h2)-y;
     if((w <= 0)||(h <= 0)) return 0;
     else return (double)((w*h)/(w1*h1));
 
@@ -314,10 +312,10 @@ namespace ebl {
     double y3 = y2 + y4;
     double dcx = coeff * ( cx*ca - cy*sa);
     double dcy = coeff * ( cx*sa + cy*ca);
-    double lx = min(min(x1, x2), min(x3, x4));
-    double ly = min(min(y1, y2), min(y3, y4));
-    double rx = max(max(x1, x2), max(x3, x4));
-    double ry = max(max(y1, y2), max(y3, y4));
+    double lx = std::min(std::min(x1, x2), std::min(x3, x4));
+    double ly = std::min(std::min(y1, y2), std::min(y3, y4));
+    double rx = std::max(std::max(x1, x2), std::max(x3, x4));
+    double ry = std::max(std::max(y1, y2), std::max(y3, y4));
     wh.set((intg)(1 + rx - lx), 0);
     wh.set((intg)(1 + ry - ly), 1);
     cxcy.set(dcx - lx, 0);
@@ -347,7 +345,7 @@ namespace ebl {
     }
     return grid;
   }
-  
+
   void translation_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
     if (flow.dim(0) != 2 && flow.order() <= 1)
       eblerror("expected first dimension to be 2 and at least order 2");
@@ -360,7 +358,7 @@ namespace ebl {
     // remove grid from flow
     idx_subacc(grid, grid0, flow);
   }
-  
+
   void shear_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
     if (flow.dim(0) != 2 && flow.order() <= 1)
       eblerror("expected first dimension to be 2 and at least order 2");
@@ -373,7 +371,7 @@ namespace ebl {
     // remove grid from flow
     idx_subacc(grid, grid0, flow);
   }
-  
+
   void scale_flow(idx<float> &grid, idx<float> &flow, float h, float w) {
     if (h == 0 || w == 0) eblerror("expected non-zero scalings");
     if (grid.dim(0) != 2 && grid.order() <= 1)
@@ -398,7 +396,7 @@ namespace ebl {
     idx_copy(tmp, tmp2);
     idx<float> grid0(grid.get_idxdim());
     idx_copy(grid, grid0);
-      
+
     float rad = deg / 180 * PI;
     rot.set(cos(rad), 0, 0);
     rot.set(-sin(rad), 0, 1);
@@ -406,7 +404,7 @@ namespace ebl {
     rot.set(cos(rad), 1, 1);
     idx_m2dotm3(rot, tmp2, tmp3);
     tmp3 = tmp3.shift_dim(2, 0);
-    idx_copy(tmp3, grid);    
+    idx_copy(tmp3, grid);
     // remove grid values
     idx_subacc(grid, grid0, flow);
   }
@@ -425,21 +423,21 @@ namespace ebl {
     idx_fill(l2, (float) 1);
     idx<float> grid0(grid.get_idxdim());
     idx_copy(grid, grid0);
-      
+
     float rad = deg / 180 * PI;
     t.set(cos(rad) / sh, 0, 0);
     t.set((-sin(rad) + shh) / sh, 0, 1);
     t.set(0, 0, 2);
     // t.set(-th / sh, 0, 2);
-    
+
     t.set((sin(rad) + shw) / sw, 1, 0);
     t.set(cos(rad) / sw, 1, 1);
     t.set(0, 1, 2);
     // t.set(-tw / sw, 1, 2);
-    
+
     idx_m2dotm3(t, tmp2, tmp3);
     tmp3 = tmp3.shift_dim(2, 0);
-    idx_copy(tmp3, grid);    
+    idx_copy(tmp3, grid);
     // remove grid values
     idx_subacc(grid, grid0, flow);
   }
@@ -453,7 +451,7 @@ namespace ebl {
     idx_random(f, -.5, .5);
     idx<float> g = create_gaussian_kernel<float>(sz);
     idx_3dconvol(f, g, f2);
-    // remove grid values    
+    // remove grid values
     idx_dotcacc(f2, coeff, flow);
   }
 

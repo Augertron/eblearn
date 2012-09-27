@@ -8,6 +8,7 @@
 #include <sstream>
 
 using namespace ebl;
+using namespace std;
 
 extern string *gl_data_dir;
 extern string *gl_data_errmsg;
@@ -48,7 +49,7 @@ void detector_test::test_face() {
     idx<uint> total_saved(1);
     string processed_fname;
     uint cnt = 0;
-    
+
     dt.start();
     while (!dt.set_data(im, imagename, name, cnt)) millisleep(5);
     bool updated = false;
@@ -75,7 +76,7 @@ void detector_test::test_face() {
 //     typedef double t_net;
 //     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
 //     string mono_net = *gl_data_dir;
-//     mono_net += 
+//     mono_net +=
 //       "/norb/20040618-1628-031617-lenet7-jitt-bg-mono-demo-4082400.prm";
 //     string imgfile = *gl_data_dir;
 //     //  imgfile += "/norb/dino.jpg";
@@ -97,7 +98,7 @@ void detector_test::test_face() {
 //     idx<t_net> targets =
 //       create_target_matrix<t_net>(5, 1.0);
 //     cout << "Targets:" << endl; targets.printElems();
-    
+
 //     // parameter, network and classifier
 //     // load the previously saved weights of a trained network
 //     parameter<fs(t_net)> theparam(1);
@@ -145,7 +146,7 @@ void detector_test::test_norb_binoc() {
     //   imgfiler += "/norb/plane_right.mat";
     //   const char labels[5][10] = {"animal","human", "plane", "truck", "car"};
     //   idx<const char*> lbl(5);
-    //   int sizes[] = { 9, 6, 4, 2 };	
+    //   int sizes[] = { 9, 6, 4, 2 };
     //   idx<ubyte> left(1, 1), right(1, 1);
     //   CPPUNIT_ASSERT(load_matrix<ubyte>(left, imgfilel.c_str()) == true);
     //   CPPUNIT_ASSERT(load_matrix<ubyte>(right, imgfiler.c_str()) == true);
@@ -167,7 +168,7 @@ void detector_test::test_norb_binoc() {
     //   left = image_resize(left, 320, 240, 1);
     //   right = image_resize(right, 320, 240, 1);
     //   //idx_copy(left, right);
-    //   idx<double> res = cb.fprop(left.idx_ptr(), right.idx_ptr(), 
+    //   idx<double> res = cb.fprop(left.idx_ptr(), right.idx_ptr(),
     // 			     1, 0, 40, 1.8, 60);
     //   CPPUNIT_ASSERT(res.dim(0) == 1); // only 1 object
     //   CPPUNIT_ASSERT(res.get(0, 0) == 2); // plane
@@ -175,4 +176,3 @@ void detector_test::test_norb_binoc() {
     cerr << err << endl;
   }
 }
-

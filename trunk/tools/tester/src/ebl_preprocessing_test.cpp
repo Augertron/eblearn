@@ -10,11 +10,11 @@
 #include "libidxgui.h"
 #endif
 
-extern string *gl_data_dir;
-extern string *gl_data_errmsg;
-
 using namespace std;
 using namespace ebl;
+
+extern string *gl_data_dir;
+extern string *gl_data_errmsg;
 
 void ebl_preprocessing_test::setUp() {
 }
@@ -33,48 +33,48 @@ void ebl_preprocessing_test::test_resizing() {
   idx<float> imbird = load_image<float>(path);
   bool glob_norm = false;
   idxdim kd(9, 9), ind(100, 300), kd5(5, 5);
-  rgb_to_yn_module<fs(float)> pp(kd, false, WSTD_NORM, glob_norm);
-  rgb_to_yn_module<fs(float)> ppl(kd, true, LAPLACIAN_NORM, glob_norm);
-  rgb_to_yn_module<fs(float)> pp5(kd5, false, WSTD_NORM, glob_norm);
-  rgb_to_ynuv_module<fs(float)> ppuv(kd, false, WSTD_NORM, glob_norm);
-  rgb_to_ynuv_module<fs(float)> ppuv5(kd5, false, WSTD_NORM, glob_norm);
-  rgb_to_y_module<fs(float)> ppy;
-  rgb_to_yuv_module<fs(float)> ppyuv;
-  rgb_to_hp_module<fs(float)> pph(kd);
-  resizepp_module<fs(float)> mean_rspp(ind, MEAN_RESIZE, &pp);
-  resizepp_module<fs(float)> bil_rspp(ind, BILINEAR_RESIZE, &pp);
-  resizepp_module<fs(float)> gaus_rspp(ind, GAUSSIAN_RESIZE, &pp);
-  resizepp_module<fs(float)> mean(ind, MEAN_RESIZE, NULL);
-  resizepp_module<fs(float)> bil(ind, BILINEAR_RESIZE, NULL);
-  resizepp_module<fs(float)> gaus(ind, GAUSSIAN_RESIZE, NULL);
+  rgb_to_yn_module<float> pp(kd, false, WSTD_NORM, glob_norm);
+  rgb_to_yn_module<float> ppl(kd, true, LAPLACIAN_NORM, glob_norm);
+  rgb_to_yn_module<float> pp5(kd5, false, WSTD_NORM, glob_norm);
+  rgb_to_ynuv_module<float> ppuv(kd, false, WSTD_NORM, glob_norm);
+  rgb_to_ynuv_module<float> ppuv5(kd5, false, WSTD_NORM, glob_norm);
+  rgb_to_y_module<float> ppy;
+  rgb_to_yuv_module<float> ppyuv;
+  rgb_to_hp_module<float> pph(kd);
+  resizepp_module<float> mean_rspp(ind, MEAN_RESIZE, &pp);
+  resizepp_module<float> bil_rspp(ind, BILINEAR_RESIZE, &pp);
+  resizepp_module<float> gaus_rspp(ind, GAUSSIAN_RESIZE, &pp);
+  resizepp_module<float> mean(ind, MEAN_RESIZE, NULL);
+  resizepp_module<float> bil(ind, BILINEAR_RESIZE, NULL);
+  resizepp_module<float> gaus(ind, GAUSSIAN_RESIZE, NULL);
   idxdim lpd(192, 192);
   midxdim mlpd(lpd);
-  laplacian_pyramid_module<fs(float)> lp5(3, mlpd, MEAN_RESIZE, &ppyuv);
-  // laplacian_pyramid_module<fs(float)>
+  laplacian_pyramid_module<float> lp5(3, mlpd, MEAN_RESIZE, &ppyuv);
+  // laplacian_pyramid_module<float>
   //   lp5l(3, lpd, MEAN_RESIZE, &ppy, false, NULL, false, true);
-  // pyramid_module<fs(float)> lp5(3, .5, lpd, MEAN_RESIZE, &pplw);
-  // pyramid_module<fs(float)> lp5l(3, .5, lpd, MEAN_RESIZE, &ppl);
-  pyramid_module<fs(float)> pyr(3, .5, lpd, MEAN_RESIZE, &ppuv);
-  pyramid_module<fs(float)> pyr5(3, .5, lpd, MEAN_RESIZE, &ppuv5);
+  // pyramid_module<float> lp5(3, .5, lpd, MEAN_RESIZE, &pplw);
+  // pyramid_module<float> lp5l(3, .5, lpd, MEAN_RESIZE, &ppl);
+  pyramid_module<float> pyr(3, .5, lpd, MEAN_RESIZE, &ppuv);
+  pyramid_module<float> pyr5(3, .5, lpd, MEAN_RESIZE, &ppuv5);
   // barn
   im = im.shift_dim(2, 0);
-  fstate_idx<float> in(im.get_idxdim()), out(1, 1, 1);
-  idx_copy(im, in.x);
+  state<float> in(im.get_idxdim()), out(1, 1, 1);
+  idx_copy(im, in);
   im = im.shift_dim(0, 2);
   pp.fprop(in, out);
-  idx<float> im2 = out.x.shift_dim(0, 2);
+  idx<float> im2 = out.shift_dim(0, 2);
   im2 = idx_copy(im2);
   ppuv.fprop(in, out);
-  idx<float> im3 = out.x.shift_dim(0, 2);
+  idx<float> im3 = out.shift_dim(0, 2);
   im3 = idx_copy(im3);
   bil_rspp.fprop(in, out);
-  idx<float> im4 = out.x.shift_dim(0, 2);
+  idx<float> im4 = out.shift_dim(0, 2);
   im4 = idx_copy(im4);
   gaus_rspp.fprop(in, out);
-  idx<float> im5 = out.x.shift_dim(0, 2);
+  idx<float> im5 = out.shift_dim(0, 2);
   im5 = idx_copy(im5);
   mean_rspp.fprop(in, out);
-  idx<float> im6 = out.x.shift_dim(0, 2);
+  idx<float> im6 = out.shift_dim(0, 2);
   im6 = idx_copy(im6);
   // barn laplacian pyramid
   // midx<float> outs(1);
@@ -95,37 +95,37 @@ void ebl_preprocessing_test::test_resizing() {
   barn_no_ar = image_region_to_rect(barn_no_ar, outr, 100, 100);
   // bird
   imbird = imbird.shift_dim(2, 0);
-  fstate_idx<float> inb(imbird.get_idxdim());
-  idx_copy(imbird, inb.x);
+  state<float> inb(imbird.get_idxdim());
+  idx_copy(imbird, inb);
   imbird = imbird.shift_dim(0, 2);
   pp.fprop(inb, out);
-  idx<float> im7 = out.x.shift_dim(0, 2);
+  idx<float> im7 = out.shift_dim(0, 2);
   im7 = idx_copy(im7);
   ppuv.fprop(inb, out);
-  idx<float> im8 = out.x.shift_dim(0, 2);
+  idx<float> im8 = out.shift_dim(0, 2);
   im8 = idx_copy(im8);
   bil_rspp.fprop(inb, out);
-  idx<float> im9 = out.x.shift_dim(0, 2);
+  idx<float> im9 = out.shift_dim(0, 2);
   im9 = idx_copy(im9);
   gaus_rspp.fprop(inb, out);
-  idx<float> im10 = out.x.shift_dim(0, 2);
+  idx<float> im10 = out.shift_dim(0, 2);
   im10 = idx_copy(im10);
   mean_rspp.fprop(inb, out);
-  idx<float> im11 = out.x.shift_dim(0, 2);
+  idx<float> im11 = out.shift_dim(0, 2);
   im11 = idx_copy(im11);
   pph.fprop(inb, out);
-  idx<float> im12 = out.x.shift_dim(0, 2);
+  idx<float> im12 = out.shift_dim(0, 2);
   im12 = idx_copy(im12);
   bil.fprop(inb, out);
-  idx<float> im13 = out.x.shift_dim(0, 2);
+  idx<float> im13 = out.shift_dim(0, 2);
   im13 = idx_copy(im13);
   gaus.fprop(inb, out);
-  idx<float> im14 = out.x.shift_dim(0, 2);
+  idx<float> im14 = out.shift_dim(0, 2);
   im14 = idx_copy(im14);
   mean.fprop(inb, out);
-  idx<float> im15 = out.x.shift_dim(0, 2);
+  idx<float> im15 = out.shift_dim(0, 2);
   im15 = idx_copy(im15);
-#ifdef __GUI__  
+#ifdef __GUI__
 #ifdef __SHOW__
   uint h = 0, w = 0;
   new_window("ebl_preprocessing_test");
@@ -140,7 +140,7 @@ void ebl_preprocessing_test::test_resizing() {
   im = image_rotate(im, angle, r.hcenter(), r.wcenter());
   r.rotate(angle);
   draw_box(r, 0, 255, 0);
-  
+
   // barn
   s = ""; s << "RGB " << im;
   draw_matrix(im, s.c_str(), h, w);
@@ -152,7 +152,7 @@ void ebl_preprocessing_test::test_resizing() {
   rect<int> inr2 = inr;
   inr2.h0 += h; inr2.w0 += w;
   draw_box(inr2, 0, 0, 255, 255, &s);
-  w += im2.dim(1) + 2;  
+  w += im2.dim(1) + 2;
   s = ""; s << "YpUV " << im3;
   draw_matrix(im3, s.c_str(), h, w, 1, 1, (float)-1, (float)1);
   h += im3.dim(0) + 2;
@@ -171,7 +171,7 @@ void ebl_preprocessing_test::test_resizing() {
   // rect<int> outr2 = outr;
   // outr2.h0 += h; outr2.w0 += w;
   // draw_box(outr2, 0, 0, 255, 255);
-  h += barn_no_ar.dim(0) + 2;  
+  h += barn_no_ar.dim(0) + 2;
   w = 0;
   // laplacian pyramid 5x5 global norm
   h += 15;
@@ -251,10 +251,10 @@ void ebl_preprocessing_test::test_resizing() {
   // w += imbird.dim(1) + 152;
   // gui << at(h - 15, w) << "Yp " << im7;
   // draw_matrix(im7, h, w, 1, 1, (float)-1, (float)1);
-  // w += im7.dim(1) + 152;  
+  // w += im7.dim(1) + 152;
   // gui << at(h - 15, w) << "YpUV " << im8;
   // draw_matrix(im8, h, w, 1, 1, (float)-1, (float)1);
-  // w += im8.dim(1) + 152;  
+  // w += im8.dim(1) + 152;
   // gui << at(h - 15, w) << "Hp " << im12;
   // draw_matrix(im12, h, w, 1, 1, (float)-1, (float)1);
   // h += im12.dim(0) + 2;
@@ -278,17 +278,16 @@ void ebl_preprocessing_test::test_resizing() {
   // s = ""; s << "mean " << im15;
   // draw_matrix(im15, s.c_str(), h, w, 1, 1, (float)0, (float)255);
   // h += im15.dim(0) + 2;
-  
+
 #endif
 #endif
 }
 
 void ebl_preprocessing_test::test_preprocessing_modules() {
   typedef float T;
-  typedef fstate_idx<T> Tstate;
   CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
   // create preprocessing modules
-  vector<resizepp_module<T,Tstate>*> mods;
+  vector<resizepp_module<T>*> mods;
   idxdim ker3(3, 3), ker5(5, 5), ker7(7,7), ker9(9, 9);
   midxdim kers953, kers73, kers999, kers555, kers55;
   midxdim zpads;
@@ -309,91 +308,94 @@ void ebl_preprocessing_test::test_preprocessing_modules() {
     in64(idxdim(64, 64));
   bool globnorm = true;
   bool keep_ar = true;
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker5, "bilinear", keep_ar, 3, NULL,globnorm));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker5, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  true,true,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker3, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  true,false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker5, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  true,false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker7, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  true,false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker9, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  true,false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker5, "bilinear", keep_ar, 3, NULL,globnorm,
   // 		  false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "YUV", ker5, "bilinear", keep_ar, 3, NULL,false,true));
-  // mods.push_back(create_preprocessing<T,Tstate>
+  // mods.push_back(create_preprocessing<T>
   // 		 (64, 64, "RGB", ker5, "bilinear", keep_ar, 3, NULL, globnorm));
   // const char *chans[] = { "YnUV", "YnUVn", "YnUnVn", "YUVn", "RGBn"};
   // for (uint i = 0; i < sizeof (chans) / sizeof (chans[0]); ++i) {
-  //   mods.push_back(create_preprocessing<T,Tstate>
+  //   mods.push_back(create_preprocessing<T>
   // 		   (64, 64, chans[i], ker5, "mean", keep_ar, 0, NULL, globnorm));
-  //   mods.push_back(create_preprocessing<T,Tstate>
+  //   mods.push_back(create_preprocessing<T>
   // 		   (32, 32, chans[i], ker5, "mean", keep_ar, 0, NULL, globnorm));
-  //   mods.push_back(create_preprocessing<T,Tstate>
+  //   mods.push_back(create_preprocessing<T>
   // 		   (16, 16, chans[i], ker5, "mean", keep_ar, 0, NULL, globnorm));
   // }
 
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers953, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, false, false, false, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers953, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, true, false, false, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers953, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, true, false, true, true));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers953, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, true, false, true, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers953, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, true, true, true, true));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in64, "YUV", kers555, zpads, "bilinear", keep_ar, 3, NULL,
 		  NULL, globnorm, true, false, true, true));
 
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers73, zpads, "bilinear", keep_ar, 2, NULL,
 		  NULL, globnorm, false, false, false, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers73, zpads, "bilinear", keep_ar, 2, NULL, NULL, globnorm,
   		  true, false, false, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers73, zpads, "bilinear", keep_ar, 2, NULL, NULL, globnorm,
   		  true, false, true, true));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers73, zpads, "bilinear", keep_ar, 2, NULL, NULL, globnorm,
   		  true, false, true, false));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers73, zpads, "bilinear", keep_ar, 2, NULL, NULL, globnorm,
   		  true, true, true, true));
-  mods.push_back(create_preprocessing<T,Tstate>
+  mods.push_back(create_preprocessing<T>
   		 (in48, "YUV", kers55, zpads, "bilinear", keep_ar, 2, NULL, NULL, globnorm,
   		  true, false, true, true));
-  
+
   const char *chans[] = { "YnUV", "YnUVn" };
   for (uint i = 0; i < sizeof (chans) / sizeof (chans[0]); ++i) {
-    mods.push_back(create_preprocessing<T,Tstate>
+    mods.push_back(create_preprocessing<T>
 		   (in64, chans[i], kers55, zpads, "mean", keep_ar, 0, NULL, NULL, globnorm));
-    mods.push_back(create_preprocessing<T,Tstate>
+    mods.push_back(create_preprocessing<T>
 		   (in32, chans[i], kers55, zpads, "mean", keep_ar, 0, NULL, NULL, globnorm));
-    mods.push_back(create_preprocessing<T,Tstate>
+    mods.push_back(create_preprocessing<T>
 		   (in16, chans[i], kers55, zpads, "mean", keep_ar, 0, NULL, NULL, globnorm));
   }
-  
-  uint h = 0, w = 0, wmax = 0, hmax = 0, htmp = 0;
-  int wid = -1;
+
+  uint h = 0, hmax = 0;
+#ifdef __GUI__
+  uint w = 0, wmax = 0, htmp = 0;
   T minval, maxval;
+  int wid = -1;
+#endif
   const char *files[] = { "dark.ppm", "contrast.ppm", "blurry.ppm" };
   // loop on images
   for (uint i = 0; i < sizeof (files) / sizeof (files[0]); ++i) {
@@ -404,7 +406,7 @@ void ebl_preprocessing_test::test_preprocessing_modules() {
   }
   // loop on images
   for (uint i = 0; i < sizeof (files) / sizeof (files[0]); ++i) {
-#ifdef __GUI__  
+#ifdef __GUI__
 #ifdef __SHOW__
     if (wid < 0) wid = new_window("Preprocessing modules test");
     gui << black_on_white();
@@ -413,7 +415,7 @@ void ebl_preprocessing_test::test_preprocessing_modules() {
     path << *gl_data_dir << "/signs/" << files[i];
     idx<T> im = load_image<T>(path);
     // draw original
-    
+
     // im = image_resize(im, (double) 64, (double) 64, 0);
     // //			keep_aspect_ratio ? 0 : 1, &inr, &outr);
     // im = im.select(2, 0);
@@ -430,9 +432,9 @@ void ebl_preprocessing_test::test_preprocessing_modules() {
     im = im.shift_dim(2, 0);
     w = w2;
     h = hmax;
-    Tstate in;
+    state<T> in;
     midx<T> out(1);
-    in.x = im;    
+    in = im;
     // loop on preprocessing modules
     for (uint j = 0; j < mods.size(); ++j) {
       mods[j]->fprop(in, out);

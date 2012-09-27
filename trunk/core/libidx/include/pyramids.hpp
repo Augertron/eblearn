@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -74,7 +74,7 @@ namespace ebl {
     idxdim dout(in);
     dout.setdim(d0, oi);
     dout.setdim(d1, oj);
-    idx<T> out(dout);   
+    idx<T> out(dout);
     idx_clear(out);
     if (tin.order() == 3) { // loop over each channel
       idx_bloop2(ttin, tin, T, outt, out, T) {
@@ -82,8 +82,8 @@ namespace ebl {
 	uin = uin.unfold(1, 5, 2);
 	idx_m4dotm2acc(uin, filter, outt);
       }
-    }  
-    else {      
+    }
+    else {
       idx<T> uin = tin.unfold(0, 5, 2);
       uin = uin.unfold(1, 5, 2);
       idx_m4dotm2acc(uin, filter, out); // just one channel
@@ -96,7 +96,7 @@ namespace ebl {
     if (n == 0)
       return r;
     uint h = 1+ ((1 + 2 * ((int) (r.height - 1) / 2)) - 5) / 2;
-    uint w = 1+((1 + 2 * ((int) (r.width - 1) / 2)) - 5) / 2;  
+    uint w = 1+((1 + 2 * ((int) (r.width - 1) / 2)) - 5) / 2;
     uint h0 = r.h0 / 2;
     uint w0 = r.w0 / 2;
     rect<uint> rr(h0, w0, h, w);
@@ -137,12 +137,12 @@ namespace ebl {
   template <class T>
   idx<T> gaussian_pyramid<T>::expand(idx<T> &in, uint n) {
     if (n == 0) // no more expansions
-      return in; 
+      return in;
     // only accept 2D images or 3D with channel dim to 0.
     if ((in.order() != 2) && (in.order() != 3)) {
-      cerr << "error: gaussian_pyramid only accepts 2D images ";
-      cerr << "or 3D. ";
-      cerr << "input image is " << in << endl;
+      std::cerr << "error: gaussian_pyramid only accepts 2D images ";
+      std::cerr << "or 3D. ";
+      std::cerr << "input image is " << in << std::endl;
       eblerror("unexpected image format");
     }
     int d0 = 1;
@@ -151,10 +151,10 @@ namespace ebl {
     intg ij = in.dim(d1);
     intg oi = (ii - 1) * 2 + 5;
     intg oj = (ij - 1) * 2 + 5;
-    
+
     idxdim di(in);
     di.setdim(d0, oi);
-    di.setdim(d1, oj);      
+    di.setdim(d1, oj);
     idx<T> tin(di);
     idx_clear(tin);
 
@@ -171,7 +171,7 @@ namespace ebl {
 	idx_m2extm2acc(inn, filt, uin);
       }
     }
-    else {      
+    else {
       idx<T> uin = tin.unfold(0, 5, 2);
       uin = uin.unfold(1, 5, 2);
       idx_m2extm2acc(in, filt, uin); // just one channel
@@ -191,14 +191,14 @@ namespace ebl {
     rect<uint> rr(h0, w0, h, w);
     return expand_rect(rr, n - 1);
   }
-  
+
   template <class T>
   uint gaussian_pyramid<T>::count_expansions(uint insz, uint outsz,
 						 uint &dist) {
     if (insz > outsz) {
       return 0;
     }
-    dist = (uint) abs((float)outsz - insz);
+    dist = (uint) std::abs((float)outsz - insz);
     uint newsz = (insz - 1) * 2 + 5;
     return 1 + count_expansions(newsz, outsz, dist);
   }

@@ -39,7 +39,6 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
-using namespace std;
 #endif
 
 // DUMPING /////////////////////////////////////////////////////////////////////
@@ -66,14 +65,14 @@ extern std::string dump_prefix;
     mkdir_full(n);							\
     /*    n << dump_prefix << (dump_count < 10? "00": (dump_count < 100? "0":""))*/ \
     /*  << dump_count << "_" << fname << "_" << mat << ".mat";*/	\
-    n << fname << "_" << mat << ".mat";		\
+    n << fname << "_" << mat << ".mat";                                 \
     dump_count = dump_count + 1;					\
     if (save_matrix(mat, n))						\
-      cout << "Dumped " << n << " (min " << idx_min(mat)		\
-	   << " max " << idx_max(mat) << " mean " << idx_mean(mat)	\
-	   << ")" <<endl;						\
+      std::cout << "Dumped " << n << " (min " << idx_min(mat)		\
+                << " max " << idx_max(mat) << " mean " << idx_mean(mat)	\
+                << ")" << std::endl;                                    \
     else								\
-      cerr << "Failed to dump " << n << endl;				\
+      std::cerr << "Failed to dump " << n << std::endl;                 \
   }
 
 /* #else */
@@ -106,13 +105,13 @@ extern std::string dump_prefix;
 #define MAGIC_DOUBLE_VINCENT	0x0E00
 
 namespace ebl {
-  
+
   // TODO: implement all types.
   // TODO: is check for endianess required?
 
   ////////////////////////////////////////////////////////////////
   // loading
-  
+
   //! Returns matrix from file filename. If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
@@ -124,12 +123,12 @@ namespace ebl {
   template <typename T>
     idx<T> load_matrix(const std::string &filename);
   //! Returns matrix that is the concatenation along dimension 'concat_dim'
-  //! of multiple matrices with corresponding filenames. 
+  //! of multiple matrices with corresponding filenames.
   //! If original matrix type is different
   //! than requested type, it is casted (copied) into the new type.
   //! This throws string exceptions upon errors.
   template <typename T>
-    idx<T> load_matrix(const std::vector<std::string> &filenames, 
+    idx<T> load_matrix(const std::vector<std::string> &filenames,
 		       intg concat_dim = 0);
   //! Loads a matrix from file filename into given matrix m.
   //! m if resized if necessary. Data is cast into m's type if different.
@@ -158,10 +157,10 @@ namespace ebl {
   //!   open and dynamically load each matrix when requested in the midx object.
   template <typename T>
     midx<T> load_matrices(const std::string &filename, bool ondemand = true);
-  
+
   ////////////////////////////////////////////////////////////////
   // saving
-  
+
   //! Saves a matrix m in file filename.
   //! Returns true if successful, false otherwise.
   template <typename T>
@@ -181,7 +180,7 @@ namespace ebl {
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrix(idx<T>& m, FILE *fp);
-  //! Saves a midx m into a single static matrix in file 'filename'. 
+  //! Saves a midx m into a single static matrix in file 'filename'.
   //! Returns true if successful, false otherwise.
   template <typename T>
   bool save_matrix(midx<T> m, const std::string &filename);
@@ -204,13 +203,13 @@ namespace ebl {
   template <typename T>
     bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename);
   //! Saves matrices with filenames 'filenames' in a collection of matrices
-  //! in file 'filename'. 
+  //! in file 'filename'.
   //! Returns true if successful, false otherwise.
   template <typename T>
     bool save_matrices(std::list<std::string> &filenames,
 		       const std::string &filename);
   //! Saves matrices with filenames 'filenames' in a single matrix
-  //! of size filenames.size() x (dimensions of first element) in file 
+  //! of size filenames.size() x (dimensions of first element) in file
   //! 'filename'. All matrices must have the same dimensions.
   //! Returns true if successful, false otherwise.
   template <typename T>
@@ -219,14 +218,14 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // helper functions
-  
+
   //! Set string type to a string describing the matrix type found in filename.
   //! Possible strings are: ubyte, int, float, double, long, uint,
   //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
   //! double (pascal vincent).
   //! This returns the magic number found in 'filename'.
   EXPORT int get_matrix_type(const char *filename, std::string &type);
-  //! Return the magic number associated with the matrix's type found in 
+  //! Return the magic number associated with the matrix's type found in
   //! 'filename'.
   EXPORT int get_matrix_type(const char *filename);
   //! Returns true if the file 'filename' is a matrix file.
@@ -248,4 +247,3 @@ namespace ebl {
 #include "idxIO.hpp"
 
 #endif /* IDXIO_H_ */
-

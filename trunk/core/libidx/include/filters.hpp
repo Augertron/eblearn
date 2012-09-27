@@ -81,21 +81,21 @@ namespace ebl {
 	double t=sigma_scale*sigma
 	  *sqrt(pow((double) (x-xoffset),2)
 		+ pow((double) (ymult*(y-yoffset)),2))/maxd;
-	//t=1.3*sigma*std::max(abs(x-xoffset),abs((y-yoffset)*ymult))/maxd;
+	//t=1.3*sigma*std::max(std::abs(x-xoffset),std::abs((y-yoffset)*ymult))/maxd;
 	double v=cons*(1.0-(pow(t,2)/pow(sigma,2)))
 	  *exp((-pow(t,2))/(2*pow(sigma,2)));
 	sum+=v;
 	m.set(v, x, y);
       }
     }
-    sum=abs(sum);
-    idx_dotc(m, 1/abs(sum), m);
+    sum=std::abs(sum);
+    idx_dotc(m, 1/std::abs(sum), m);
     return m;
   }
 
   template <typename T>
   idx<T> create_gaussian_kernel2(uint n, double sig) {
-    idx<T> g(n);    
+    idx<T> g(n);
     idx_fill_index(g);
     // if not odd, shift by half to get equal peaks at the center
     if (n % 2 == 0) idx_addc(g, -.5, g);
@@ -107,7 +107,7 @@ namespace ebl {
     idx_dotc(g, 1 / idx_sum(g), g);
     return g;
   }
-  
+
   template <typename T>
   idx<T> create_gaussian_kernel2(uint h, uint w, double sig) {
     if (h != w)
@@ -118,7 +118,7 @@ namespace ebl {
     idx_m1extm1(g1, g1, g2);
     return g2;
   }
-  
+
   template <typename T>
   idx<T> create_gaussian_kernel(idxdim &d, double mode) {
     // if (d.order() != 1 && d.order() != 2)
@@ -135,7 +135,7 @@ namespace ebl {
 
   template <typename T>
   idx<T> create_burt_adelson_kernel(double a) {
-    idx<T> filter(5, 5), f1d(5);      
+    idx<T> filter(5, 5), f1d(5);
     f1d.set((T) (.25 - a / 2.0), 0);
     f1d.set((T) .25, 1);
     f1d.set((T) a, 2);
@@ -152,13 +152,13 @@ namespace ebl {
     idx<T> m(n, n);
     double s = ((double)n)/4;
     T vinv;
-    
+
     if (mode == 0)
       vinv = (T) (1/(s*s));
     else
       vinv = (T) (1/(mode*s));
     //      vinv = (T) (1/(2*s));
-    
+
     T total = 0;
     int cx = n/2;
     int cy = n/2;
@@ -185,13 +185,13 @@ namespace ebl {
     uint min = MIN(h, w); // use smallest dim for gaussian
     double s = (double)(min)/4;
     T vinv;
-    
+
     if (mode == 0)
       vinv = (T) (1/(s*s));
     else
       vinv = (T) (1/(mode*s));
     //      vinv = (T) (1/(2*s));
-    
+
     T total = 0;
     int cx = min/2;
     int cy = min/2;

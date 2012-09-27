@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -44,11 +44,9 @@ using namespace boost::filesystem;
 using namespace boost;
 #endif
 
-using namespace std;
-
 namespace ebl {
 
-  //! The camera_video class interfaces with images extracted from 
+  //! The camera_video class interfaces with images extracted from
   //! a video file, grabbing all images into idx format, and also allowing
   //! to save gui outputs into video files.
   template <typename Tdata> class camera_video
@@ -82,7 +80,7 @@ namespace ebl {
 
     // members ////////////////////////////////////////////////////////
   protected:
-    float        fps_video;           //!< frames per second of video   
+    float        fps_video;           //!< frames per second of video
   };
 
 } // end namespace ebl

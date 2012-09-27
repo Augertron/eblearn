@@ -51,13 +51,13 @@ namespace ebl {
   EXPORT idx<intg> concat_tables(idx<intg> &t0, idx<intg> &t1);
   //! Return a random table from [a0 .. a - 1] to [b0 .. b - 1] with
   //! each output being connected to 'fanin' inputs.
-  EXPORT idx<intg> random_table(intg a, intg b, std::vector<intg> &fanin, 
+  EXPORT idx<intg> random_table(intg a, intg b, std::vector<intg> &fanin,
 				intg a0 = 0, intg b0 = 0);
   //! Create a table for a first convolution layer on yuv input,
   //! fully and independently connecting layer y (0) to
   //! [0 .. yend - 1], u (1) to [yend .. uend - 1] and v(2) to
   //! [uend .. vend - 1].
-  EXPORT idx<intg> yuv_table0(intg yend, intg uend, intg vend, intg yuvend, 
+  EXPORT idx<intg> yuv_table0(intg yend, intg uend, intg vend, intg yuvend,
 			     intg uvend, intg &maxend);
   //! Create a table for a first convolution layer on uv input,
   //! fully and independently connecting  u (1) to [0 .. uend - 1] and v(2) to
@@ -86,7 +86,7 @@ namespace ebl {
 				   intg &maxend);
   //! Create a table from a file with semi-colon separated csv values.
   //! for example, the contents can be 0,0; 0,1; 1,2; 3,1, 4,2; 1,5
-  EXPORT idx<intg> text_table(string filename);
+  EXPORT idx<intg> text_table(std::string filename);
 
   //! Checks if duplicate inputs exist for each output and prints
   //! a warning for each duplicate.

@@ -49,6 +49,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <iostream>
+#include <new>
 
 #ifndef NULL
 #define NULL (void*)0
@@ -74,11 +76,11 @@
 #define DEBUG_LOW(s) //std::cout << s << std::endl;
 
 // debug message
-#ifdef __DEBUG__
+#if defined(DEBUG) || defined(__DEBUG__)
 #define __DEBUG_PRINT__
 #define EDEBUG(s) std::cout << s << std::endl;
 #define EDEBUG_MAT(s, m) \
-  std::cout << s << " " << m << setprecision(20) << " min " << idx_min(m) \
+  std::cout << s << " " << m << std::setprecision(20) << " min " << idx_min(m) \
   << " max " << idx_max(m) << " mean " << idx_mean(m) << " sum " << idx_sum(m) \
   << std::endl;
 #define MEDEBUG(s) mout << s << std::endl;
@@ -104,17 +106,17 @@
 ////////////////////////////////////////////////////////////////
 // error reporting macros
 
-/* #ifdef __ANDROID__ // no exceptions */
-/* #define eblthrow(s) {					\ */
-/*     eblerror(s);					\ */
-/*   } */
-/* #else */
+#if defined(__ANDROID__) || defined(__NOEXCEPTIONS__)  // no exceptions
+#define eblthrow(s) {					\
+    eblerror(s);					\
+  }
+#else
 #define eblthrow(s) {					\
     std::string eblthrow_error;				\
     eblthrow_error << s;				\
     throw ebl::eblexception(eblthrow_error);		\
   }
-//#endif
+#endif
 
 #define eblcatch()					\
   catch(ebl::eblexception &e) {				\
@@ -124,13 +126,116 @@
     cerr << "exception: " << e << endl;			\
   }
 
-#define eblcatcherror()					\
+#ifdef __NOEXCEPTIONS__
+#define eblcatcherror()                                 \
+  catch(ebl::eblexception &e) {				\
+    eblerror("exception");                              \
+  }							\
+  catch(std::string &e) {				\
+    eblerror("exception");                              \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblerror("bad_alloc");                              \
+  }
+#define eblcatchwarn()                                  \
+  catch(ebl::eblexception &e) {				\
+    eblwarn("exception");                               \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn("exception");                               \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn("bad_alloc");                               \
+  }
+#define eblcatchwarn_msg(s)                             \
+  catch(ebl::eblexception &e) {				\
+    eblwarn(s);                                         \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn(s);                                         \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn(s << ": bad_alloc");                        \
+  }
+#define eblcatchwarn_extra(cmd)                         \
+  catch(ebl::eblexception &e) {				\
+    eblwarn("exception");                               \
+    cmd                                                 \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn("exception");                               \
+    cmd                                                 \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn("bad_alloc");                               \
+    cmd                                                 \
+  }
+#define eblcatcherror_msg(s)                             \
+  catch(ebl::eblexception &e) {                          \
+    eblerror(s);                                         \
+  }                                                      \
+  catch(std::string &e) {                                \
+    eblerror(s);                                         \
+  }                                                      \
+  catch(std::bad_alloc& ba) {                            \
+    eblerror("bad_alloc: " << s);                        \
+  }
+#else
+#define eblcatcherror()                                 \
   catch(ebl::eblexception &e) {				\
     eblerror(e);					\
   }							\
   catch(std::string &e) {				\
     eblerror(e);					\
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblerror("bad_alloc: " << ba.what());               \
   }
+#define eblcatchwarn_extra(cmd)                         \
+  catch(ebl::eblexception &e) {				\
+    eblwarn(e);                                         \
+    cmd                                                 \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn(e);                                         \
+    cmd                                                 \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn("bad_alloc: " << ba.what());                \
+    cmd                                                 \
+  }
+#define eblcatchwarn()                                  \
+  catch(ebl::eblexception &e) {				\
+    eblwarn(e);                                         \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn(e);                                         \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn("bad_alloc: " << ba.what());                \
+  }
+#define eblcatchwarn_msg(s)                             \
+  catch(ebl::eblexception &e) {				\
+    eblwarn(s << ": " << e);                            \
+  }							\
+  catch(std::string &e) {				\
+    eblwarn(s << ": " << e);                            \
+  }                                                     \
+  catch(std::bad_alloc& ba) {                           \
+    eblwarn(s << ": " << "bad_alloc: " << ba.what());   \
+  }
+#define eblcatcherror_msg(s)                                    \
+  catch(ebl::eblexception &e) {                                 \
+    eblerror(e << ": " << s);                                   \
+  }                                                             \
+  catch(std::string &e) {                                       \
+    eblerror(e << ": " << s);					\
+  }                                                             \
+  catch(std::bad_alloc& ba) {                                   \
+    eblerror("bad_alloc: " << ba.what()                         \
+             << ", " << s);                                     \
+  }
+#endif
 
 #define not_implemented() {			\
     eblerror("not implemented"); }
@@ -148,7 +253,7 @@
     std::stringstream ANDs; ANDs << info;					\
     std::string ANDs2 = ANDs.str();						\
     __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,ANDs2.c_str()); }
-#define eblerror(s) LOGE(s) 
+#define eblerror(s) LOGE(s)
 #define eblwarn(s) LOGE(s)
 
 #elif defined(__WINDOWS__) ///////////////////////////////////////////////////
@@ -160,11 +265,11 @@
     abort();								\
   }
 
-#define trace()
+#define ebltrace()
 
 #else ///////////////////////////////////////////////////
 
-#define trace() {				\
+#define ebltrace() {				\
     void *array[10];							\
     size_t size;							\
     size = backtrace(array, 10);					\
@@ -176,14 +281,14 @@
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__;		\
     std::cerr << ":" << __LINE__ << std::endl;				\
     std::cerr << "\033[1;31mStack:\033[0m" << std::endl;		\
-    trace();								\
+    ebltrace();								\
     abort();								\
   }
 #endif /* __WINDOWS__ */
 
 #ifndef __ANDROID__
 #define eblwarn(s) { std::cerr << "Warning: " << s << "." << std::endl; }
-#endif 
+#endif
 /* #ifndef MAX */
 /* # define MAX(a, b) (((a) > (b)) ? (a) : (b)) */
 /* #endif */
@@ -231,7 +336,7 @@ namespace ebl {
 
   // iterators
 #define USING_FAST_ITERS 1
-  
+
 #ifdef LIBIDX // we are inside the library
 #define IDXEXPORT EXPORT
 #else // we are outside

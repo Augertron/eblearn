@@ -33,8 +33,6 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-using namespace std;
-
 namespace ebl {
 
 } // end namespace ebl

@@ -59,14 +59,14 @@ namespace ebl {
 			      const char *name = "divisive_norm",
 			      bool across_features = true, double cgauss = 2.0,
 			      bool fsum_div = false, float fsum_split = 1.0,
-			      double epsilon = NORM_EPSILON, 
+			      double epsilon = NORM_EPSILON,
 			      double espilon2 = 0, int gpu_id_ = -1);
     //! destructor
     virtual ~cuda_divisive_norm_module();
     //! Returns a deep copy of this module.
     //! \param p If NULL, reuse current parameter space, otherwise allocate new
     //!   weights on parameter 'p'.
-    virtual cuda_divisive_norm_module<T,Tstate>* 
+    virtual cuda_divisive_norm_module<T,Tstate>*
       copy(parameter<T,Tstate> *p = NULL);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();
@@ -112,7 +112,7 @@ namespace ebl {
   //! over a local neighborhood. An input set of feature maps is locally
   //! normalized to be zero mean.
   template <typename T, class Tstate = bbstate_idx<T> >
-    class cuda_subtractive_norm_module 
+    class cuda_subtractive_norm_module
     : public subtractive_norm_module<T, Tstate> {
   public:
     //! \param kerdim The kernel dimensions.
@@ -135,7 +135,7 @@ namespace ebl {
 				 float fsum_split = 1.0, int gpu_id_ = -1,
 				 bool valid = false);
     //! destructor
-    virtual ~cuda_subtractive_norm_module();    
+    virtual ~cuda_subtractive_norm_module();
     //! Returns a deep copy of this module.
     //! \param p If NULL, reuse current parameter space, otherwise allocate new
     //!   weights on parameter 'p'.
@@ -146,7 +146,7 @@ namespace ebl {
 
     // friends
     template <typename T1, class Tstate1> friend class cuda_contrast_norm_module;
-  
+
     // members /////////////////////////////////////////////////////////////////
   protected:
     using subtractive_norm_module<T,Tstate>::param;
@@ -162,7 +162,7 @@ namespace ebl {
     using subtractive_norm_module<T,Tstate>::nfeatures;
     using subtractive_norm_module<T,Tstate>::kerdim;
     using subtractive_norm_module<T,Tstate>::across_features;//!< Norm across feats.
-    using subtractive_norm_module<T,Tstate>::cgauss; 
+    using subtractive_norm_module<T,Tstate>::cgauss;
     using subtractive_norm_module<T,Tstate>::fsum_div;
     using subtractive_norm_module<T,Tstate>::fsum_split;
     using subtractive_norm_module<T,Tstate>::mirror;
@@ -193,19 +193,19 @@ namespace ebl {
 			      bool threshold = true, bool global_norm = false,
 			      parameter<T,Tstate> *p = NULL,
 			      const char *name = "contrast_norm",
-			      bool across_features = true, 
+			      bool across_features = true,
 			      bool learn_mean = false,
 			      double cnorm = 2.0, bool fsum_div = false,
-			      float fsum_split = 1.0, 
-			      double epsilon = NORM_EPSILON, 
+			      float fsum_split = 1.0,
+			      double epsilon = NORM_EPSILON,
 			      double epsilon2 = 0, int gpu_id = -1,
 			      bool valid = false);
     //! destructor
-    virtual ~cuda_contrast_norm_module();    
+    virtual ~cuda_contrast_norm_module();
     //! Returns a deep copy of this module.
     //! \param p If NULL, reuse current parameter space, otherwise allocate new
     //!   weights on parameter 'p'.
-    virtual cuda_contrast_norm_module<T,Tstate>* 
+    virtual cuda_contrast_norm_module<T,Tstate>*
       copy(parameter<T,Tstate> *p = NULL);
     //! Returns a string describing this module and its parameters.
     virtual std::string describe();

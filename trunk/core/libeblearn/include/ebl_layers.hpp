@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2012 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,347 +31,372 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////////////
-  // full_layer
+// full_layer //////////////////////////////////////////////////////////////////
 
-  template <typename T, class Tstate>
-  full_layer<T,Tstate>::full_layer(parameter<T,Tstate> *p, intg indim0,
-				   intg noutputs, bool btanh_,
-				   const char *name_)
-    : module_1_1<T,Tstate>(name_), btanh(btanh_),
-      linear(p, indim0, noutputs, name_),
+template <typename T>
+full_layer<T>::full_layer(parameter<T> *p, intg indim0, intg noutputs,
+                          bool btanh_, const char *name_)
+    : module_1_1<T>(name_), btanh(btanh_), linear(p, indim0, noutputs, name_),
       adder(p, noutputs, name_),
-      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
-	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
-    // the order of sum is not yet known and this is just an internal buffer
-    // that does not need to be save in the parameter, so we allocate it later
-    sum = NULL; 
-    this->_name = name_;
-  }
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+  // the order of sum is not yet known and this is just an internal buffer
+  // that does not need to be save in the parameter, so we allocate it later
+  sum = NULL;
+  this->_name = name_;
+}
 
-  template <typename T, class Tstate>
-  full_layer<T,Tstate>::~full_layer() {
-    if (sum) delete sum;
-    if (sigmoid) delete sigmoid;
-  }
+template <typename T>
+full_layer<T>::~full_layer() {
+  if (sum) delete sum;
+  if (sigmoid) delete sigmoid;
+}
 
-  template <typename T, class Tstate>
-  void full_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // resize output and sum
-    idxdim d(in.x.spec); // use same dimensions as in
-    d.setdim(0, adder.bias.x.dim(0)); // except for the first one
-    if (!sum) sum = new Tstate(d); // we now know the order of sum
+template <typename T>
+void full_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
+  // resize output and sum
+  idxdim d(in); // use same dimensions as in
+  d.setdim(0, adder.bias.dim(0)); // except for the first one
+  if (!sum) sum = new state<T>(d); // we now know the order of sum
 
-    // fprop
-    linear.fprop(in, *sum);
-    adder.fprop(*sum, *sum);
-    sigmoid->fprop(*sum, out);
-  }
+  // fprop
+  linear.fprop1(in, *sum);
+  adder.fprop1(*sum, *sum);
+  sigmoid->fprop1(*sum, out);
+}
 
-  template <typename T, class Tstate>
-  void full_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->dx);
-    sigmoid->bprop(*sum, out);
-    adder.bprop(*sum, *sum);
-    linear.bprop(in, *sum);
-  }
+template <typename T>
+void full_layer<T>::bprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  sum->resize_b(); // make sure backward tensors are allocated
+  // backprpo
+  idx_clear(sum->b[0]);
+  sigmoid->bprop1(*sum, out);
+  adder.bprop1(*sum, *sum);
+  linear.bprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void full_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->ddx);
-    sigmoid->bbprop(*sum, out);
-    adder.bbprop(*sum, *sum);
-    linear.bbprop(in, *sum);
-  }
+template <typename T>
+void full_layer<T>::bbprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  sum->resize_bb(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(sum->bb[0]);
+  sigmoid->bbprop1(*sum, out);
+  adder.bbprop1(*sum, *sum);
+  linear.bbprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void full_layer<T,Tstate>::forget(forget_param_linear &fp) {
-    linear.forget(fp);
-    adder.forget(fp);
-  }
+template <typename T>
+void full_layer<T>::forget(forget_param_linear &fp) {
+  linear.forget(fp);
+  adder.forget(fp);
+}
 
-  template <typename T, class Tstate>
-  fidxdim full_layer<T,Tstate>::fprop_size(fidxdim &isize) {
-    return linear.fprop_size(isize);
-  }
+template <typename T>
+fidxdim full_layer<T>::fprop_size(fidxdim &isize) {
+  return linear.fprop_size(isize);
+}
 
-  template <typename T, class Tstate>
-  idxdim full_layer<T,Tstate>::bprop_size(const idxdim &osize) {
-    return linear.bprop_size(osize);
-  }
+template <typename T>
+idxdim full_layer<T>::bprop_size(const idxdim &osize) {
+  return linear.bprop_size(osize);
+}
 
-  template <typename T, class Tstate>
-  full_layer<T,Tstate>* full_layer<T,Tstate>::copy() {
-    // allocate
-    full_layer<T,Tstate>* l2 =
-      new full_layer<T,Tstate>(NULL, linear.w.x.dim(1), linear.w.x.dim(0),
-			       btanh);
-    // copy data
-    idx_copy(linear.w.x, l2->linear.w.x);
-    idx_copy(adder.bias.x, l2->adder.bias.x);
-    return l2;
-  }
+template <typename T>
+full_layer<T>* full_layer<T>::copy() {
+  // allocate
+  full_layer<T>* l2 = new full_layer<T>(NULL, linear.w.dim(1), linear.w.dim(0),
+                                        btanh);
+  // copy data
+  idx_copy(linear.w, l2->linear.w);
+  idx_copy(adder.bias, l2->adder.bias);
+  return l2;
+}
 
-  template <typename T, class Tstate>
-  std::string full_layer<T,Tstate>::describe() {
-    std::string s;
-    s << "fully connected layer " << this->name() << " composed of a linear "
-      << "module: " << linear.describe() << ", a bias module: "
-      << adder.describe();
-    if (sigmoid) s << ", and a sigmoid module: " << sigmoid->describe();
-    return s;
-  }
-    
-  ////////////////////////////////////////////////////////////////
-  // convolution_layer
+template <typename T>
+std::string full_layer<T>::describe() {
+  std::string s;
+  s << "fully connected layer " << this->name() << " composed of a linear "
+    << "module: " << linear.describe() << ", a bias module: "
+    << adder.describe();
+  if (sigmoid) s << ", and a sigmoid module: " << sigmoid->describe();
+  return s;
+}
 
-  template <typename T, class Tstate>
-  convolution_layer<T,Tstate>::
-  convolution_layer(parameter<T,Tstate> *p, idxdim &ker, idxdim &stride,
-		    idx<intg> &tbl, bool btanh_, const char *name_) 
-    : module_1_1<T,Tstate>(name_), btanh(btanh_),
-      convol(p, ker, stride, tbl, name_), 
+// convolution_layer ///////////////////////////////////////////////////////////
+
+template <typename T>
+convolution_layer<T>::
+convolution_layer(parameter<T> *p, idxdim &ker, idxdim &stride,
+                  idx<intg> &tbl, bool btanh_, const char *name_)
+    : module_1_1<T>(name_), btanh(btanh_),
+      convol(p, ker, stride, tbl, name_),
       adder(p, convol.thickness, name_),
-      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
-	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
-    sum = NULL;
-    this->_name = name_;
-  }
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+  sum = NULL;
+  this->_name = name_;
+}
 
-  template <typename T, class Tstate>
-  convolution_layer<T,Tstate>::~convolution_layer() {
-    if (sum) delete sum;
-    if (sigmoid) delete sigmoid;
-  }
+template <typename T>
+convolution_layer<T>::~convolution_layer() {
+  if (sum) delete sum;
+  if (sigmoid) delete sigmoid;
+}
 
-  template <typename T, class Tstate>
-  void convolution_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // 1. allocate sum
-    idxdim d(in.x.spec); // use same dimensions as in
-    if (!sum) sum = new Tstate(d);
+template <typename T>
+void convolution_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
+  // 1. allocate sum
+  idxdim d(in); // use same dimensions as in
+  if (!sum) sum = new state<T>(d);
 
-    // 2. fprop
-    //    sum->clear();
-    convol.fprop(in, *sum);
-    adder.fprop(*sum, *sum);
-    sigmoid->fprop(*sum, out);
-  }
+  // 2. fprop
+  convol.fprop1(in, *sum);
+  adder.fprop1(*sum, *sum);
+  sigmoid->fprop1(*sum, out);
+}
 
-  template <typename T, class Tstate>
-  void convolution_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->dx);
-    sigmoid->bprop(*sum, out);
-    adder.bprop(*sum, *sum);
-    convol.bprop(in, *sum);
-  }
+template <typename T>
+void convolution_layer<T>::bprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  sum->resize_b(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(sum->b[0]);
+  sigmoid->bprop1(*sum, out);
+  adder.bprop1(*sum, *sum);
+  convol.bprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void convolution_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->ddx);
-    sigmoid->bbprop(*sum, out);
-    adder.bbprop(*sum, *sum);
-    convol.bbprop(in, *sum);
-  }
+template <typename T>
+void convolution_layer<T>::bbprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  sum->resize_bb(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(sum->bb[0]);
+  sigmoid->bbprop1(*sum, out);
+  adder.bbprop1(*sum, *sum);
+  convol.bbprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void convolution_layer<T,Tstate>::forget(forget_param_linear &fp) {
-    convol.forget(fp);
-    adder.forget(fp);
-  }
+template <typename T>
+void convolution_layer<T>::forget(forget_param_linear &fp) {
+  convol.forget(fp);
+  adder.forget(fp);
+}
 
-  template <typename T, class Tstate>
-  fidxdim convolution_layer<T,Tstate>::fprop_size(fidxdim &isize) {
-    return convol.fprop_size(isize);
-  }
+template <typename T>
+fidxdim convolution_layer<T>::fprop_size(fidxdim &isize) {
+  return convol.fprop_size(isize);
+}
 
-  template <typename T, class Tstate>
-  fidxdim convolution_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
-    return convol.bprop_size(osize);
-  }
+template <typename T>
+fidxdim convolution_layer<T>::bprop_size(const fidxdim &osize) {
+  return convol.bprop_size(osize);
+}
 
-  template <typename T, class Tstate>
-  convolution_layer<T,Tstate>* convolution_layer<T,Tstate>::copy() {
-    // allocate
-    convolution_layer<T,Tstate> *l2 = new convolution_layer<T,Tstate>
+template <typename T>
+convolution_layer<T>* convolution_layer<T>::copy() {
+  // allocate
+  convolution_layer<T> *l2 = new convolution_layer<T>
       (NULL, convol.ker, convol.stride, convol.table, btanh);
-    // copy data
-    idx_copy(convol.kernel.x, l2->convol.kernel.x);
-    idx_copy(adder.bias.x, l2->adder.bias.x);
-    return l2;
-  }
+  // copy data
+  idx_copy(convol.kernel, l2->convol.kernel);
+  idx_copy(adder.bias, l2->adder.bias);
+  return l2;
+}
 
-  ////////////////////////////////////////////////////////////////
-  // convabsnorm_layer
+// convabsnorm_layer ///////////////////////////////////////////////////////////
 
-  template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>::convabsnorm_layer(parameter<T,Tstate> *p, 
-                                                 intg kerneli, intg kernelj,
-                                                 intg stridei_, intg stridej_,
-                                                 idx<intg> &tbl, bool mirror, bool btanh_,
-                                                 const char *name_) 
-    : module_1_1<T,Tstate>(name_), btanh(btanh_),
+template <typename T>
+convabsnorm_layer<T>::convabsnorm_layer(parameter<T> *p,
+                                        intg kerneli, intg kernelj,
+                                        intg stridei_, intg stridej_,
+                                        idx<intg> &tbl, bool mirror, bool btanh_,
+                                        const char *name_)
+    : module_1_1<T>(name_), btanh(btanh_),
       lconv(p, kerneli, kernelj, stridei_, stridej_, tbl, btanh_, name_),
       abs(), norm(kerneli, kernelj, lconv.convol.thickness, mirror),
       tmp(NULL), tmp2(NULL) {
-    this->_name = name_;
-  }
+  this->_name = name_;
+}
 
-  template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>::~convabsnorm_layer() {
-    if (tmp) delete tmp;
-    if (tmp2) delete tmp2;
-  }
+template <typename T>
+convabsnorm_layer<T>::~convabsnorm_layer() {
+  if (tmp) delete tmp;
+  if (tmp2) delete tmp2;
+}
 
-  template <typename T, class Tstate>
-  void convabsnorm_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // 1. resize tmp
-    idxdim d(in.x.spec); // use same dimensions as in
-    d.setdim(0, lconv.convol.thickness); // except for the first one
-    if (!tmp) tmp = new Tstate(d);
-    if (!tmp2) tmp2 = new Tstate(d);
+template <typename T>
+void convabsnorm_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
+  // 1. resize tmp
+  idxdim d(in); // use same dimensions as in
+  d.setdim(0, lconv.convol.thickness); // except for the first one
+  if (!tmp) tmp = new state<T>(d);
+  if (!tmp2) tmp2 = new state<T>(d);
 
-    // 2. fprop
-    // tmp->clear();
-    // tmp2->clear();
-    lconv.fprop(in, *tmp);
-    abs.fprop(*tmp, *tmp2);
-    norm.fprop(*tmp2, out);
-  }
+  // 2. fprop
+  // tmp->clear();
+  // tmp2->clear();
+  lconv.fprop1(in, *tmp);
+  abs.fprop1(*tmp, *tmp2);
+  norm.fprop1(*tmp2, out);
+}
 
-  template <typename T, class Tstate>
-  void convabsnorm_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    idx_clear(tmp->dx);
-    idx_clear(tmp2->dx);
-    norm.bprop(*tmp2, out);
-    abs.bprop(*tmp, *tmp2);
-    lconv.bprop(in, *tmp);
-  }
+template <typename T>
+void convabsnorm_layer<T>::bprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  tmp->resize_b(); // make sure backward tensors are allocated
+  tmp2->resize_b(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(tmp->b[0]);
+  idx_clear(tmp2->b[0]);
+  norm.bprop1(*tmp2, out);
+  abs.bprop1(*tmp, *tmp2);
+  lconv.bprop1(in, *tmp);
+}
 
-  template <typename T, class Tstate>
-  void convabsnorm_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
-    idx_clear(tmp->ddx);
-    idx_clear(tmp2->ddx);
-    norm.bbprop(*tmp2, out);
-    abs.bbprop(*tmp, *tmp2);
-    lconv.bbprop(in, *tmp);
-  }
+template <typename T>
+void convabsnorm_layer<T>::bbprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  tmp->resize_bb(); // make sure backward tensors are allocated
+  tmp2->resize_bb(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(tmp->bb[0]);
+  idx_clear(tmp2->bb[0]);
+  norm.bbprop1(*tmp2, out);
+  abs.bbprop1(*tmp, *tmp2);
+  lconv.bbprop1(in, *tmp);
+}
 
-  template <typename T, class Tstate>
-  void convabsnorm_layer<T,Tstate>::forget(forget_param_linear &fp) {
-    lconv.forget(fp);
-  }
+template <typename T>
+void convabsnorm_layer<T>::forget(forget_param_linear &fp) {
+  lconv.forget(fp);
+}
 
-  template <typename T, class Tstate>
-  fidxdim convabsnorm_layer<T,Tstate>::fprop_size(fidxdim &isize) {
-    return lconv.fprop_size(isize);
-  }
+template <typename T>
+fidxdim convabsnorm_layer<T>::fprop_size(fidxdim &isize) {
+  return lconv.fprop_size(isize);
+}
 
-  template <typename T, class Tstate>
-  fidxdim convabsnorm_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
-    return lconv.bprop_size(osize);
-  }
+template <typename T>
+fidxdim convabsnorm_layer<T>::bprop_size(const fidxdim &osize) {
+  return lconv.bprop_size(osize);
+}
 
-  template <typename T, class Tstate>
-  convabsnorm_layer<T,Tstate>* convabsnorm_layer<T,Tstate>::copy() {
-    // allocate
-    convabsnorm_layer<T,Tstate> *l2 = new convabsnorm_layer<T,Tstate>
+template <typename T>
+convabsnorm_layer<T>* convabsnorm_layer<T>::copy() {
+  // allocate
+  convabsnorm_layer<T> *l2 = new convabsnorm_layer<T>
       (NULL, lconv.convol.ker, lconv.convol.stride, lconv.convol.table,
        norm.mirror, btanh);
-    // copy data
-    idx_copy(lconv.convol.kernel.x, l2->lconv.convol.kernel.x);
-    idx_copy(lconv.adder.bias.x, l2->lconv.adder.bias.x);
-    return l2;
-  }
+  // copy data
+  idx_copy(lconv.convol.kernel, l2->lconv.convol.kernel);
+  idx_copy(lconv.adder.bias, l2->lconv.adder.bias);
+  return l2;
+}
 
-  ////////////////////////////////////////////////////////////////
-  // subsampling_layer
+// subsampling_layer ///////////////////////////////////////////////////////////
 
-  template <typename T, class Tstate>
-  subsampling_layer<T,Tstate>::
-  subsampling_layer(parameter<T,Tstate> *p, uint thickness, idxdim &kernel,
-		    idxdim &stride, bool btanh_, const char *name_)
-    : module_1_1<T,Tstate>(name_), btanh(btanh_),
+template <typename T>
+subsampling_layer<T>::
+subsampling_layer(parameter<T> *p, uint thickness, idxdim &kernel,
+                  idxdim &stride, bool btanh_, const char *name_)
+    : module_1_1<T>(name_), btanh(btanh_),
       subsampler(p, thickness, kernel, stride, name_),
       adder(p, thickness, name_),
-      sigmoid(btanh_ ? (module_1_1<T,Tstate>*) new tanh_module<T,Tstate>()
-	      : (module_1_1<T,Tstate>*) new stdsigmoid_module<T,Tstate>()) {
-    sum = NULL;
-    this->_name = name_;
-  }
+      sigmoid(btanh_ ? (module_1_1<T>*) new tanh_module<T>()
+	      : (module_1_1<T>*) new stdsigmoid_module<T>()) {
+  sum = NULL;
+  this->_name = name_;
+}
 
-  template <typename T, class Tstate>
-  subsampling_layer<T,Tstate>::~subsampling_layer() {
-    if (sum) delete sum;
-    if (sigmoid) delete sigmoid;
-  }
+template <typename T>
+subsampling_layer<T>::~subsampling_layer() {
+  if (sum) delete sum;
+  if (sigmoid) delete sigmoid;
+}
 
-  template <typename T, class Tstate>
-  void subsampling_layer<T,Tstate>::fprop(Tstate &in, Tstate &out) {
-    // 1. resize sum
-    idxdim d(in.x.spec); // use same dimensions as in
-    d.setdim(0, subsampler.thickness); // except for the first one
-    if (!sum) sum = new Tstate(d);
+template <typename T>
+void subsampling_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
+  // 1. resize sum
+  idxdim d(in); // use same dimensions as in
+  d.setdim(0, subsampler.thickness); // except for the first one
+  if (!sum) sum = new state<T>(d);
 
-    // 2. fprop
-    subsampler.fprop(in, *sum);
-    adder.fprop(*sum, *sum);
-    sigmoid->fprop(*sum, out);
-  }
+  // 2. fprop
+  subsampler.fprop1(in, *sum);
+  adder.fprop1(*sum, *sum);
+  sigmoid->fprop1(*sum, out);
+}
 
-  template <typename T, class Tstate>
-  void subsampling_layer<T,Tstate>::bprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->dx);
-    sigmoid->bprop(*sum, out);
-    adder.bprop(*sum, *sum);
-    subsampler.bprop(in, *sum);
-  }
+template <typename T>
+void subsampling_layer<T>::bprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  sum->resize_b(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(sum->b[0]);
+  sigmoid->bprop1(*sum, out);
+  adder.bprop1(*sum, *sum);
+  subsampler.bprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void subsampling_layer<T,Tstate>::bbprop(Tstate &in, Tstate &out) {
-    idx_clear(sum->ddx);
-    sigmoid->bbprop(*sum, out);
-    adder.bbprop(*sum, *sum);
-    subsampler.bbprop(in, *sum);
-  }
+template <typename T>
+void subsampling_layer<T>::bbprop1(state<T> &in, state<T> &out) {
+  // checks
+  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  sum->resize_bb(); // make sure backward tensors are allocated
+  // backprop
+  idx_clear(sum->bb[0]);
+  sigmoid->bbprop1(*sum, out);
+  adder.bbprop1(*sum, *sum);
+  subsampler.bbprop1(in, *sum);
+}
 
-  template <typename T, class Tstate>
-  void subsampling_layer<T,Tstate>::forget(forget_param_linear &fp) {
-    subsampler.forget(fp);
-    adder.forget(fp);
-  }
+template <typename T>
+void subsampling_layer<T>::forget(forget_param_linear &fp) {
+  subsampler.forget(fp);
+  adder.forget(fp);
+}
 
-  template <typename T, class Tstate>
-  fidxdim subsampling_layer<T,Tstate>::fprop_size(fidxdim &isize) {
-    return subsampler.fprop_size(isize);
-  }
+template <typename T>
+fidxdim subsampling_layer<T>::fprop_size(fidxdim &isize) {
+  return subsampler.fprop_size(isize);
+}
 
-  template <typename T, class Tstate>
-  fidxdim subsampling_layer<T,Tstate>::bprop_size(const fidxdim &osize) {
-    return subsampler.bprop_size(osize);
-  }
+template <typename T>
+fidxdim subsampling_layer<T>::bprop_size(const fidxdim &osize) {
+  return subsampler.bprop_size(osize);
+}
 
-  template <typename T, class Tstate>
-  subsampling_layer<T,Tstate>* subsampling_layer<T,Tstate>::copy() {
-    // allocate
-    subsampling_layer<T,Tstate> *l2 =
-      new subsampling_layer<T,Tstate>(NULL, subsampler.thickness,
-				      subsampler.kernel, subsampler.stride,
-				      btanh);
-    // copy data
-    idx_copy(subsampler.coeff.x, l2->subsampler.coeff.x);
-    idx_copy(adder.bias.x, l2->adder.bias.x);
-    return l2;
-  }
+template <typename T>
+subsampling_layer<T>* subsampling_layer<T>::copy() {
+  // allocate
+  subsampling_layer<T> *l2 =
+      new subsampling_layer<T>(NULL, subsampler.thickness, subsampler.kernel,
+                               subsampler.stride, btanh);
+  // copy data
+  idx_copy(subsampler.coeff, l2->subsampler.coeff);
+  idx_copy(adder.bias, l2->adder.bias);
+  return l2;
+}
 
-  template <typename T, class Tstate>
-  std::string subsampling_layer<T, Tstate>::describe() {
-    std::string desc;
-    desc << "subsampling layer " << this->name() << " with thickness "
-	 << subsampler.thickness << ", kernel "
-	 << subsampler.kernel << ", stride " << subsampler.stride
-	 << ", bias " << adder.bias.x
-	 << " and non linearity " << sigmoid->name();
-    return desc;
-  }
-  
+template <typename T>
+std::string subsampling_layer<T>::describe() {
+  std::string desc;
+  desc << "subsampling layer " << this->name() << " with thickness "
+       << subsampler.thickness << ", kernel "
+       << subsampler.kernel << ", stride " << subsampler.stride
+       << ", bias " << adder.bias.f[0]
+       << " and non linearity " << sigmoid->name();
+  return desc;
+}
+
 } // end namespace ebl

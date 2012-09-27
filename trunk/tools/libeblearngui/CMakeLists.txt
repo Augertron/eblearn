@@ -8,9 +8,9 @@
 ################################################################################
 
 include_directories (include)
-include_directories(${LIBEBLEARN_INCLUDE_DIR})
 include_directories(${LIBIDX_INCLUDE_DIR})
 include_directories(${LIBIDXGUI_INCLUDE_DIR})
+include_directories(${LIBEBLEARN_INCLUDE_DIR})
 SET(LIBEBLEARNGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 
 IF (QT_FOUND) #-----------------------------------------------------------------

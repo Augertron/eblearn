@@ -34,80 +34,80 @@
 
 namespace ebl {
 
-  // smart pointer /////////////////////////////////////////////////////////////
+// smart pointer /////////////////////////////////////////////////////////////
 
-  smart_pointer::smart_pointer() {
-    refcount = 0;
+smart_pointer::smart_pointer() {
+  refcount = 0;
 #ifdef __DEBUGMEM__
-    debug_name = "smart_pointer";
+  debug_name = "smart_pointer";
 #endif
 #ifdef __DEBUGMEM__
-    spointers++;
+  spointers++;
 #endif
-  }
-  
-  smart_pointer::smart_pointer(const smart_pointer &other) {
-    refcount = 0;
+}
+
+smart_pointer::smart_pointer(const smart_pointer &other) {
+  refcount = 0;
 #ifdef __DEBUG__
-    debug_name = "smart_pointer";
+  debug_name = "smart_pointer";
 #endif
 #ifdef __DEBUGMEM__
-    spointers++;
+  spointers++;
 #endif
-  }
-  
-  smart_pointer::~smart_pointer() {
+}
+
+smart_pointer::~smart_pointer() {
 #ifdef __DEBUGMEM__
-    spointers--;
+  spointers--;
 #endif
-    if (refcount > 0)
-      eblerror("trying to delete an object that has " << refcount
-	       << " references to it");
-  }
-  
-  // reference counting ////////////////////////////////////////////////////////
-  
-  int smart_pointer::unlock() {
-    refcount--;
+  if (refcount > 0)
+    eblerror("trying to delete an object that has " << refcount
+             << " references to it");
+}
+
+// reference counting ////////////////////////////////////////////////////////
+
+int smart_pointer::unlock() {
+  refcount--;
 #ifdef __DEBUGMEM__
-    locks--;
+  locks--;
 #endif
-// #ifdef __DEBUG__
-//     std::cerr << debug_name << " " << this 
-// 	      << " smart_pointer::unlock: refcount = " << refcount;
-//     if (refcount == 0) std::cerr << " (deleting)";
-//     std::cerr << std::endl;
-// #endif
-    if (refcount < 0) {
-      eblerror("idx negative reference counter: " << refcount);
-      return refcount;
-    } else {
-      if (refcount == 0) {
-	DEBUG_LOW("------------ deleting " << this);// << " (" << *this << ")");
-	delete this;
-	return 0;
+  // #ifdef __DEBUG__
+  //     std::cerr << debug_name << " " << this
+  // 	      << " smart_pointer::unlock: refcount = " << refcount;
+  //     if (refcount == 0) std::cerr << " (deleting)";
+  //     std::cerr << std::endl;
+  // #endif
+      if (refcount < 0) {
+        eblerror("idx negative reference counter: " << refcount);
+        return refcount;
       } else {
-	return refcount;
+        if (refcount == 0) {
+          DEBUG_LOW("------------ deleting " << this);// << " (" << *this << ")");
+          delete this;
+          return 0;
+        } else {
+          return refcount;
+        }
       }
-    }
-  }
+}
 
-  int smart_pointer::lock() {
+int smart_pointer::lock() {
 #ifdef __DEBUGMEM__
-    locks++;
+  locks++;
 #endif
-// #ifdef __DEBUG__
-//     std::cerr << debug_name << " " << this << " smart_pointer::lock: refcount="
-//    << refcount + 1 << std::endl;
-// #endif
-    return ++refcount;
-  }
+  // #ifdef __DEBUG__
+  //     std::cerr << debug_name << " " << this << " smart_pointer::lock: refcount="
+  //    << refcount + 1 << std::endl;
+  // #endif
+      return ++refcount;
+}
 
-  int smart_pointer::get_count() {
-    return refcount;
-  }
-  void smart_pointer::set_count(int count) {
-    refcount=count;
-  }
+int smart_pointer::get_count() {
+  return refcount;
+}
+void smart_pointer::set_count(int count) {
+  refcount=count;
+}
 
 } // namespace ebl

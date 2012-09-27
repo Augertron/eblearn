@@ -83,7 +83,7 @@ namespace ebl {
 
     //! Returns a string describing this bbox in details.
     //! \param labels An optional vector of strings of class labels.
-    string pretty(vector<string> *labels = NULL);
+    std::string pretty(std::vector<std::string> *labels = NULL);
 
     // member variables ////////////////////////////////////////////////////////
   public:
@@ -103,7 +103,7 @@ namespace ebl {
     int		output_index;	//!< Output index of bbox.
     // input map /////////////////////////////////////////////////
     rect<float> i;        //!< Box in pyramid input space.
-    vector<rect<float> > mi;        //!< All input boxes in inputs.
+    std::vector<rect<float> > mi;        //!< All input boxes in inputs.
     rect<float> i0;        //!< Non-transformed box in pyramid input space.
     int	iheight;	//!< scaled input image height
     int	iwidth;		//!< scaled input image width
@@ -137,18 +137,18 @@ namespace ebl {
     //! using instance_id to identify parts uniquely.
     bool share_parts(bbox_parts &bbp);
     //! Return a reference to the parts vector.
-    vector<bbox_parts>& get_parts();
+    std::vector<bbox_parts>& get_parts();
   protected:
-    vector<bbox_parts> parts;
+    std::vector<bbox_parts> parts;
   };
 
-  EXPORT bbox mean_bbox(vector<bbox*> &boxes, float bonus_per_bbox,
+  EXPORT bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox,
 			int classid);
 
   //! bbox stream operator.
   EXPORT std::ostream& operator<<(std::ostream& out, const bbox& b);
   //! bbox stream operator.
-  EXPORT string& operator<<(string& s, const bbox& b);
+  EXPORT std::string& operator<<(std::string& s, const bbox& b);
 
   // bboxes ////////////////////////////////////////////////////////////////////
 
@@ -158,7 +158,7 @@ namespace ebl {
   public:
     //! Initialize parameters.
     //! \param saving_type Determines the formats save() will save data.
-    bboxes(t_bbox_saving saving_type = bbox_all, string *outdir_ = NULL,
+    bboxes(t_bbox_saving saving_type = bbox_all, std::string *outdir_ = NULL,
 	   std::ostream &out = std::cout, std::ostream &err = std::cerr);
     //! Destructor. Delete bbox if own_boxes is true.
     virtual ~bboxes();
@@ -169,16 +169,16 @@ namespace ebl {
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
-    void new_group(idxdim &dims, string *name = NULL,
+    void new_group(idxdim &dims, std::string *name = NULL,
 			  int index = -1);
 
     //! Return an entire vector of pointers to bbox for group with name
     //! 'name'. This throws an exception if the group is not found.
-    bboxes* get_group(const string &name);
+    bboxes* get_group(const std::string &name);
 
     //! Return the image dimensions associated with a group of bbox with
     //! name 'name'. This throws an exception if the group is not found.
-    idxdim get_group_dims(const string &name);
+    idxdim get_group_dims(const std::string &name);
 
     //! Add a new bbox to the collection (in last group or the group with index
     //! 'index').
@@ -186,26 +186,26 @@ namespace ebl {
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
-    void add(bbox *b, idxdim &dims, string *name = NULL, int index = -1);
+    void add(bbox *b, idxdim &dims, std::string *name = NULL, int index = -1);
     //! Add a new bbox to the collection (in last group or the group with index
     //! 'index').
     //! \param dims The image size associated with this bbox.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index to order the bboxes.
     //! \param name An optional name for the new group.
-    void add(bbox &b, idxdim &dims, string *name = NULL, int index = -1);
+    void add(bbox &b, idxdim &dims, std::string *name = NULL, int index = -1);
     //! Create a new group and add a set of bbox to this group.
     //! \param dims The image size associated with this group.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index as the group's index in the vector of groups.
     //! \param name An optional name for the new group.
-    void add(bboxes &bbs, idxdim &dims, string *name = NULL, int index = -1);
+    void add(bboxes &bbs, idxdim &dims, std::string *name = NULL, int index = -1);
     //! Create a new group and add a set of bbox to this group.
     //! \param dims The image size associated with this group.
     //! \param index If negative (default), the order is the addition order,
     //!   otherwise use the index as the group's index in the vector of groups.
     //! \param name An optional name for the new group.
-    void add(vector<bbox> &bbs, idxdim &dims, string *name = NULL,
+    void add(std::vector<bbox> &bbs, idxdim &dims, std::string *name = NULL,
 	     int index = -1);
     //! Returns the subset of current bboxes that exclude bboxes in 'other'.
     bboxes exclude(bboxes &other);
@@ -213,26 +213,26 @@ namespace ebl {
     // loading /////////////////////////////////////////////////////////////////
 
     //! Load the bboxes found the file 'filename' in the eblearn bbox format.
-    void load_eblearn(const string &filename);
+    void load_eblearn(const std::string &filename);
 
     // saving //////////////////////////////////////////////////////////////////
 
     //! Save boxes using the internal parameters initialized by the constructor.
     //! \param dir Output directory. If null (default), use internal directory
     //!   initialized by the constructor.
-    void save(string *dir = NULL);
+    void save(std::string *dir = NULL);
     //! Save boxes eblearn-style in dir.
     //! \param dir Output directory. If null (default), use internal directory
     //!   initialized by the constructor.
-    void save_eblearn(string *dir = NULL);
+    void save_eblearn(std::string *dir = NULL);
     //! Save boxes caltech-style in dir.
     //! \param dir Output directory. If null (default), use internal directory
     //!   initialized by the constructor.
-    void save_caltech(string *dir = NULL);
+    void save_caltech(std::string *dir = NULL);
     //! Save boxes class-style in dir.
     //! \param dir Output directory. If null (default), use internal directory
     //!   initialized by the constructor.
-    void save_class(string *dir = NULL);
+    void save_class(std::string *dir = NULL);
 
     // sorting /////////////////////////////////////////////////////////////////
 
@@ -266,29 +266,32 @@ namespace ebl {
     // printing ////////////////////////////////////////////////////////////////
 
     //! Returns a string describing the number of bboxes and number of groups.
-    string describe();
+    std::string describe();
     //! Print each bbox with a brief description to 'mout'.
     void print();
     //! Print the saving type of boxes.
     void print_saving_type();
     //! Returns a string describing each bbox in details.
     //! \param labels An optional vector of strings of class labels.
-    string pretty(vector<string> *labels = NULL);
+    std::string pretty(std::vector<std::string> *labels = NULL);
     //! Returns a string with a short description of each bbox.
     //! \param labels A vector of strings of class labels.
-    string pretty_short(vector<string> &labels);
+    std::string pretty_short(std::vector<std::string> &labels);
     //! Returns a string with a short description of each bbox (without label
     //! strings).
-    string str();
+    std::string str();
+
+    // Making hidden operator visible.
+    using svector<bbox>::operator=;
 
     // member variables ////////////////////////////////////////////////////////
   private:
     std::ostream        	*mout;	//! output stream.
     std::ostream        	*merr;	//! error output stream.
-    vector<svector<bbox>*>	 grouped_boxes;
-    vector<string>		 group_names;
-    vector<idxdim>		 group_dims;
-    string		 	 outdir;
+    std::vector<svector<bbox>*>	 grouped_boxes;
+    std::vector<std::string>	 group_names;
+    std::vector<idxdim>		 group_dims;
+    std::string		 	 outdir;
     t_bbox_saving        	 saving_type;
   };
 

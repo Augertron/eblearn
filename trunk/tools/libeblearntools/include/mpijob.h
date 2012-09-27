@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -43,8 +43,6 @@
 
 #include "job.h"
 
-using namespace std;
-
 namespace ebl {
 
   //! Jobs to be executed in a MPI system.
@@ -62,7 +60,7 @@ namespace ebl {
 
     //! Execute job (fork and call run_child()).
     virtual void run();
-    
+
   protected:
 
     //! Execute child's code.
@@ -90,7 +88,8 @@ namespace ebl {
     //! \param resume_name If not null, resume the existing job with this name.
     //! \param resumedir If true, resume by reading existing job dirs, use global
     //!                  conf file otherwise.
-    virtual bool read_metaconf(const char *fname, const string *tstamp = NULL,
+    virtual bool read_metaconf(const char *fname,
+                               const std::string *tstamp = NULL,
 			       const char *resume_name = NULL,
 			       bool resumedir = false,
 			       bool nomax = false, int maxjobs = -1);

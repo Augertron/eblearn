@@ -34,14 +34,14 @@
 #include "utils.h"
 #include "tools_utils.h"
 
-using namespace std;
-
 #define CMD_RUN 0
 #define CMD_RUNNING 1
 #define CMD_RUNTIME 2
 #define CMD_CONF 3
 #define CMD_RESUME 4
 #define CMD_STOP 5
+
+using namespace std;
 
 namespace ebl {
 
@@ -73,13 +73,13 @@ namespace ebl {
 #ifndef __WINDOWS__
     // check that this child hasn't been finished by others
     if (check_finished()) {
-      cout << "child " << conf.get_name() 
+      cout << "child " << conf.get_name()
 	   << " is already finished, do nothing." << endl;
       return ; // already finished, do nothing
     }
     // start timer
     t.start();
-    string cmd, log, errlog;
+    std::string cmd, log, errlog;
     log << "out_" << conf.get_name() << ".log";
     errlog << "out_" << conf.get_name() << ".errlog";
     // prepare command
@@ -88,7 +88,7 @@ namespace ebl {
       cmd << " meta_conf_shortname=" << conf.get_string("meta_conf_shortname");
     // not finished, check if it has been started in the past
     if (check_started()) {
-      cout << "child " << conf.get_name() 
+      cout << "child " << conf.get_name()
 	   << " is already started but not finished, resuming." << endl;
       figure_resume_out();
       if (conf.exists("retrain_iteration") && conf.exists("retrain_weights")
@@ -96,9 +96,9 @@ namespace ebl {
 	// add retrain params at the end of job's conf
 	ofstream of(confname.c_str(), ios_base::app);
 	if (!of)
-	  eblerror("failed to open conf for appending retrain params: " 
+	  eblerror("failed to open conf for appending retrain params: "
 		   << confname);
-	of << endl 
+	of << endl
 	   << " retrain_iteration=" << conf.get_string("retrain_iteration")
 	   << endl << " retrain_weights=" << conf.get_string("retrain_weights")
 	   << endl << " retrain=" << conf.get_string("retrain") << endl;
@@ -107,7 +107,7 @@ namespace ebl {
     }
     // set classe filename if defined
     if (rconf.exists("train") || rconf.exists("train_classes")) {
-      string classesname = conf.get_output_dir();
+      std::string classesname = conf.get_output_dir();
       if (rconf.exists("train"))
 	classesname << "/" << rconf.get_string("train");
       else if (rconf.exists("train_classes"))
@@ -120,9 +120,9 @@ namespace ebl {
 	<< log << " && ((" << exe << " " << confname
 	<< " 3>&1 1>&2 2>&3 | tee /dev/tty | tee -a " << errlog
 	<< ") 3>&1 1>&2 2>&3) >> " << log << " 2>&1 && exit 0";
-    
+
     // execute child
-    string jname = basename(confname.c_str());
+    std::string jname = basename(confname.c_str());
     cout << endl << "(mpi) Executing job " << jname
 	 << " with cmd:" << endl << cmd << endl;
     int ret = std::system(cmd.c_str());
@@ -152,13 +152,13 @@ namespace ebl {
   jslots = world.size(); // number of available cpus
   ready_slots = jslots;
   id_running = -1; // no job running intially
-#endif    
+#endif
   }
-  
+
   mpijob_manager::~mpijob_manager() {
   }
-  
-  bool mpijob_manager::read_metaconf(const char *fname, const string *tstamp,
+
+  bool mpijob_manager::read_metaconf(const char *fname, const std::string *tstamp,
 				     const char *resume_name, bool resumedir,
 				     bool nomax, int maxjobs) {
     if (is_master()) { // only read metaconf if we are the master
@@ -166,13 +166,13 @@ namespace ebl {
     }
 //       mconf_fullfname = fname;
 //       size_t pos = mconf_fullfname.find_last_of('/');
-//       mconf_fname = mconf_fullfname.substr(pos == string::npos ? 0 : pos);
+//       mconf_fname = mconf_fullfname.substr(pos == std::string::npos ? 0 : pos);
 //       // read meta configuration
 //       if (!mconf.read(mconf_fullfname.c_str(), false, tstamp, false,
 // 		      resume_name))
 // 	return false;
 //       // read meta configuration as a simple configuration, to be resolved
-//       rmconf.read(mconf_fullfname.c_str(), true, tstamp, false, resume_name, 
+//       rmconf.read(mconf_fullfname.c_str(), true, tstamp, false, resume_name,
 // 		  true);
 //       // set resolved elements into unresolved mconf
 //       mconf.set_output_dir(rmconf.get_output_dir());
@@ -189,21 +189,21 @@ namespace ebl {
 // 	    confs = mconf.configurations();
 // 	  } else if (!strcmp(r, "directories")) { // determine jobs based on dir
 // 	    // list all directories that start with same dir name + _conf
-// 	    string dir = dirname(fname); 
-// 	    string patt = resume_name;
+// 	    std::string dir = dirname(fname);
+// 	    std::string patt = resume_name;
 // 	    patt << "_conf*";
 // 	    cout << "Resuming jobs based on directory " << dir
 // 		 << " and pattern " << patt << endl;
 // 	    // find dirs non recursively
-// 	    list<string> *l = find_fullfiles(dir, patt.c_str(), 
+// 	    std::list<std::string> *l = find_fullfiles(dir, patt.c_str(),
 // 					     NULL, true, false, false);
 // 	    if (!l)
 // 	      eblerror("failed to find existing job directories to resume in "
 // 		       << dir << " with pattern: " << patt);
 // 	    // for each dir, check that its conf exists and add it
-// 	    string odir = rmconf.get_output_dir();
-// 	    for (list<string>::iterator li = l->begin(); li != l->end(); ++li) {
-// 	      string c = *li;
+// 	    std::string odir = rmconf.get_output_dir();
+// 	    for (std::list<std::string>::iterator li = l->begin(); li != l->end(); ++li) {
+// 	      std::string c = *li;
 // 	      c << "/" << basename(c.c_str()) << ".conf";
 // 	      if (file_exists(c.c_str())) {
 // 		configuration con;
@@ -250,20 +250,20 @@ namespace ebl {
     return 0;
 #endif
   }
-  
+
   bool mpijob_manager::is_master() {
     return (bool) (rank == 0);
   }
 
   /////////////////////////////////////////////////////////////////////////////
   // protected members
-  
+
   void mpijob_manager::run_master() {
     cout << "Running master job." << endl;
 #ifdef __MPI__
     time.start();
     // print info
-    string prefix = "master: ";
+    std::string prefix = "master: ";
     cout << prefix << "world has " << jslots << " slots." << endl;
     cout << prefix << jobs.size() << " jobs to process." << endl;
     // ask each slave if available
@@ -344,19 +344,19 @@ namespace ebl {
 
   bool mpijob_manager::assign(uint jobid, uint slave_id) {
 #ifdef __MPI__
-    string prefix = "master: ";
-    cout << prefix << "assigning job " << jobid << " to slot " << slave_id 
+    std::string prefix = "master: ";
+    cout << prefix << "assigning job " << jobid << " to slot " << slave_id
 	 << endl;
     if (slave_id == 0) { // master
       if (id_running != -1) eblerror("already running job " << id_running);
       id_running = jobid;
-      cout << prefix << "assigned job " << jobid << " to slot " << slave_id 
+      cout << prefix << "assigned job " << jobid << " to slot " << slave_id
 	   << endl;
       // output dir is the one up where conf is
       timer t;
-      string confname = jobs[jobid]->name();
+      std::string confname = jobs[jobid]->name();
       bool resume = jobs[jobid]->resumed();
-      string outdir = dirname(confname.c_str());
+      std::string outdir = dirname(confname.c_str());
       outdir = dirname(outdir.c_str());
       configuration c;
       c.read(confname.c_str(), true, false, true, outdir.c_str());
@@ -368,22 +368,22 @@ namespace ebl {
 	   << t.elapsed() << endl;
       return true;
     } else { // slaves
-      // ask slave 
-      string confname = jobs[jobid]->name();
+      // ask slave
+      std::string confname = jobs[jobid]->name();
       bool resumed = jobs[jobid]->resumed();
       world.send(slave_id, CMD_RUN, jobid);
       world.send(slave_id, CMD_CONF, confname);
       world.send(slave_id, CMD_RESUME, resumed);
       // remember in master that this job has been started
       jobs[jobid]->force_started();
-      cout << prefix << "assigned job " << jobid << " to slot " << slave_id 
+      cout << prefix << "assigned job " << jobid << " to slot " << slave_id
 	   << endl;
       return true;
     }
-    cerr << prefix << "failed to assign job " << jobid << " to slot " 
+    cerr << prefix << "failed to assign job " << jobid << " to slot "
 	 << slave_id << endl;
 #endif
-    return false;    
+    return false;
   }
 
   void mpijob_manager::jinfos(int running[]) {
@@ -406,15 +406,15 @@ namespace ebl {
       jobs[i]->check_started();
       if (!jobs[i]->started() && !jobs[i]->finished()) unstarted++;
       if (jobs[i]->running()) nrunning++;
-      infos << i << ". pid: " << jobs[i]->getpid() << ", name: " 
-	    << jobs[i]->name() << ", status: " 
+      infos << i << ". pid: " << jobs[i]->getpid() << ", name: "
+	    << jobs[i]->name() << ", status: "
 	    << (jobs[i]->alive() ? "alive" : "dead")
 	    << ", minutes: " << jobs[i]->minutes() << endl;
     }
     cout << "Jobs alive: " << nalive << ", waiting to start: " << unstarted
 	 << " / " << jobs.size()
 	 << ", empty (MPI) job slots: " << ready_slots << ", Iteration: "
-	 << maxiter << ", elapsed: " << time.elapsed() << ", ETA: " 
+	 << maxiter << ", elapsed: " << time.elapsed() << ", ETA: "
 	 << time.eta(jobs.size() - unstarted, jobs.size()) << endl;
     cout << "Running: ";
     int k = use_master ? 0 : 1;
@@ -427,11 +427,11 @@ namespace ebl {
 #ifdef __MPI__
     int running;
     while (1) {
-      string prefix;
+      std::string prefix;
       prefix << "slave " << rank << ": ";
       // wait for master command
       int value = -1, resume = 0;
-      string confname, outdir;
+      std::string confname, outdir;
       mpijob *j;
       configuration c;
       timer t;
@@ -447,7 +447,7 @@ namespace ebl {
 	s = world.recv(0, CMD_CONF, confname);
 	cout << prefix << "job's configuration: " << confname << endl;
 	s = world.recv(0, CMD_RESUME, resume);
-	cout << prefix << "resume job or not: " << resume << endl;	
+	cout << prefix << "resume job or not: " << resume << endl;
 	// output dir is the one up where conf is
 	outdir = dirname(confname.c_str());
 	outdir = dirname(outdir.c_str());

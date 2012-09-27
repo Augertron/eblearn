@@ -32,9 +32,8 @@
 #ifndef EBL_LOGGER_H_
 #define EBL_LOGGER_H_
 
-#include "ebl_defines.h"
 #include "libidx.h"
-#include "ebl_states.h"
+#include "ebl_defines.h"
 
 #ifndef __NOSTL__
 #include <vector>
@@ -103,7 +102,7 @@ namespace ebl {
     //! Initialize the meter.
     //! \param nclasses The number of classes.
     void init(uint nclasses);
-    
+
     //! return 0 if <actual> equals -1, otherwise, return 1 if <actual>
     //! and <desired> are equal, -1 otherwise.
     int correctp(ubyte co, ubyte cd);
@@ -169,22 +168,23 @@ namespace ebl {
     //! recognized samples, and the percentage of rejected samples.
     //! names of each class (lblstr) are optional.
     //! \param ds_is_test If true, prepend "test_" in front of varialbes.
-    void display(int iteration, string &dsname, 
-		 std::vector<string*> *lblstr = NULL,
+    void display(int iteration, std::string &dsname,
+		 std::vector<std::string*> *lblstr = NULL,
 		 bool ds_is_test = false);
 
     //! Display information averaged over all iterations.
-    void display_average(string &dsname, std::vector<string*> *lblstr = NULL,
+    void display_average(std::string &dsname,
+                         std::vector<std::string*> *lblstr = NULL,
 			 bool ds_is_test = false);
 
     //! display ROC points for each class.
     //! names of each class (lblstr) are optional.
     void display_positive_rates(double threshold,
-				std::vector<string*> *lblstr = NULL);
-    
+				std::vector<std::string*> *lblstr = NULL);
+
     bool save();
     bool load();
-    
+
   public:
     double		energy;
     float		confidence;
@@ -207,28 +207,8 @@ namespace ebl {
     uint                nclasses;       //!< number of classes
   };
 
-  ////////////////////////////////////////////////////////////////
+} // namespace ebl
 
-  //! a module that takes an fstate_idx, finds the lowest value
-  //! and output the label associated with the index (in the first dimension
-  //! of the state) of this lowest value.
-  //! It actually sorts the labels according to their score (or costs)
-  //! and outputs the sorted list.
-  template <class T> class max_classer { // TODO: idx3-classer
-  public:
-    //! a vector that maps output unit index to a label
-    idx<ubyte> *classindex2label; 
-
-    //! makes a new max-classer. <classes> is an integer vector
-    //! which contains the labels associated with each output.
-    max_classer(idx<ubyte> *classes);
-    ~max_classer() {
-    }
-    ;
-
-    void fprop(fstate_idx<T> *in, class_state *out);
-  };
-
-} // namespace ebl {
+#include "ebl_logger.hpp"
 
 #endif /* EBL_LOGGER_H_ */

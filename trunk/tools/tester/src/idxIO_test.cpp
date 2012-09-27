@@ -8,8 +8,8 @@
 #define TEST_FILE "./eblearn_tester_matrix_2.mat"
 #endif
 
-extern string *gl_data_dir;
-extern string *gl_data_errmsg;
+extern std::string *gl_data_dir;
+extern std::string *gl_data_errmsg;
 
 using namespace std;
 using namespace ebl;
@@ -22,7 +22,7 @@ void idxIO_test::tearDown() {
 
 template<class T> void test_save_load_matrix() {
   idx<T> m(9, 9);
-  string fname= TEST_FILE;
+  std::string fname= TEST_FILE;
 
   // initialize values
   double v = 0.1;
@@ -31,7 +31,7 @@ template<class T> void test_save_load_matrix() {
       v++;
     }
   }
-  //m.printElems(); cout << endl;
+  //m.printElems(); cout << std::endl;
   try {
     save_matrix(m, fname);
     idx<T> l = load_matrix<T>(fname);
@@ -42,8 +42,8 @@ template<class T> void test_save_load_matrix() {
 	v++;
       }
     }
-  } catch(string &err) {
-    cerr << err << endl;
+  } catch(std::string &err) {
+    std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // error
   }
 }
@@ -82,8 +82,8 @@ void idxIO_test::test_save_load_matrix_long() {
 	CPPUNIT_ASSERT_EQUAL((intg) *j, (intg) *i);
       }
     }
-  } catch(string &err) {
-    cerr << err << endl;
+  } catch(std::string &err) {
+    std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // err
   }
 }
@@ -91,8 +91,8 @@ void idxIO_test::test_save_load_matrix_long() {
 void idxIO_test::test_save_load_matrix_matrix() {
   try {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-    string root = *gl_data_dir;
-    string sim1, sim2, sim3, sall;
+    std::string root = *gl_data_dir;
+    std::string sim1, sim2, sim3, sall;
     sim1 << root << "/barn.png";
     sim2 << root << "/lena.png";
     sim3 << root << "/2008_007714.jpg";
@@ -100,12 +100,12 @@ void idxIO_test::test_save_load_matrix_matrix() {
     idx<float> im1 = load_image<float>(sim1);
     idx<float> im2 = load_image<float>(sim2);
     idx<float> im3 = load_image<float>(sim3);
-    
+
     midx<float> all(3);
     all.set(im1, 0);
     all.set(im2, 1);
     all.set(im3, 2);
-    
+
     save_matrices(all, sall);
     // midx<float> all2 = load_matrices<float>(sall, false);
     midx<float> all2 = load_matrices<float>(sall);
@@ -115,8 +115,8 @@ void idxIO_test::test_save_load_matrix_matrix() {
     float sum = idx_sum(im1) - idx_sum(m1) + idx_sum(im2) - idx_sum(m2)
       + idx_sum(im3) - idx_sum(m3);
     CPPUNIT_ASSERT_EQUAL(sum, (float) 0);
-  } catch(string &err) {
-    cerr << err << endl;
+  } catch(std::string &err) {
+    std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // err
   }
 }
@@ -124,14 +124,14 @@ void idxIO_test::test_save_load_matrix_matrix() {
 void idxIO_test::test_save_load_matrices() {
   try {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
-    string root;
+    std::string root;
     root << *gl_data_dir << "/tables";
-    string sim1, sim2, sim3, sall;
+    std::string sim1, sim2, sim3, sall;
     sim1 << root <<"/table_2_6_connect_6_fanin_0_density_0.5_uv0_u3_v6.mat";
     sim2 << root <<"/table_32_96_connect_1920_fanin_20_density_0.62_random.mat";
     sim3 << root <<"/table_38_68_connect_2040_fanin_30_density_0.79_random.mat";
     sall << root << "/all.mat";
-    list<string> l;
+    list<std::string> l;
     l.push_back(sim1);
     l.push_back(sim2);
     l.push_back(sim3);
@@ -152,8 +152,8 @@ void idxIO_test::test_save_load_matrices() {
     // check has_multiple_matrices
     CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sall.c_str()), true);
     CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sim1.c_str()), false);
-  } catch(string &err) {
-    cerr << err << endl;
+  } catch(std::string &err) {
+    std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // err
   }
 }

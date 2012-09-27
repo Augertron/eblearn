@@ -39,21 +39,21 @@
 #include "utils.h"
 #include <list>
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  typedef map<string, string, less<string> > string_map_t;
-  typedef map<string, vector<string>, less<string> > string_list_map_t;
+  typedef std::map<std::string, std::string,
+                   std::less<std::string> > string_map_t;
+  typedef std::map<std::string, std::vector<std::string>,
+                   std::less<std::string> > string_list_map_t;
 
   ////////////////////////////////////////////////////////////////
   //! a class containing the original text of the configuration file in a
   //! list form. once variables have been updated, they can be inserted back
   //! to this list to recreate the original file with the new values.
-  class textlist : public list< pair<string,string> > {
-  public:
+  class textlist : public std::list< std::pair<std::string,std::string> > {
+   public:
     //! constructor.
     textlist();
 
@@ -66,16 +66,16 @@ namespace ebl {
     //! replace original line with variable assignment to value, everywhere that
     //! is indicated by a second element equal to varname.
     //! if variable is not found, push it at the end of the list.
-    void update(const string &varname, const string &value);
+    void update(const std::string &varname, const std::string &value);
 
     //! write entire text to out (using new variables if updated).
-    void print(ostream &out);
+    void print(std::ostream &out);
   };
 
   ////////////////////////////////////////////////////////////////
   // utility functions
 
-  string timestamp();
+  std::string timestamp();
 
   ////////////////////////////////////////////////////////////////
   //! configuration class. handle files containing variable definitions.
@@ -91,13 +91,13 @@ namespace ebl {
 		  bool silent = false, bool resolve = true);
     //! load configuration found in filename.
     //! \param resolve If true, replace all referenced variables by their value.
-    configuration(const string &filename, bool replquotes = false,
+    configuration(const std::string &filename, bool replquotes = false,
 		  bool silent = false, bool resolve = true);
     //! Load configuration from already loaded map of variables, name and
     //! output directory.
     //! \param txt Original text lines of configuration.
-    configuration(string_map_t &smap, textlist &txt, string &name,
-		  string &output_dir);
+    configuration(string_map_t &smap, textlist &txt, std::string &name,
+		  std::string &output_dir);
     //! destructor.
     virtual ~configuration();
 
@@ -118,13 +118,13 @@ namespace ebl {
     // accessors ///////////////////////////////////////////////////////////////
 
     //! return the name of the configuration
-    const string &get_name();
+    const std::string &get_name();
     //! set name of the configuration
-    void set_name(const string &name);
+    void set_name(const std::string &name);
     //! return output directory.
-    const string &get_output_dir();
+    const std::string &get_output_dir();
     //! set output directory.
-    void set_output_dir(const string &d);
+    void set_output_dir(const std::string &d);
 
     //! Generic template get, return the value associated with varname,
     //! if varname exists, otherwise throws an execption.
@@ -147,17 +147,17 @@ namespace ebl {
     //! Get variable with name varname as a double into v.
     void get(float &v, const char *varname);
     //! Get variable with name varname as a string into v.
-    void get(string &v, const char *varname);
+    void get(std::string &v, const char *varname);
     //! Get variable with name varname as a string into v.
     void get(bool &v, const char *varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
-    const string &get_string(const char *varname);
+    const std::string &get_string(const char *varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
-    const string &get_string(const string &varname);
+    const std::string &get_string(const std::string &varname);
 
     //! returns the string contained the variable with name varname.
     //! if varname does not exist, this throws an exception.
@@ -186,7 +186,7 @@ namespace ebl {
     double try_get_double(const char *varname, double default_val);
     //! If variable "varname" exists, return its value in float, otherwise
     //! return 'default_val'. If float conversion fails, it throws an exception.
-    string try_get_string(const char *varname, const char *default_val = "");
+    std::string try_get_string(const char *varname, const char *default_val = "");
 
     //! returns a float conversion of the string contained in the variable
     //! with name varname.
@@ -231,7 +231,7 @@ namespace ebl {
     bool exists_true(const char *varname);
 
     //! Returns true if variable exists and its value is true, false otherwise.
-    bool exists_true(const string &varname);
+    bool exists_true(const std::string &varname);
 
     //! Returns true if variable exists and its value is false, true otherwise.
     bool exists_false(const char *varname);
@@ -247,7 +247,7 @@ namespace ebl {
     //! \param silent If false, warn when using env variable.
     const char* get_cstr(const char *varname, bool silent = false);
     //! Return a vector of all variable names that begin with 's'.
-    vector<string> get_all_strings(const string &s);
+    std::vector<std::string> get_all_strings(const std::string &s);
 
     //! returns true if the variable exists, false otherwise.
     bool exists(const char *varname);
@@ -257,7 +257,7 @@ namespace ebl {
     //! print loaded variables
     virtual void pretty();
     //! Print all variables who's name is contained in string 's'.
-    virtual void pretty_match(const string &s);
+    virtual void pretty_match(const std::string &s);
 
     ////////////////////////////////////////////////////////////////
   protected:
@@ -266,17 +266,17 @@ namespace ebl {
     void resolve_variables(string_map_t &m, bool replquotes = false);
 
     //! Resolve double quotes blocs, or entire string if not present.
-    string resolve0(string_map_t &m, const string &variable,
-		    const string &v, bool firstonly = false);
+    std::string resolve0(string_map_t &m, const std::string &variable,
+		    const std::string &v, bool firstonly = false);
 
     //! Resolve back quotes blocs only.
-    string resolve_backquotes(string_map_t &m,
-			     const string &variable, const string &v,
+    std::string resolve_backquotes(string_map_t &m,
+			     const std::string &variable, const std::string &v,
 			     bool firstonly = false);
 
     //! Resolve an unquoted string (just variables).
-    string resolve_string(string_map_t &m, const string &variable,
-			  const string &v, bool firstonly = false);
+    std::string resolve_string(string_map_t &m, const std::string &variable,
+			  const std::string &v, bool firstonly = false);
 
     // open file fname and put variables assignments in smap.
     // e.g. " i = 42 # comment " will yield a entry in smap
@@ -288,8 +288,8 @@ namespace ebl {
   protected:
     string_map_t	smap; 	//!< map between variables and values
     string_map_t	tmp_smap; //!< map between variables and values
-    string 		name; 	//!< name of configuration
-    string 		output_dir;	//!< output directory
+    std::string 		name; 	//!< name of configuration
+    std::string 		output_dir;	//!< output directory
     textlist 		otxt; 	//!< original text
     bool                silent;
   };
@@ -299,9 +299,9 @@ namespace ebl {
   class EXPORT meta_configuration : public configuration {
   private:
     string_list_map_t	lmap;
-    vector<size_t>	conf_indices;
+    std::vector<size_t>	conf_indices;
     int			conf_combinations;
-    vector<configuration> confs;
+    std::vector<configuration> confs;
 
   public:
     meta_configuration();
@@ -310,7 +310,7 @@ namespace ebl {
     //! Read a meta configuration.
     //! \param resume_name Name of experiment to be resumed.
     bool read(const char *fname, bool bresolve = true,
-	      const string *tstamp = NULL,
+	      const std::string *tstamp = NULL,
 	      bool replace_quotes = false,
 	      const char *resume_name = NULL,
 	      bool silent = false);
@@ -318,7 +318,7 @@ namespace ebl {
     // accessors
 
     //! return all possible configurations
-    vector<configuration>& configurations();
+    std::vector<configuration>& configurations();
 
     //! print loaded variables
     virtual void pretty();

@@ -39,7 +39,7 @@
 #ifdef __CUDA__
 
 namespace ebl {
-  
+
   ////////////////////////////////////////////////////////////////
   //! a slab of cuda_tanh
   template <typename T, class Tstate = bbstate_idx<T> >

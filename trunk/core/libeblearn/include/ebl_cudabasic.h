@@ -93,7 +93,7 @@ namespace ebl {
   public:
     //! <p> is double number, every element of input is raised to
     //! its <p>th power.
-    cuda_power_module(T p, int gpu_id = -1, 
+    cuda_power_module(T p, int gpu_id = -1,
 		      const char *name = "cuda_power");
     //! destructor
     virtual ~cuda_power_module();
@@ -124,7 +124,7 @@ namespace ebl {
     //!        If p is null, a local buffer will be used.
     //! \param size is the number of biases, or the size of dimensions 0 of
     //! inputs and outputs.
-  cuda_addc_module(parameter<T,Tstate> *p, intg size, 
+  cuda_addc_module(parameter<T,Tstate> *p, intg size,
                    const char *name = "addc", int gpu_id_=-1);
     //! destructor
     virtual ~cuda_addc_module();
@@ -164,7 +164,7 @@ namespace ebl {
   protected:
   using fsum_module<T, Tstate>:: div; //!< Normalize by number of elements used for sum.
   //! Sum by groups of n elements, n = features * split.
-  using fsum_module<T, Tstate>::split; 
+  using fsum_module<T, Tstate>::split;
 
   // GPU members /////////////////////////////////////////////////////////////
   int                 gpu_id; //!< Whether to use gpu or not

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Pierre Sermanet *
+ *   Copyright (C) 2012 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -33,33 +33,34 @@
 #ifndef LIBEBLEARNTOOLS_H_
 #define LIBEBLEARNTOOLS_H_
 
-#include "defines_tools.h"
-#include "configuration.h"
-#include "gdb.h"
-#include "xml_utils.h"
-#include "tools_utils.h"
-#include "train_utils.h"
-#include "opencv.h"
+#include "bootstrapping.h"
 #include "camera.h"
-#include "camera_opencv.h"
-#include "camera_v4l2.h"
-#include "camera_mcams.h"
-#include "camera_shmem.h"
+#include "camera_directory.h"
 #include "camera_kinect.h"
 #include "camera_mac.h"
-//#include "camera_windows.h"
-#include "camera_directory.h"
+#include "camera_mcams.h"
+#include "camera_opencv.h"
+#include "camera_shmem.h"
+#include "camera_v4l2.h"
 #include "camera_video.h"
+#include "configuration.h"
+#include "dataset.h"
+#include "defines_tools.h"
+#include "detection_thread.h"
+#include "fprop_thread.h"
+#include "gdb.h"
+#include "job.h"
 #include "metaparser.h"
+#include "mpijob.h"
+#include "netconf.h"
+#include "nms.h"
+#include "opencv.h"
 #include "sort.h"
 #include "thread.h"
-#include "detection_thread.h"
-#include "bootstrapping.h"
-#include "fprop_thread.h"
+#include "tools_utils.h"
 #include "tracking_thread.h"
-#include "netconf.h"
-#include "job.h"
-#include "mpijob.h"
-#include "dataset.h"
+#include "train_utils.h"
+#include "xml_utils.h"
+//#include "camera_windows.h"
 
 #endif /* LIBEBLEARNTOOLS_H_ */

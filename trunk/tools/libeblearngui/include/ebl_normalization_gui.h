@@ -38,35 +38,32 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
 
-  class contrast_norm_module_gui {
-  public:
-    contrast_norm_module_gui();
-    virtual ~contrast_norm_module_gui();
+class contrast_norm_module_gui {
+ public:
+  contrast_norm_module_gui();
+  virtual ~contrast_norm_module_gui();
 
-    template <typename T, class Tstate>
-      static void display_fprop(contrast_norm_module<T,Tstate> &m,
-				Tstate &in, Tstate &out,
-				unsigned int &h0, unsigned int &w0, double zoom,
-				T vmin = 0, T vmax = 0,
-				bool show_out = false, bool run = true);
+  template <typename T>
+  static void display_fprop(contrast_norm_module<T> &m, state<T> &in,
+                            state<T> &out, uint &h0, uint &w0, double zoom,
+                            T vmin = 0, T vmax = 0,
+                            bool show_out = false, bool run = true);
 
-    template <typename T, class Tstate>
-      static void display_bprop(contrast_norm_module<T,Tstate> &m,
-				Tstate &in, Tstate &out,
-				unsigned int &h0, unsigned int &w0, double zoom,
-				T vmin = 0, T vmax = 0,
-				bool show_out = false, bool run = true);
+  template <typename T>
+  static void display_bprop(contrast_norm_module<T> &m,
+                            state<T> &in, state<T> &out,
+                            uint &h0, uint &w0, double zoom,
+                            T vmin = 0, T vmax = 0,
+                            bool show_out = false, bool run = true);
 
-    template <typename T, class Tstate>
-      static void display_bbprop(contrast_norm_module<T,Tstate> &m,
-				 Tstate &in, Tstate &out,
-				 unsigned int &h0, unsigned int &w0,
-				 double zoom,
-				 T vmin = 0, T vmax = 0,
-				 bool show_out = false, bool run = true);
-  };
+  template <typename T>
+  static void display_bbprop(contrast_norm_module<T> &m,
+                             state<T> &in, state<T> &out,
+                             uint &h0, uint &w0, double zoom,
+                             T vmin = 0, T vmax = 0,
+                             bool show_out = false, bool run = true);
+};
 
 } // namespace ebl {
 

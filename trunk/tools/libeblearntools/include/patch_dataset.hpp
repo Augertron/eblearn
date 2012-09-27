@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -42,8 +42,6 @@
 using namespace boost::filesystem;
 using namespace boost;
 #endif
-
-using namespace std;
 
 namespace ebl {
 
@@ -85,7 +83,7 @@ namespace ebl {
     ostringstream fname;
     vector<idx<Tdata> > patches;
     idx<Tdata> img  = mimg.get(0);
-    
+
     // check for capacity
     if (this->full(label)) // reached full capacity
       return false;
@@ -96,7 +94,7 @@ namespace ebl {
       // rescale original bboxes
       uint outh = (uint) (outdims.dim(0) * *i);
       uint outw = (uint) (outdims.dim(1) * *i);
-      float ratio = std::max(img.dim(0) / (float) outh, 
+      float ratio = std::max(img.dim(0) / (float) outh,
 			     img.dim(1) / (float) outw);
       uint inh = (uint) (img.dim(0) / ratio);
       uint inw = (uint) (img.dim(1) / ratio);
@@ -151,7 +149,7 @@ namespace ebl {
     }
     return true;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // save patches
 
@@ -177,10 +175,10 @@ namespace ebl {
 	// save patch in folder
 	// switch saving behavior
 	fname.str("");
-	fname << folder.str() << "img_" << setw(5) << setfill('0') << data_cnt 
+	fname << folder.str() << "img_" << setw(5) << setfill('0') << data_cnt
 	      << "_bg" << i+1 << "_scale" << scale;
-	if (!strcmp(save_mode.c_str(), "mat") 
-            || !strcmp(save_mode.c_str(), "dataset") 
+	if (!strcmp(save_mode.c_str(), "mat")
+            || !strcmp(save_mode.c_str(), "dataset")
             || !strcmp(save_mode.c_str(), "dynset") )
           { // lush matrix mode
             fname << MATRIX_EXTENSION;

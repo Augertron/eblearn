@@ -51,7 +51,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // table functions
-  
+
   idx<intg> full_table(intg a, intg b, intg a0, intg b0) {
     if (a <= a0 || b <= b0)
       eblerror("a=" << a << " and b=" << b << " have to be greater than a0="
@@ -91,7 +91,7 @@ namespace ebl {
     return t;
   }
 
-  idx<intg> random_table(intg a, intg b, std::vector<intg> &fanin, 
+  idx<intg> random_table(intg a, intg b, std::vector<intg> &fanin,
 			 intg a0, intg b0) {
     if (a <= a0 || b <= b0)
       eblerror("a and b have to be greater than a0 and b0");
@@ -127,7 +127,7 @@ namespace ebl {
 	if ((uint) k == ins.size()) // all ins were present in outs
 	  k = 0; // add first element anyway
 	outs.push_back(ins[k]);
-	ins.erase(ins.begin() + k);      
+	ins.erase(ins.begin() + k);
       }
       // push outs to final outputs
       for (uint j = 0; j < outs.size(); ++j) {
@@ -170,13 +170,13 @@ namespace ebl {
     }
     return all;
   }
-  
+
   idx<intg> uv_table0(intg uend, intg vend) {
     idx<intg> t1 = full_table(1, uend); // U channel
     idx<intg> t2 = full_table(2, vend, 1, uend);
     return concat_tables(t1, t2);
   }
-  
+
   idx<intg> yuv_table1(intg yend, intg uend, intg vend,
 		       intg p0, intg p1, intg p2, intg fanin_y,
 		       intg fanin_yuv, intg fanin_uv) {
@@ -270,7 +270,7 @@ namespace ebl {
     return all;
   }
 
-  idx<intg> text_table(string filename) {
+  idx<intg> text_table(std::string filename) {
     vector<intg> inputs, outputs;
     int scanint;
     char scanchar;
@@ -308,14 +308,14 @@ namespace ebl {
       m.set(outputs[i], i, 1);
     }
     return m;
-    
+
   }
 
   bool check_table_duplicates(idx<intg> &table) {
     bool found = false;
     for (intg i = 0; i < table.dim(0); ++i)
       for (intg j = 0; j < table.dim(0); ++j)
-	if (i != j && 
+	if (i != j &&
 	    table.get(i, 0) == table.get(j, 0) &&
 	    table.get(i, 1) == table.get(j, 1)) {
 	  found = true;
@@ -324,5 +324,5 @@ namespace ebl {
 	}
     return found;
   }
-  
+
 } // end namespace ebl

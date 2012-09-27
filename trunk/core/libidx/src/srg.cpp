@@ -35,8 +35,6 @@
 
 #include "srg.h"
 
-using namespace std;
-
 namespace ebl {
 
 } // end namespace ebl

@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -44,8 +44,6 @@
 #include "defines.h"
 #include "stl.h"
 
-using namespace std;
-
 namespace ebl {
 
   #define COLOR_LIST_SIZE 13
@@ -68,14 +66,14 @@ namespace ebl {
 
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
-  EXPORT bool mkdir_full(const char *dir);  
+  EXPORT bool mkdir_full(const char *dir);
   //! Create specified directory and all its parents if they do not exists.
   //! Return false upon failure.
-  EXPORT bool mkdir_full(string &dir);
+  EXPORT bool mkdir_full(std::string &dir);
   //! Returns true if directory 's' exists.
-  EXPORT bool dir_exists(const char *s);  
+  EXPORT bool dir_exists(const char *s);
   //! Returns true if directory 's' exists.
-  EXPORT bool dir_exists(const std::string &s);  
+  EXPORT bool dir_exists(const std::string &s);
   //! Returns true if file 's' exists.
   EXPORT bool file_exists(const char *s);
   //! Returns true if file 's' exists.
@@ -88,7 +86,7 @@ namespace ebl {
   EXPORT time_t file_modified(const char *s);
   //! Returns the time of last modification of file 's'.
   EXPORT time_t file_modified(const std::string &s);
-  //! Returns the number of seconds elapsed since file 's' 
+  //! Returns the number of seconds elapsed since file 's'
   //! was last modified.
   EXPORT int file_modified_elapsed(const char *s);
   //! Update the modified timestamp of file 's'. Returns true on success.
@@ -101,12 +99,12 @@ namespace ebl {
   EXPORT bool mv_file(const char *src, const char *tgt);
   //! Returns the directory part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return '/usr'.
-  EXPORT const char *dirname(const char *fname);  
+  EXPORT const char *dirname(const char *fname);
   //! Returns the file part of 'fname'. E.g. when fname equals
   //! '/usr/lib', it will return 'lib'.
   //! If suffix is provided, the suffix 'suffix' is removed from the
   //! filename.
-  EXPORT const char *basename(const char *fname, const char *suffix = NULL);    
+  EXPORT const char *basename(const char *fname, const char *suffix = NULL);
   //! Returns a name without its extension, basically returns the
   //! first part before the last '.' character.
   EXPORT std::string noext_name(const char *fname);
@@ -118,7 +116,7 @@ namespace ebl {
 
   //! Return a string containing a timestamp of localtime in the following
   //! format: "<year><month><day>.<hour><minutes><seconds>".
-  EXPORT string tstamp();
+  EXPORT std::string tstamp();
 
   //! A timer class.
   class EXPORT timer {
@@ -144,28 +142,28 @@ namespace ebl {
 
     //! Return all accumulated milliseconds since last reset()/restart().
     long accumulated_milliseconds();
-    
+
     //! Print elapsed time in a human-friendly way since start() or restart().
     void pretty_elapsed();
     //! Print the provided seconds in a human-friendly way.
     void pretty_secs(long seconds);
     //! Return seconds in a human-friendly string.
-    string elapsed(long seconds);
+    std::string elapsed(long seconds);
     //! Return elapsed time in a human-friendly string since start()/restart().
-    string elapsed();
+    std::string elapsed();
     //! Return seconds in a human-friendly string,
     //! with millisecond precision
-    string elapsed_ms(long milliseconds);
+    std::string elapsed_ms(long milliseconds);
     //! Return elapsed time in a human-friendly string since start()/restart(),
     //! with millisecond precision.
-    string elapsed_ms();
+    std::string elapsed_ms();
     //! Return elapsed time in a human-friendly string since start()/restart(),
     //! with millisecond precision.
-    string accumulated_ms();
+    std::string accumulated_ms();
     //! Return a string with the human-friendly remaining time based on
     //! elapsed time and n/total progress.
-    string eta(uint n, uint total);
-    
+    std::string eta(uint n, uint total);
+
   private:
 #ifdef __WINDOWS__
 #else // linux & mac
@@ -177,19 +175,19 @@ namespace ebl {
   };
 
   //! Sleep for 'millis' milliseconds.
-  EXPORT void millisleep(long millis);  
+  EXPORT void millisleep(long millis);
   //! Sleep for 'seconds' seconds.
   EXPORT void secsleep(long seconds);
 
   // process utilities /////////////////////////////////////////////////////////
-  
+
   //! Return PID of current process.
   EXPORT int pid();
-  
+
   // TIMING MACROS ////////////////////////////////////////////////
 
 #ifdef __TIMING__
-  
+
   extern EXPORT ebl::timer debug_timer1;
   extern EXPORT ebl::timer debug_timer2;
   extern EXPORT ebl::timer debug_timer_resizing; // timing of resizing
@@ -210,7 +208,7 @@ namespace ebl {
     t.restart();							\
   }
 #define TIMING_ACCSTART(t) t.start();
-#define TIMING_ACCSTOP(t) t.stop();					
+#define TIMING_ACCSTOP(t) t.stop();
 #define TIMING_RESET(t) t.reset();
 #define LOCAL_TIMING_START() ebl::timer local_debug_timer;
 #define LOCAL_TIMING2_START() ebl::timer local_debug_timer2;

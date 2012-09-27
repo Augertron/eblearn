@@ -45,168 +45,128 @@
 
 namespace ebl {
 
-  // module_1_1_gui ////////////////////////////////////////////////////////////
+// module_1_1_gui ////////////////////////////////////////////////////////////
 
-  class EXPORT module_1_1_gui {
-  public:
-    int	 display_wid_fprop;
-    int	 display_wid_bprop;
-    int	 display_wid_bbprop;
-    static uint cnt;
-
+class EXPORT module_1_1_gui {
+public:
   module_1_1_gui(int fwid = -1)
-    : display_wid_fprop(fwid), display_wid_bprop(-1), display_wid_bbprop(-1) {};
-    virtual ~module_1_1_gui() {};
+      : display_wid_fprop(fwid), display_wid_bprop(-1), display_wid_bbprop(-1) {
+  };
+  virtual ~module_1_1_gui() {};
 
-#define DISPLAY_PROTO_1_1(name, Tin, Tout)				\
-    template<typename T, class Tstate>					\
-      void name(module_1_1<T,Tstate> &m, Tin &in, Tout &out, uint h0 = 0, \
+#define DISPLAY_PROTO_1_1(name)                                         \
+  template <typename T>                                                 \
+      void name(module_1_1<T> &m, state<T> &in, state<T> &out, uint h0 = 0, \
 		uint w0 = 0, double dzoom = 1.0, T vmin = 0, T vmax = 0, \
 		bool show_out = true, int wid = -1, const char *wname = NULL);
 
-#define DISPLAY2_PROTO_1_1(name, Tin, Tout)				\
-    template<typename T, class Tstate>					\
-      void name(module_1_1<T,Tstate> &m, Tin &in, Tout &out, uint &h0,	\
+#define DISPLAY2_PROTO_1_1(name)                                        \
+  template <typename T>                                                 \
+      void name(module_1_1<T> &m, state<T> &in, state<T> &out, uint &h0, \
 		uint &w0, double dzoom = 1.0, T vmin = 0, T vmax = 0,	\
 		bool show_out = true, int wid = -1, const char *wname = NULL);
 
-    // in: Tstate out: Tstate
-    DISPLAY_PROTO_1_1(display_fprop, Tstate, Tstate)
-    DISPLAY_PROTO_1_1(display_bprop, Tstate, Tstate)
-    DISPLAY_PROTO_1_1(display_bbprop, Tstate, Tstate)
-    DISPLAY2_PROTO_1_1(display_fprop2, Tstate, Tstate)
-    DISPLAY2_PROTO_1_1(display_bprop2, Tstate, Tstate)
-    DISPLAY2_PROTO_1_1(display_bbprop2, Tstate, Tstate)
-    // in: Tstate out: mstate<Tstate>
-    DISPLAY_PROTO_1_1(display_fprop, Tstate, mstate<Tstate>)
-    DISPLAY_PROTO_1_1(display_bprop, Tstate, mstate<Tstate>)
-    DISPLAY_PROTO_1_1(display_bbprop, Tstate, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_fprop2, Tstate, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_bprop2, Tstate, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_bbprop2, Tstate, mstate<Tstate>)
-    // in: mstate<Tstate> out: Tstate
-    DISPLAY_PROTO_1_1(display_fprop, mstate<Tstate>, Tstate)
-    DISPLAY_PROTO_1_1(display_bprop, mstate<Tstate>, Tstate)
-    DISPLAY_PROTO_1_1(display_bbprop, mstate<Tstate>, Tstate)
-    DISPLAY2_PROTO_1_1(display_fprop2, mstate<Tstate>, Tstate)
-    DISPLAY2_PROTO_1_1(display_bprop2, mstate<Tstate>, Tstate)
-    DISPLAY2_PROTO_1_1(display_bbprop2, mstate<Tstate>, Tstate)
-    // in: mstate<Tstate> out: mstate<Tstate>
-    DISPLAY_PROTO_1_1(display_fprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_1_1(display_bprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_1_1(display_bbprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_fprop2, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_bprop2, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY2_PROTO_1_1(display_bbprop2, mstate<Tstate>, mstate<Tstate>)
+  DISPLAY_PROTO_1_1(display_fprop)
+  DISPLAY_PROTO_1_1(display_bprop)
+  DISPLAY_PROTO_1_1(display_bbprop)
+  DISPLAY2_PROTO_1_1(display_fprop2)
+  DISPLAY2_PROTO_1_1(display_bprop2)
+  DISPLAY2_PROTO_1_1(display_bbprop2)
 
-    //! Display internal buffers of module 'm', as declared in
-    //! module_1_1's member 'internals'.
-    //! \param maxwidth Max width after which to create a new line
-    template<typename T, class Tstate>
-      void display_internals(module_1_1<T,Tstate> &m, unsigned int &h0,
-			     unsigned int &w0, double zoom = 1.0,
-			     T vmin = 0, T vmax = 0, int wid = -1,
-			     const char *wname = NULL,
-			     uint maxwidth = MAXWIDTH);
-  };
-  ////////////////////////////////////////////////////////////////
-  // module_2_1_gui
+  //! Display internal buffers of module 'm', as declared in
+  //! module_1_1's member 'internals'.
+  //! \param maxwidth Max width after which to create a new line
+  template <typename T>
+    void display_internals(module_1_1<T> &m, uint &h0, uint &w0,
+                           double zoom = 1.0, T vmin = 0, T vmax = 0,
+                           int wid = -1, const char *wname = NULL,
+			   uint maxwidth = MAXWIDTH);
 
-  class module_2_1_gui {
-  private:
-    uint	 display_wid_fprop;
+public:
+  int	 display_wid_fprop;
+  int	 display_wid_bprop;
+  int	 display_wid_bbprop;
+  static uint cnt;
+};
 
-  public:
-    module_2_1_gui() {};
-    virtual ~module_2_1_gui() {};
+// module_2_1_gui //////////////////////////////////////////////////////////////
 
-#define DISPLAY_PROTO_2_1(name)						\
-    template<typename T, class Tstate, class Tin2, class Tout>		\
-      void name(module_2_1<T,Tstate,Tstate,Tout> &m,			\
-		Tstate &in1, Tin2 &in2, Tout &out,			\
-		unsigned int &h0, unsigned int &w0,			\
-		double dzoom = 1.0, T vmin = 0, T vmax = 0,		\
-		bool show_out = true,					\
-		int wid = -1, const char *wname = NULL);
+class module_2_1_gui {
+ public:
+  module_2_1_gui() {};
+  virtual ~module_2_1_gui() {};
 
-    DISPLAY_PROTO_2_1(display_fprop)
-    DISPLAY_PROTO_2_1(display_bprop)
-    DISPLAY_PROTO_2_1(display_bbprop)
-  };
+#define DISPLAY_PROTO_2_1(name)                                         \
+  template <typename T>                                                 \
+  void name(module_2_1<T> &m,                                           \
+            state<T> &in1, state<T> &in2, state<T> &out,                \
+            uint &h0, uint &w0, double dzoom = 1.0, T vmin = 0, T vmax = 0, \
+            bool show_out = true, int wid = -1, const char *wname = NULL);
 
-  // layers_gui ////////////////////////////////////////////////////////////////
+  DISPLAY_PROTO_2_1(display_fprop)
+  DISPLAY_PROTO_2_1(display_bprop)
+  DISPLAY_PROTO_2_1(display_bbprop)
 
-  class layers_gui {
-  public:
-    layers_gui(int wid = -1) : m11g(wid) {};
-    virtual ~layers_gui() {};
+ private:
+  uint	 display_wid_fprop;
+};
 
-#define DISPLAY_PROTO_LAYERSN(name, Tin, Tout)				\
-    template<typename T, class Tstate>					\
-      static void name(module_1_1_gui &g, layers<T,Tstate> &ln,	Tin &in, \
-		       Tout &out, uint &h0, uint &w0, double dzoom = 1.0, \
-		       T vmin = 0, T vmax = 0, bool show_out = false);
+// layers_gui //////////////////////////////////////////////////////////////////
 
-    // in: Tstate out: Tstate
-    DISPLAY_PROTO_LAYERSN(display_fprop, Tstate, Tstate)
-    DISPLAY_PROTO_LAYERSN(display_bprop, Tstate, Tstate)
-    DISPLAY_PROTO_LAYERSN(display_bbprop, Tstate, Tstate)
-    // in: Tstate out: mstate<Tstate>
-    DISPLAY_PROTO_LAYERSN(display_fprop, Tstate, mstate<Tstate>)
-    DISPLAY_PROTO_LAYERSN(display_bprop, Tstate, mstate<Tstate>)
-    DISPLAY_PROTO_LAYERSN(display_bbprop, Tstate, mstate<Tstate>)
-    // in: mstate<Tstate> out: Tstate
-    DISPLAY_PROTO_LAYERSN(display_fprop, mstate<Tstate>, Tstate)
-    DISPLAY_PROTO_LAYERSN(display_bprop, mstate<Tstate>, Tstate)
-    DISPLAY_PROTO_LAYERSN(display_bbprop, mstate<Tstate>, Tstate)
-    // in: mstate<Tstate> out: mstate<Tstate>
-    DISPLAY_PROTO_LAYERSN(display_fprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_LAYERSN(display_bprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_LAYERSN(display_bbprop, mstate<Tstate>, mstate<Tstate>)
+class layers_gui {
+ public:
+  layers_gui(int wid = -1) : m11g(wid) {};
+  virtual ~layers_gui() {};
 
-    //! Display internal buffers of modules contained in layer 'ln'.
-    template<typename T, class Tstate>
-      void display_internals(layers<T,Tstate> &ln,
-			     unsigned int &h0, unsigned int &w0,
-			     double dzoom = 1.0,
-			     T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
+#define DISPLAY_PROTO_LAYERSN(name)                                     \
+  template <typename T>                                                 \
+  static void name(module_1_1_gui &g, layers<T> &ln, state<T> &in,      \
+                   state<T> &out, uint &h0, uint &w0, double dzoom = 1.0, \
+                   T vmin = 0, T vmax = 0, bool show_out = false);
 
-    //! Tries to cast 'm' as a layers object and display internal buffers
-    //! of all sub modules.
-    template<typename T, class Tstate>
-      void display_internals(module_1_1<T,Tstate> &m,
-			     unsigned int &h0, unsigned int &w0,
-			     double dzoom = 1.0,
-			     T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
+  DISPLAY_PROTO_LAYERSN(display_fprop)
+  DISPLAY_PROTO_LAYERSN(display_bprop)
+  DISPLAY_PROTO_LAYERSN(display_bbprop)
+
+  //! Display internal buffers of modules contained in layer 'ln'.
+  template <typename T>
+  void display_internals(layers<T> &ln, uint &h0, uint &w0, double dzoom = 1.0,
+                         T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
+
+  //! Tries to cast 'm' as a layers object and display internal buffers
+  //! of all sub modules.
+  template <typename T>
+  void display_internals(module_1_1<T> &m, uint &h0, uint &w0,
+                         double dzoom = 1.0,
+                         T vmin = 0, T vmax = 0, uint maxwidth = MAXWIDTH);
+
+ protected:
+  module_1_1_gui	m11g;
+};
+
+// ms_module_gui /////////////////////////////////////////////////////////////
+
+class ms_module_gui {
+ public:
+  ms_module_gui(int wid = -1) : m11g(wid) {};
+  virtual ~ms_module_gui() {};
+
+#define DISPLAY_PROTO_MSMODULE(name, T)                                 \
+  template <typename T>                                                  \
+  static void name(module_1_1_gui &g, ms_module<T> &ln, state<T> &in,   \
+                   state<T> &out, uint &h0, uint &w0, double dzoom = 1.0, \
+                   T vmin = 0, T vmax = 0, bool show_out = false);
+
+  // in: state<T> out: state<T>
+  DISPLAY_PROTO_MSMODULE(display_fprop, T)
+  DISPLAY_PROTO_MSMODULE(display_bprop, T)
+  DISPLAY_PROTO_MSMODULE(display_bbprop, T)
 
   protected:
-    module_1_1_gui	m11g;
-  };
+  module_1_1_gui	m11g;
+};
 
-  // ms_module_gui /////////////////////////////////////////////////////////////
-
-  class ms_module_gui {
-  public:
-    ms_module_gui(int wid = -1) : m11g(wid) {};
-    virtual ~ms_module_gui() {};
-
-#define DISPLAY_PROTO_MSMODULE(name, Tin, Tout)				\
-    template<typename T, class Tstate>					\
-      static void name(module_1_1_gui &g, ms_module<T,Tstate> &ln, Tin &in, \
-		       Tout &out, uint &h0, uint &w0, double dzoom = 1.0, \
-		       T vmin = 0, T vmax = 0, bool show_out = false);
-
-    // in: mstate<Tstate> out: mstate<Tstate>
-    DISPLAY_PROTO_MSMODULE(display_fprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_MSMODULE(display_bprop, mstate<Tstate>, mstate<Tstate>)
-    DISPLAY_PROTO_MSMODULE(display_bbprop, mstate<Tstate>, mstate<Tstate>)
-
-  protected:
-    module_1_1_gui	m11g;
-  };
-
-  ////////////////////////////////////////////////////////////////
-  // layers_2_gui
+// layers_2_gui ////////////////////////////////////////////////////////////////
 
 /*   class layers_2_gui { */
 /*   public: */
@@ -214,11 +174,11 @@ namespace ebl {
 /*     virtual ~layers_2_gui() {}; */
 
 /* #define DISPLAY_PROTO_LAYERS2(name)				\ */
-/*     template<typename T, class Tstate>							\ */
+/*     template <typename T, class state<T>>							\ */
 /*       static void name(module_1_1_gui &g,				\ */
-/* 		       layers_2<T,Tstate> &ln,					\ */
-/* 		       Tstate &in, Tstate &out,			\ */
-/* 		       unsigned int &h0, unsigned int &w0,		\ */
+/* 		       layers_2<T> &ln,					\ */
+/* 		       state<T> &in, state<T> &out,			\ */
+/* 		       uint &h0, uint &w0,		\ */
 /* 		       double dzoom = 1.0,				\ */
 /* 		       T vmin = 0, T vmax = 0,				\ */
 /* 		       bool show_out = false); */
@@ -228,27 +188,26 @@ namespace ebl {
 /*     DISPLAY_PROTO_LAYERS2(display_bbprop) */
 /*   }; */
 
-  ////////////////////////////////////////////////////////////////
-  // trainable_module_gui
+// trainable_module_gui ////////////////////////////////////////////////////////
 
-  class trainable_module_gui {
-  public:
-    trainable_module_gui() {};
-    virtual ~trainable_module_gui() {};
+class trainable_module_gui {
+ public:
+  trainable_module_gui() {};
+  virtual ~trainable_module_gui() {};
 
-#define DISPLAY_PROTO_TRAINABLE(name)					\
-    template<typename T, class Tin1, class Tin2, class Ten,typename Tds1,typename Tds2> \
-      static void name(trainable_module<T,Tds1,Tds2,Tin1,Tin1,Ten> &dse, \
-		       Tin1 &i1, Tin2 &i2, Ten &energy,			\
-		       unsigned int &h0, unsigned int &w0,		\
-		       double zoom, T vmin = 0, T vmax = 0,		\
-		       bool show_out = true,				\
-		       int wid = -1, const char *wname = NULL);
+#define DISPLAY_PROTO_TRAINABLE(name)                                   \
+  template <typename T, typename Tds1, typename Tds2>                   \
+  static void name(trainable_module<T,Tds1,Tds2> &dse,                  \
+                   state<T> &i1, state<T> &i2, state<T> &energy,        \
+                   uint &h0, uint &w0,                                  \
+                   double zoom, T vmin = 0, T vmax = 0,                 \
+                   bool show_out = true,				\
+                   int wid = -1, const char *wname = NULL);
 
-    DISPLAY_PROTO_TRAINABLE(display_fprop)
-    DISPLAY_PROTO_TRAINABLE(display_bprop)
-    DISPLAY_PROTO_TRAINABLE(display_bbprop)
-  };
+  DISPLAY_PROTO_TRAINABLE(display_fprop)
+  DISPLAY_PROTO_TRAINABLE(display_bprop)
+  DISPLAY_PROTO_TRAINABLE(display_bbprop)
+};
 
 } // namespace ebl {
 

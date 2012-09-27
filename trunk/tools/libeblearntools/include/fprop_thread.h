@@ -41,98 +41,83 @@
 #include "netconf.h"
 #include "configuration.h"
 
-using namespace std;
-
 namespace ebl {
 
-// switch between forward only buffers or also backward
-#define FPROP_SFUNC fs
-#define FPROP_SBUF fstate_idx
-#define SFUNC2(T) T,T,T,SBUF<T>
-#define SFUNC3(T) T,SBUF<T>,mstate<SBUF<T> >
-// backward
-// #define FPROP_SFUNC bbs
-// #define SBUF bbstate_idx
-  
-  ////////////////////////////////////////////////////////////////
-  // A detection thread class
+// A detection thread class ////////////////////////////////////////////////////
 
-  template <typename Tnet>
-  class fprop_thread : public thread {
-  public:
-    //! \param om A mutex used to synchronize threads outputs/
-    //!   To synchronize all threads, give the same mutex to each of them.
-    //! \param sync If true, synchronize outputs between threads, using
-    //!    om, otherwise use regular unsynced outputs.
-    //! \param tc The channels type of the input image, e.g. brightness Y,
-    //!    or color RGB.
-    fprop_thread(configuration &conf, mutex *om = NULL,
-		     const char *name = "",
-		     const char *arg2 = NULL, bool sync = true,
-		     t_chans tc = CHANS_RGB);
-    ~fprop_thread();
-    
-    //! Execute the detection thread.
-    virtual void execute();
-    //! Return true if new data was copied to the thread, false otherwise,
-    //! if we could not obtain the mutex lock.
-    virtual bool set_data(idx<ubyte> &frame, string &frame_name, uint frame_id);
-    //! Return true if new data was copied from the thread, false otherwise.
-    //! We get the frame back even though it was set via set_data,
-    //! because we do not know which frame was actually used.
-    //! (could use some kind of id, and remember frames to avoid copy).
-    //! Note: this method will return true only once, after a frame has been
-    //! processed. Subsequent calls will return false until a new frame is
-    //! processed again.
-    virtual bool get_data(idx<ubyte> &frame, string &frame_name,
-			  uint &frame_id);
-    //! Ask the thread to fprop the file 'frame_fname' and dump the results
-    //! in 'dump_fname' (which should not contain an extension, it will be
-    //! added along the matrix sizes).
-    virtual bool set_dump(string &frame_fname, string &dump_fname);
-    //! Return true if the thread has processed and dump the data.
-    //! Note: this method will return true only once, after a frame has been
-    //! processed. Subsequent calls will return false until a new frame is
-    //! processed again.
-    virtual bool dumped();
-    //! Return true if the thread is available to process a new frame, false
-    //! otherwise.
-    virtual bool available();
-    //! Set the directory where to write outputs.
-    virtual void set_output_directory(string &out);
-    
-  private:
-    //! Turn 'out_updated' flag on, so that other threads know we just outputed
-    //! new data.
-    void set_out_updated();
+template <typename T> class fprop_thread : public thread {
+ public:
+  //! \param om A mutex used to synchronize threads outputs/
+  //!   To synchronize all threads, give the same mutex to each of them.
+  //! \param sync If true, synchronize outputs between threads, using
+  //!    om, otherwise use regular unsynced outputs.
+  //! \param tc The channels type of the input image, e.g. brightness Y,
+  //!    or color RGB.
+  fprop_thread(configuration &conf, mutex *om = NULL, const char *name = "",
+               const char *arg2 = NULL, bool sync = true,
+               t_chans tc = CHANS_RGB);
+  ~fprop_thread();
 
-    ////////////////////////////////////////////////////////////////
-    // private members
-  private:
-    configuration		 conf;
-    const char			*arg2;
-    idx<ubyte>			 uframe;
-    idx<Tnet>			 frame;
-    mutex		         mutex_in;	// mutex for thread input
-    mutex 		         mutex_out;	// mutex for thread output
-    bool			 in_updated;	// thread input updated
-    bool			 out_updated;	// thread output updated
-    bool                         bavailable;    // thread is available
-    string                       frame_name;    // name of current frame
-    uint                         frame_id;      //! Unique ID for frame.
-    string                       outdir;        // output directory
-    using thread::mout; //! synchronized cout
-    using thread::merr; //! synchronized cerr
-    t_chans                      color_space;
-    bool                         bload_image;    //! Load image or not.
+  //! Execute the detection thread.
+  virtual void execute();
+  //! Return true if new data was copied to the thread, false otherwise,
+  //! if we could not obtain the mutex lock.
+  virtual bool set_data(idx<ubyte> &frame, std::string &frame_name,
+                        uint frame_id);
+  //! Return true if new data was copied from the thread, false otherwise.
+  //! We get the frame back even though it was set via set_data,
+  //! because we do not know which frame was actually used.
+  //! (could use some kind of id, and remember frames to avoid copy).
+  //! Note: this method will return true only once, after a frame has been
+  //! processed. Subsequent calls will return false until a new frame is
+  //! processed again.
+  virtual bool get_data(idx<ubyte> &frame, std::string &frame_name,
+                        uint &frame_id);
+  //! Ask the thread to fprop the file 'frame_fname' and dump the results
+  //! in 'dump_fname' (which should not contain an extension, it will be
+  //! added along the matrix sizes).
+  virtual bool set_dump(std::string &frame_fname, std::string &dump_fname);
+  //! Return true if the thread has processed and dump the data.
+  //! Note: this method will return true only once, after a frame has been
+  //! processed. Subsequent calls will return false until a new frame is
+  //! processed again.
+  virtual bool dumped();
+  //! Return true if the thread is available to process a new frame, false
+  //! otherwise.
+  virtual bool available();
+  //! Set the directory where to write outputs.
+  virtual void set_output_directory(std::string &out);
 
-  public:
-    detector<FPROP_SFUNC(Tnet)>       *pdetect;
-  };
+ private:
+  //! Turn 'out_updated' flag on, so that other threads know we just outputed
+  //! new data.
+  void set_out_updated();
+
+  // private members
+ private:
+  configuration	 conf;
+  const char	*arg2;
+  idx<ubyte>	 uframe;
+  idx<T>	 frame;
+  mutex		 mutex_in;              // mutex for thread input
+  mutex 	 mutex_out;             // mutex for thread output
+  bool		 in_updated;            // thread input updated
+  bool		 out_updated;           // thread output updated
+  bool           bavailable;            // thread is available
+  std::string    frame_name;            // name of current frame
+  uint           frame_id;              //! Unique ID for frame.
+  std::string    outdir;                // output directory
+  using          thread::mout;          //! synchronized cout
+  using          thread::merr;          //! synchronized cerr
+  t_chans        color_space;
+  bool           bload_image;           //! Load image or not.
+
+ public:
+  detector<T> *pdetect;
+};
 
 } // end namespace ebl
 
 #include "fprop_thread.hpp"
 
 #endif /* FPROP_THREAD_H_ */
-

@@ -10,20 +10,20 @@
 using namespace ebl;
 
 bool approx_equals(float a, float b, float err = 1e-5) {
-  if (abs(a) == std::numeric_limits<float>::infinity() ||
-      abs(b) == std::numeric_limits<float>::infinity())
+  if (std::abs(a) == std::numeric_limits<float>::infinity() ||
+      std::abs(b) == std::numeric_limits<float>::infinity())
     return a == b;
-  else if (abs(a) > 1e-10 && abs(b) > 1e-10)
+  else if (std::abs(a) > 1e-10 && std::abs(b) > 1e-10)
     return (1.0f - err < a / b) && (a / b < 1.0f + err);
   else
     return (a - err < b) && (b < a + err);
 }
 
 bool approx_equals(double a, double b, double err = 1e-5) {
-  if (abs(a) == std::numeric_limits<double>::infinity() ||
-      abs(b) == std::numeric_limits<double>::infinity())
+  if (std::abs(a) == std::numeric_limits<double>::infinity() ||
+      std::abs(b) == std::numeric_limits<double>::infinity())
     return a == b;
-  else if (abs(a) > 1e-10 && abs(b) > 1e-10)
+  else if (std::abs(a) > 1e-10 && std::abs(b) > 1e-10)
     return (1.0f - err < a / b) && (a / b < 1.0f + err);
   else
     return (a - err < b) && (b < a + err);
@@ -38,7 +38,6 @@ void thops_test::tearDown() {
 // tests for th_add
 
 void thops_test::test_th_add_float() {
-  
   int nx = 15, ny = 42;
   idx<float> A(nx, ny), B(nx, ny);
   for (int i = 0; i < nx; ++i)
@@ -55,11 +54,9 @@ void thops_test::test_th_add_float() {
       CPPUNIT_ASSERT(approx_equals(AB.get(i, j), A.get(i, j) + B.get(i, j)));
       CPPUNIT_ASSERT(approx_equals(AB2.get(i, j), A.get(i, j) + B.get(i, j)));
     }
-  
 }
 
 void thops_test::test_th_add_double() {
-  
   int nx = 15, ny = 42;
   idx<double> A(nx, ny), B(nx, ny);
   for (int i = 0; i < nx; ++i)
@@ -76,8 +73,8 @@ void thops_test::test_th_add_double() {
       CPPUNIT_ASSERT(approx_equals(AB.get(i, j), A.get(i, j) + B.get(i, j)));
       CPPUNIT_ASSERT(approx_equals(AB2.get(i, j), A.get(i, j) + B.get(i, j)));
     }
-  
 }
+
 // tests for th_convolution
 void thops_test::test_th_convolve_float() {
   idx<float> A(4, 4);

@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -37,8 +37,6 @@
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif
-
-using namespace std;
 
 namespace ebl {
 
@@ -60,30 +58,30 @@ namespace ebl {
 			  unsigned int w0 = 0,
 			  double zoomh = 1.0, double zoomw = 1.0,
 			  double minv = 0, double maxv = 0);
-    
+
   //! float instantiation of draw_matrix, useful for debugging under gdb
   void draw_matrix_float(idx<float> &im, unsigned int h0 = 0,
 			 unsigned int w0 = 0,
 			 double zoomh = 1.0, double zoomw = 1.0,
 			 float minv = 0, float maxv = 0);
-  
+
   //! ubyte instantiation of draw_matrix, useful for debugging under gdb
   void draw_matrix_ubyte(idx<ubyte> &im, unsigned int h0 = 0,
 			 unsigned int w0 = 0,
 			 double zoomh = 1.0, double zoomw = 1.0,
 			 ubyte minv = 0, ubyte maxv = 0);
 #endif
-  
+
   ////////////////////////////////////////////////////////////////
   // global idx variables, useful for debugging under gdb
-  
+
   extern idx<double>	gdb_idx_double1;
   extern idx<double>	gdb_idx_double2;
   extern idx<float>	gdb_idx_float1;
   extern idx<float>	gdb_idx_float2;
   extern idx<ubyte>	gdb_idx_ubyte1;
   extern idx<ubyte>	gdb_idx_ubyte2;
-  
+
 } // end namespace ebl
 
 #endif /* GDB_ */

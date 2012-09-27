@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -65,20 +65,20 @@ namespace ebl {
 				      std::ostream &out,
 				      std::ostream &err)
     : camera<Tdata>(height_, width_) {
-    cout << "Initializing Kinect ..." << endl;
+    std::cout << "Initializing Kinect ..." << std::endl;
     frame = idx<Tdata>(480, 640, 3);
     mresize = false; // use regular resize instead of mean
     resize_mode = 1; // allow ratio loss
   }
-  
+
   template <typename Tdata>
   camera_kinect<Tdata>::~camera_kinect() {
   }
-  
+
   template <typename Tdata>
   idx<Tdata> camera_kinect<Tdata>::grab() {
 #ifdef __KINECT__
-    void *v_depth; 
+    void *v_depth;
     unsigned int timestamp;
     int b = freenect_sync_get_depth
       (&v_depth, &timestamp, 0,
@@ -88,7 +88,7 @@ namespace ebl {
       return frame;
     }
     uint16_t *depth = (uint16_t *)v_depth;
-    //copy depth into an idx	
+    //copy depth into an idx
     for(int j=0;j<480;j++) {
       for(int i=0;i<640;i++) {
 	for(int k=0;k<3;k++) {

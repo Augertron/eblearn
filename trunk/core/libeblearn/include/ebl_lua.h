@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pierre Sermanet *
+ *   Copyright (C) 2012 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -36,43 +36,42 @@
 #include "ebl_defines.h"
 #include "libidx.h"
 #include "ebl_arch.h"
-#include "ebl_states.h"
 #include "ebl_utils.h"
 #include "ebl_preprocessing.h"
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // lua_module
-  //! An interface to lua modules.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class lua_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    lua_module(const char *script, const char *name = "lua");
-    //! destructor
-    virtual ~lua_module();
-    //! forward propagation from in to out
-    virtual void fprop(mstate<Tstate> &in, mstate<Tstate> &out);
-    //! backward propagation from out to in
-    virtual void bprop(mstate<Tstate> &in, mstate<Tstate> &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(mstate<Tstate> &in, mstate<Tstate> &out);
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
+// lua_module //////////////////////////////////////////////////////////////////
 
-    // members ////////////////////////////////////////////////////////
-  protected:
-    string script_fname;
-    long ninputs;
-    float **inputs;
-    long **inputs_size;
+//! An interface to lua modules.
+template <typename T> class lua_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  lua_module(const char *script, const char *name = "lua");
+  //! destructor
+  virtual ~lua_module();
 
-    long noutputs;
-    float **outputs;
-    long **outputs_size;
-  };
-  
+  //! Forward propagation of all tensors from 'in' tensors to 'out' tensors.
+  virtual void fprop(state<T> &in, state<T> &out);
+  //! 1st order backward propagation of all tensors from out to in.
+  virtual void bprop(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation of all tensors from out to in.
+  virtual void bbprop(state<T> &in, state<T> &out);
+
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+
+  // members
+ protected:
+  std::string   script_fname;
+  long          ninputs;
+  float       **inputs;
+  long        **inputs_size;
+  long          noutputs;
+  float       **outputs;
+  long        **outputs_size;
+};
+
 } // namespace ebl {
 
 #include "ebl_lua.hpp"

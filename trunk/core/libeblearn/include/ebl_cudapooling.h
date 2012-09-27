@@ -41,7 +41,7 @@
 namespace ebl {
   ////////////////////////////////////////////////////////////////
   // cuda_lppooling_module
-  
+
   //! This module takes the l2 norm of neighborhoods with a stride,
   //! e.g. a 5x5 l2 pooling with a stride of 2x2.
   template <typename T, class Tstate = bbstate_idx<T> >
@@ -56,8 +56,8 @@ namespace ebl {
   //! \param crop If true, crop input when it does not match with the kernel.
   //!          This allows to feed any input size to this module.
   cuda_lppooling_module(uint thickness, idxdim &kernel, idxdim &stride,
-                        uint lppower = 2, 
-                        const char *name = "lppooling", 
+                        uint lppower = 2,
+                        const char *name = "lppooling",
                         bool crop = true, int gpu_id=-1);
   //! destructor
   virtual ~cuda_lppooling_module();

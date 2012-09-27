@@ -36,7 +36,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // mutex
-  
+
   //! Use non-recursive mutex so that lock can be called multiple times
   //! by the same thread but require only 1 unlock.
   //! Also this has to be the 'fast' kind of mutex that blocks the
@@ -106,7 +106,7 @@ namespace ebl {
     return 0;
   }
 
-  streamsize sbuf::xsputn ( const char * s, streamsize n ) {
+  std::streamsize sbuf::xsputn (const char * s, std::streamsize n) {
     if (!own_lock && busy)
       busy->lock();
     own_lock = true; // own lock until we output endl
@@ -115,7 +115,7 @@ namespace ebl {
     new_line = false;
     return std::stringbuf::xsputn(s, n);
    }
-  
+
   ////////////////////////////////////////////////////////////////
   // mutex_ostream
 
@@ -125,33 +125,33 @@ namespace ebl {
 
   mutex_ostream::~mutex_ostream() {
   }
-  
+
   void mutex_ostream::update_prefix(const char *p) {
     buffer.prefix = p;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // thread
   // Initialize it to satisfy the linker (correct behavior)
   uint thread::_id_counter=0;
 
-  thread::thread(mutex *outmutex, const char *name_, bool sync) 
+  thread::thread(mutex *outmutex, const char *name_, bool sync)
     : _stop(false), mutout(std::cout, outmutex, _name.c_str()),
       muterr(std::cerr, outmutex, _name.c_str()),
       mout(sync ? mutout : std::cout), merr(sync ? muterr : std::cerr),
-      _finished(false), _id(_id_counter++) {    
+      _finished(false), _id(_id_counter++) {
     if (name_ == NULL) _name << "Thread " << _id;
     else _name = name_;
     // update name in mutex outs
     mutout.update_prefix(_name.c_str());
     muterr.update_prefix(_name.c_str());
     mout << "initializing thread (" << (sync ? "synched" : "unsynched" )
-	 << " outputs)" << endl;
+	 << " outputs)" << std::endl;
   }
 
   thread::~thread() {
     //      pthread_exit((void*)&threadptr);
-    //mout << "destroyed." << endl;
+    //mout << "destroyed." << std::endl;
   }
 
   int thread::start() {
@@ -162,7 +162,7 @@ namespace ebl {
     return pthread_create(&threadptr, NULL, thread::entrypoint, this);
 #endif
   }
-  
+
   void thread::run() {
     execute();
   }
@@ -187,17 +187,17 @@ namespace ebl {
       while (!_finished && wait.elapsed_seconds() < wait_seconds)
 	millisleep(5);
     }
-    // force stopping thread 
+    // force stopping thread
 #ifndef __PTHREAD__
     eblerror("pthread missing, install it and recompile.");
 #else
     int ret = pthread_cancel(threadptr);
     if (ret) {
       merr << "Warning: failed to cancel thread, with error code " << ret
-	   << endl;
+	   << std::endl;
       return ;
     }
-#endif     
+#endif
     mutex1.lock();
     _finished = true;
     mutex1.unlock();
@@ -221,7 +221,7 @@ namespace ebl {
     thread *pt = (thread*) pthis;
     pt->run();
     pt->_finished = true;
-    //pt->mout << "finished" << endl;
+    //pt->mout << "finished" << std::endl;
     return pt;
   }
 

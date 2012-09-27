@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -60,17 +60,17 @@ namespace ebl {
     : camera<Tdata>(height_, width_), started(false),
       nbuffers(grayscale_ ? 1 : 3), buffers(new void*[nbuffers]),
       sizes(new int[nbuffers]), mode_rgb(mode_rgb_) {
-    cout << "Initializing V4l2 camera from device " << device
-	 << " to " << height_ << "x" << width_ << endl;
+    std::cout << "Initializing V4l2 camera from device " << device
+	 << " to " << height_ << "x" << width_ << std::endl;
     if (grayscale_)
-      cout << "V4l2 output is set to grayscale." << endl;
+      std::cout << "V4l2 output is set to grayscale." << std::endl;
 #ifndef __LINUX__
     eblerror("V4l2 is for linux only");
 #else
     int fps = 30;
     int height1 = -1; // height returned by camera
-    int width1 = -1; // width returned by camera 
-    
+    int width1 = -1; // width returned by camera
+
     fd = open(device, O_RDWR);
     if (fd == -1) eblerror("could not open v4l2 device: " << device);
     struct v4l2_capability cap;
@@ -96,18 +96,18 @@ namespace ebl {
     cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (0 == ioctl(fd, VIDIOC_CROPCAP, &cropcap)) {
       crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-      crop.c = cropcap.defrect; 
+      crop.c = cropcap.defrect;
       ioctl(fd, VIDIOC_S_CROP, &crop);
     }
     // get list of supported image formats
         memset((void*) &fmt, 0, sizeof(struct v4l2_format));
         ioctl(fd, VIDIOC_G_FMT, &fmt);
-    
+
     // set format
     memset((void*) &fmt, 0, sizeof(struct v4l2_format));
     fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     // TODO: error when ratio not correct
-    fmt.fmt.pix.width       = width_; 
+    fmt.fmt.pix.width       = width_;
     fmt.fmt.pix.height      = height_;
     // Looks like most cams dont support RGB output, converting it by hand
     //    if(mode_rgb)
@@ -122,20 +122,20 @@ namespace ebl {
     height1 = fmt.fmt.pix.height;
     width1 = fmt.fmt.pix.width;
     if (height != height1 || width != width1) {
-      cout << "Warning: requested resolution " << height << "x" << width
-	   << " but camera changed it to " << height1 << "x" << width1 << endl;
+      std::cout << "Warning: requested resolution " << height << "x" << width
+	   << " but camera changed it to " << height1 << "x" << width1 << std::endl;
       // enabling resizing as postprocessing
       bresize = true;
     } else // already resized to our target, disable resizing
       bresize = false;
 
     // set framerate
-    struct v4l2_streamparm setfps;  
+    struct v4l2_streamparm setfps;
     memset((void*) &setfps, 0, sizeof(struct v4l2_streamparm));
     setfps.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     setfps.parm.capture.timeperframe.numerator = 1;
     setfps.parm.capture.timeperframe.denominator = fps;
-    ioctl(fd, VIDIOC_S_PARM, &setfps); 
+    ioctl(fd, VIDIOC_S_PARM, &setfps);
     // allocate and map the buffers
     struct v4l2_requestbuffers rb;
     rb.count = nbuffers;
@@ -147,7 +147,7 @@ namespace ebl {
       eblerror("could not allocate v4l2 buffers");
     }
     ret = 0;
-    for (int i = 0; i < nbuffers; i++) { 
+    for (int i = 0; i < nbuffers; i++) {
       struct v4l2_buffer buf;
       int r;
       memset((void*) &buf, 0, sizeof(struct v4l2_buffer));
@@ -155,7 +155,7 @@ namespace ebl {
       buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
       buf.memory = V4L2_MEMORY_MMAP;
       r = ioctl(fd, VIDIOC_QUERYBUF, &buf);
-      //       printf("i=%u, length: %u, offset: %u, r=%d\n", i, buf.length, buf.m.offset, r); 
+      //       printf("i=%u, length: %u, offset: %u, r=%d\n", i, buf.length, buf.m.offset, r);
       if (r < 0)
 	ret = -(i+1);
       if (ret == 0) {
@@ -167,13 +167,13 @@ namespace ebl {
       }
     }
     if (ret < 0) {
-      cout << "ret = " << ret << endl;
+      std::cout << "ret = " << ret << std::endl;
       if (ret > -1000) {
-	cout << "query buffer " << - (1 + ret) << endl;
+	std::cout << "query buffer " << - (1 + ret) << std::endl;
 	//(==> this cleanup)
 	eblerror("could not query v4l2 buffer");
       } else {
-	cout << "map buffer " << - (1000 + ret) << endl;
+	std::cout << "map buffer " << - (1000 + ret) << std::endl;
 	//(==> this cleanup)
     	eblerror("could not map v4l2 buffer");
       }
@@ -186,7 +186,7 @@ namespace ebl {
     print_controls();
 #endif
   }
-  
+
   template <typename Tdata>
   camera_v4l2<Tdata>::~camera_v4l2() {
     if (buffers)
@@ -196,14 +196,14 @@ namespace ebl {
   }
 
 #ifdef __LINUX__
-  
+
   static void
   enumerate_menu(int fd, struct v4l2_queryctrl &queryctrl,
 		 struct v4l2_querymenu &querymenu) {
     printf ("  Menu items:\n");
     memset (&querymenu, 0, sizeof (querymenu));
     querymenu.id = queryctrl.id;
-  
+
     for (querymenu.index = queryctrl.minimum;
 	 (int) querymenu.index <= queryctrl.maximum; querymenu.index++) {
       if (0 == ioctl (fd, VIDIOC_QUERYMENU, &querymenu)) {
@@ -216,7 +216,8 @@ namespace ebl {
 
   template <typename Tdata>
   void camera_v4l2<Tdata>::print_controls() {
-    cout << "__V4l2 camera controls___________________________________" << endl;
+    std::cout << "__V4l2 camera controls___________________________________"
+              << std::endl;
 
     struct v4l2_queryctrl queryctrl;
     struct v4l2_querymenu querymenu;
@@ -228,10 +229,10 @@ namespace ebl {
       if (0 == ioctl (fd, VIDIOC_QUERYCTRL, &queryctrl)) {
 	if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 	  continue;
-	
-	cout << queryctrl.name << " (" << queryctrl.id << "): "
-	     << get_control(queryctrl.id) << endl;
-	
+
+	std::cout << queryctrl.name << " (" << queryctrl.id << "): "
+	     << get_control(queryctrl.id) << std::endl;
+
 	if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 	  enumerate_menu (fd, queryctrl, querymenu);
       } else {
@@ -246,9 +247,9 @@ namespace ebl {
       if (0 == ioctl (fd, VIDIOC_QUERYCTRL, &queryctrl)) {
 	if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED)
 	  continue;
-	
+
 	printf ("Control %s\n", queryctrl.name);
-	
+
 	if (queryctrl.type == V4L2_CTRL_TYPE_MENU)
 	  enumerate_menu (fd, queryctrl, querymenu);
       } else {
@@ -256,15 +257,16 @@ namespace ebl {
 	  break;
 	eblerror ("VIDIOC_QUERYCTRL");
       }
-    }    
-    cout << "_________________________________________________________" << endl;
+    }
+    std::cout << "_________________________________________________________"
+              << std::endl;
   }
 
   template <typename Tdata>
   int camera_v4l2<Tdata>::get_control(int id) {
     struct v4l2_queryctrl queryctrl;
     struct v4l2_control control;
-    
+
     memset (&queryctrl, 0, sizeof (queryctrl));
     queryctrl.id = id;
     if (-1 == ioctl (fd, VIDIOC_QUERYCTRL, &queryctrl)) {
@@ -284,12 +286,12 @@ namespace ebl {
     }
     return control.value;
   }
-  
+
   template <typename Tdata>
   void camera_v4l2<Tdata>::set_integer_control(int id, int val) {
     struct v4l2_queryctrl queryctrl;
     struct v4l2_control control;
-    
+
     memset (&queryctrl, 0, sizeof (queryctrl));
     queryctrl.id = id;
     if (-1 == ioctl (fd, VIDIOC_QUERYCTRL, &queryctrl)) {
@@ -309,7 +311,7 @@ namespace ebl {
       }
     }
   }
-  
+
   template <typename Tdata>
   void camera_v4l2<Tdata>::set_boolean_control(int id, bool val) {
     struct v4l2_control control;
@@ -349,17 +351,17 @@ namespace ebl {
       ret += ioctl(fd, VIDIOC_QBUF, &buf);
     }
     if (ret < 0)
-      cout << "WARNING: could not enqueue v4l2 buffers" << endl;
+      std::cout << "WARNING: could not enqueue v4l2 buffers" << std::endl;
     enum v4l2_buf_type type;
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     ret = ioctl(fd, VIDIOC_STREAMON, &type);
     if (ret < 0) {
-      cout << "WARNING: could not start v4l2 capture" << endl;
+      std::cout << "WARNING: could not start v4l2 capture" << std::endl;
       started = false;
-    } else 
+    } else
       started = true;
   }
-  
+
 #endif
 
   template <typename Tdata>
@@ -383,7 +385,7 @@ namespace ebl {
       for (j=0, k=0; j < width; j++, k+=m1) {
 	int j2;
 	j2 = j<<1;
-	dst[k] = (Tdata) src[j2]; 
+	dst[k] = (Tdata) src[j2];
 	if (j & 1) {
 	  dst[k+1] = (Tdata) src[j2-1];
 	  dst[k+2] = (Tdata) src[j2+1];

@@ -37,46 +37,48 @@
 
 namespace ebl {
 
-  // random ////////////////////////////////////////////////////////////////////
+// random ////////////////////////////////////////////////////////////////////
 
-  class EXPORT random {
-  public:
-    //! Constructs a random number generator with seed 'x'.
-    //! Use x == 0 to construct a fixed-seed generator.
-    random(int x);
-    //! Constructs a random number generator with a random seed taken
-    //! from current time and the sum of all arguments characters,
-    //! if present. This can be useful if several programs are called at the
-    //! same time with different input arguments.
-    random(int argc = 0, char **argv = NULL);
-    //! Destructor.
-    virtual ~random();
+class EXPORT random {
+public:
+  //! Empty constructor, doesn't set any seed.
+  random();
+  //! Constructs a random number generator with seed 'x'.
+  //! Use x == 0 to construct a fixed-seed generator.
+  random(int x);
+  //! Constructs a random number generator with a random seed taken
+  //! from current time and the sum of all arguments characters,
+  //! if present. This can be useful if several programs are called at the
+  //! same time with different input arguments.
+  random(int argc, char **argv);
+  //! Destructor.
+  virtual ~random();
 
-    //! random number generator. Return a random number
-    //! drawn from a uniform distribution over [0,1].
-    double drand(void);
-    //! random number generator. Return a random number
-    //! drawn from a uniform distribution over [-v,+v].
-    double drand(double v);
-    //! random number generator. Return a random number
-    //! drawn from a uniform distribution over [v0,v1].
-    double drand(double v0, double v1);    
+  //! random number generator. Return a random number
+  //! drawn from a uniform distribution over [0,1].
+  double drand(void);
+  //! random number generator. Return a random number
+  //! drawn from a uniform distribution over [-v,+v].
+  double drand(double v);
+  //! random number generator. Return a random number
+  //! drawn from a uniform distribution over [v0,v1].
+  double drand(double v0, double v1);
 
-  protected:
-    //! Initialize seed.
-    void init(int x);
-    //! sets the seed of the random number generator.
-    //! This MUST be called at least once before
-    //! the random number generator is used. Otherwise
-    //! calls to drand() and dgauss() always return the
-    //! same number.
-    void dseed(int x);
+protected:
+  //! Initialize seed.
+  void init(int x);
+  //! sets the seed of the random number generator.
+  //! This MUST be called at least once before
+  //! the random number generator is used. Otherwise
+  //! calls to drand() and dgauss() always return the
+  //! same number.
+  void dseed(int x);
 
-  private:
-    int inext, inextp;
-    int ma[56];		/* Should not be modified */
-  };
-  
+private:
+  int inext, inextp;
+  int ma[56];		/* Should not be modified */
+};
+
 } // end namespace ebl
 
 #endif /* RANDOM_H */

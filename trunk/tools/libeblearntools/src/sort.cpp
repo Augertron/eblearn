@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -39,7 +39,7 @@
 using namespace std;
 
 namespace ebl {
-  
+
   inline int safe_compare(int a, int b) {
     return a < b ? -1 : a > b;
   }
@@ -50,7 +50,7 @@ namespace ebl {
     const char *aprev, *bprev;
     bool decimal = false;
 
-    while (cmp == 0 && *a != '\0' && *b != '\0') {      
+    while (cmp == 0 && *a != '\0' && *b != '\0') {
       int_span lhs(a), rhs(b);
       aprev = max(a0, a - 1);
       bprev = max(b0, b - 1);
@@ -77,15 +77,15 @@ namespace ebl {
 	}
 
 	if (cmp == 0) {
-	  // If the values are equal, we need a tie   
+	  // If the values are equal, we need a tie
 	  // breaker using leading whitespace and zeros
 	  if (lhs.non_value() != rhs.non_value()) {
-	    // For differing widths of combined whitespace and 
+	    // For differing widths of combined whitespace and
 	    // leading zeros, the smaller width takes priority
 	    cmp = safe_compare(lhs.non_value(), rhs.non_value());
 	  }
 	  else {
-	    // For matching widths of combined whitespace 
+	    // For matching widths of combined whitespace
 	    // and leading zeros, more whitespace takes priority
 	    cmp = safe_compare(rhs.whitespace(), lhs.whitespace());
 	  }
@@ -101,26 +101,28 @@ namespace ebl {
     return cmp == 0 ? safe_compare(*a, *b) : cmp;
   }
 
-  int natural_compare(const string& a, const string& b) {
+  int natural_compare(const std::string& a, const std::string& b) {
     return natural_compare(a.c_str(), b.c_str());
   }
 
-  int natural_compare(const string& a, const string* b) {
+  int natural_compare(const std::string& a, const std::string* b) {
     return natural_compare(a.c_str(), b->c_str());
   }
 
-  bool natural_compare_less(const string& a, const string& b) {
+  bool natural_compare_less(const std::string& a, const std::string& b) {
     if (natural_compare(a.c_str(), b.c_str()) < 0)
       return true;
     return false;
   }
 
-  // bool natural_less::operator()(const std::string& a, const std::string& b) {
+  // bool natural_less::operator()(const std::std::string& a,
+  // const std::std::string& b) {
   //   return natural_compare(a, b) < 0;
   // }
 
-  bool natural_less::operator()(const string& a, const string& b) const {
-    istringstream ia(a), ib(b);
+  bool natural_less::operator()(const std::string& a,
+                                const std::string& b) const {
+    std::istringstream ia(a), ib(b);
     double da = 0, db = 0;
 
     ia >> da;
@@ -134,13 +136,14 @@ namespace ebl {
     if (da < db)
       return da < db;
     // else read the remaining
-    string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
-    string rb = b.substr(b.size() - ib.rdbuf()->in_avail());
+    std::string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
+    std::string rb = b.substr(b.size() - ib.rdbuf()->in_avail());
     return operator()(ra, rb);
   }
 
-  bool natural_less_pointer::operator()(const string& a, const string* b) const {
-    istringstream ia(a), ib(*b);
+  bool natural_less_pointer::operator()(const std::string& a,
+                                        const std::string* b) const {
+    std::istringstream ia(a), ib(*b);
     double da = 0, db = 0;
 
     ia >> da;
@@ -154,25 +157,25 @@ namespace ebl {
     if (da < db)
       return da < db;
     // else read the remaining
-    string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
-    string rb = b->substr(b->size() - ib.rdbuf()->in_avail());
+    std::string ra = a.substr(a.size() - ia.rdbuf()->in_avail());
+    std::string rb = b->substr(b->size() - ib.rdbuf()->in_avail());
     return operator()(ra, &rb);
   }
 
   // map_natural_less //////////////////////////////////////////////////////////
 
-  map_natural_less::map_natural_less(list<string> &k) {
+  map_natural_less::map_natural_less(std::list<std::string> &k) {
     keys = k;
   }
-  
-  bool map_natural_less::operator()(const map<string,string>& m1,
-				    const map<string,string>& m2) const {
+
+  bool map_natural_less::operator()(const std::map<std::string,std::string>& m1,
+				    const std::map<std::string,std::string>& m2) const {
     natural_less nl;
     // loop over comparison keys
-    for (list<string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
+    for (std::list<std::string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
       // check that key exists in both maps
-      map<string,string>::const_iterator k1 = m1.find(*i);
-      map<string,string>::const_iterator k2 = m2.find(*i);
+      std::map<std::string,std::string>::const_iterator k1 = m1.find(*i);
+      std::map<std::string,std::string>::const_iterator k2 = m2.find(*i);
       if ((k1 == m1.end()) && (k2 == m2.end()))
       	continue ; // unknown key for both, try another one.
       if (k1 == m1.end())
@@ -187,29 +190,30 @@ namespace ebl {
     // we reached this point, m1 == m2
     return true; // or false, they are equal.
   }
-  
+
   // map_natural_less //////////////////////////////////////////////////////////
 
-  map_natural_less_pointer::map_natural_less_pointer(list<string> &k) {
+  map_natural_less_pointer::map_natural_less_pointer(std::list<std::string> &k) {
     keys = k;
   }
-  
-  bool map_natural_less_pointer::operator()(const map<string,string*>& m1,
-				    const map<string,string*>& m2) const {
+
+  bool map_natural_less_pointer::operator()(
+      const std::map<std::string,std::string*>& m1,
+      const std::map<std::string,std::string*>& m2) const {
     natural_less nl;
     // loop over comparison keys
-    for (list<string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
+    for (std::list<std::string>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
       // check that key exists in both maps
-      map<string,string*>::const_iterator k1 = m1.find(*i);
-      map<string,string*>::const_iterator k2 = m2.find(*i);
+      std::map<std::string,std::string*>::const_iterator k1 = m1.find(*i);
+      std::map<std::string,std::string*>::const_iterator k2 = m2.find(*i);
       if ((k1 == m1.end()) && (k2 == m2.end()))
       	continue ; // unknown key for both, try another one.
       if (k1 == m1.end())
 	return false; // m1 doesn't contain the key but m2 does, m1 > m2
       if (k2 == m2.end())
 	return true;  // m2 doesn't contain the key but m1 does, m1 < m2
-      string &k1second = *(k1->second);
-      string &k2second = *(k2->second);
+      std::string &k1second = *(k1->second);
+      std::string &k2second = *(k2->second);
       if (nl(k1second, k2second))
 	return true; // m1 < m2
       if (k1second != k2second)
@@ -218,29 +222,30 @@ namespace ebl {
     // we reached this point, m1 == m2
     return true; // or false, they are equal.
   }
-  
+
   // map_natural_less_id //////////////////////////////////////////////////////////
 
-  map_natural_less_uint::map_natural_less_uint(list<uint> &k, vector<string> &v)
+  map_natural_less_uint::map_natural_less_uint(std::list<uint> &k,
+                                               std::vector<std::string> &v)
     : keys(k), vals(v) {
   }
-  
-  bool map_natural_less_uint::operator()(const map<uint,uint>& m1,
-					 const map<uint,uint>& m2) const {
+
+  bool map_natural_less_uint::operator()(const std::map<uint,uint>& m1,
+					 const std::map<uint,uint>& m2) const {
     natural_less nl;
     // loop over comparison keys
-    for (list<uint>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
+    for (std::list<uint>::const_iterator i = keys.begin(); i != keys.end(); ++i) {
       // check that key exists in both maps
-      map<uint,uint>::const_iterator k1 = m1.find(*i);
-      map<uint,uint>::const_iterator k2 = m2.find(*i);
+      std::map<uint,uint>::const_iterator k1 = m1.find(*i);
+      std::map<uint,uint>::const_iterator k2 = m2.find(*i);
       if ((k1 == m1.end()) && (k2 == m2.end()))
       	continue ; // unknown key for both, try another one.
       if (k1 == m1.end())
 	return false; // m1 doesn't contain the key but m2 does, m1 > m2
       if (k2 == m2.end())
 	return true;  // m2 doesn't contain the key but m1 does, m1 < m2
-      string &k1second = vals[k1->second];
-      string &k2second = vals[k2->second];
+      std::string &k1second = vals[k1->second];
+      std::string &k2second = vals[k2->second];
       if (nl(k1second, k2second))
 	return true; // m1 < m2
       if (k1second != k2second)
@@ -249,5 +254,5 @@ namespace ebl {
     // we reached this point, m1 == m2
     return true; // or false, they are equal.
   }
-  
+
 } // end namespace ebl

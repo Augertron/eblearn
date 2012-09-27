@@ -47,14 +47,13 @@
 #include "libeblearntools.h"
 #include "MyTextOutputter.h"
 
+#include "idxIO_test.h"
+#include "idx_test.h"
 #include "idxops_test.h"
 #include "idxops_test2.h"
 #include "ebl_basic_test.h"
-
 #include "ebl_preprocessing_test.h"
-#include "idxIO_test.h"
 #include "datasource_test.h"
-#include "idx_test.h"
 #include "idxiter_test.h"
 #include "detector_test.h"
 #include "ClusterTest.h"
@@ -69,10 +68,10 @@
 #include "tools_utils.h"
 #include "eblapp.h"
 
-#ifdef __IPP__ 
+#ifdef __IPP__
 #include "ippops_test.h"
 #endif
-  
+
 #ifdef __GUI__
 #include "libidxgui.h"
 #endif
@@ -110,9 +109,9 @@ void parse_args(int argc, char **argv) {
   if (strlen(DATA_PATH) > 0)
     gl_data_dir = new string(DATA_PATH);
   gl_mnist_errmsg =
-    new string("MNIST directory is unknown, some tests will be ignored (MNIST can be downloaded at http://yann.lecun.com/exdb/mnist/)");
+      new string("MNIST directory is unknown, some tests will be ignored (MNIST can be downloaded at http://yann.lecun.com/exdb/mnist/)");
   gl_data_errmsg =
-    new string("Data directory is unknown, some tests will be ignored");
+      new string("Data directory is unknown, some tests will be ignored");
   string s;
   ifstream in(ini.c_str());
   if (!in)
@@ -155,7 +154,7 @@ void parse_args(int argc, char **argv) {
 	  cout << "Warning: " << *gl_mnist_errmsg << endl;
 	} else {
 	  // download
-	  gl_mnist_dir = new string(buf);	  
+	  gl_mnist_dir = new string(buf);
 	  cout << "Downloading MNIST to " << *gl_mnist_dir << " ..." << endl;
 	  ostringstream cmd;
 	  res = 0;
@@ -184,28 +183,28 @@ void parse_args(int argc, char **argv) {
 	}
       } else
 #endif
-	{
-	  // check that directory exists and contains the files
-	  gl_mnist_dir = new string(buf);
-	  ostringstream f;
-	  try {
-	    f.str(""); f << buf;
-	    if (!ebl::dir_exists(buf)) throw f.str();
-	    f.str(""); f << buf << "/" << MNIST1;
-	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
-	    f.str(""); f << buf << "/" << MNIST2;
-	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
-	    f.str(""); f << buf << "/" << MNIST3;
-	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
-	    f.str(""); f << buf << "/" << MNIST4;
-	    if (!ebl::file_exists(f.str().c_str())) throw f.str();
-	  } catch (string &err) {
-	    delete gl_mnist_dir;
-	    gl_mnist_dir = NULL;
-	    cerr << "Could not find " << err << endl;
-	    cout << "Warning: " << *gl_mnist_errmsg << endl;
-	  }
-	}
+      {
+        // check that directory exists and contains the files
+        gl_mnist_dir = new string(buf);
+        ostringstream f;
+        try {
+          f.str(""); f << buf;
+          if (!ebl::dir_exists(buf)) throw f.str();
+          f.str(""); f << buf << "/" << MNIST1;
+          if (!ebl::file_exists(f.str().c_str())) throw f.str();
+          f.str(""); f << buf << "/" << MNIST2;
+          if (!ebl::file_exists(f.str().c_str())) throw f.str();
+          f.str(""); f << buf << "/" << MNIST3;
+          if (!ebl::file_exists(f.str().c_str())) throw f.str();
+          f.str(""); f << buf << "/" << MNIST4;
+          if (!ebl::file_exists(f.str().c_str())) throw f.str();
+        } catch (string &err) {
+          delete gl_mnist_dir;
+          gl_mnist_dir = NULL;
+          cerr << "Could not find " << err << endl;
+          cout << "Warning: " << *gl_mnist_errmsg << endl;
+        }
+      }
     }
     if (gl_mnist_dir) { // the path was successfully set, remember it
       ofstream out(ini.c_str());
@@ -221,12 +220,12 @@ void parse_args(int argc, char **argv) {
   if (gl_mnist_dir == NULL) {
     cout << "Warning: " << *gl_mnist_errmsg << endl;
   } else
-    cout << "Using MNIST directory: " << *gl_mnist_dir << endl;  
+    cout << "Using MNIST directory: " << *gl_mnist_dir << endl;
   if (gl_data_dir == NULL) {
     cout << "Warning: " << *gl_data_errmsg << endl;
   } else
     cout << "Using data directory: " << *gl_data_dir << endl;
-  
+
   // Read arguments from shell input
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-nocolor") == 0) {
@@ -237,70 +236,70 @@ void parse_args(int argc, char **argv) {
 }
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
+MAIN_QTHREAD(int, argc, char**, argv) {
 #else
-int main(int argc, char **argv) {
+  int main(int argc, char **argv) {
 #endif
 #ifdef __LINUX__
-  // enable float exceptions to halt instead of propagating errors
-  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+    // enable float exceptions to halt instead of propagating errors
+    feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
-  ebl::ipp_init(1); // limit IPP (if available) to 1 core
-  //  gui.set_silent();
-  cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
-  // parse arguments
-  parse_args(argc, argv);
-  cout << "***********************************************************" << endl;
+    ebl::ipp_init(1); // limit IPP (if available) to 1 core
+    //  gui.set_silent();
+    cout << "***** Unit tester for libeblearn and libidx libraries *****" << endl;
+    // parse arguments
+    parse_args(argc, argv);
+    cout << "***********************************************************" << endl;
 
-  // cppunit tests
-  CppUnit::BriefTestProgressListener listener;
-  CppUnit::TestResultCollector collector;
-  CppUnit::TextUi::TestRunner runner;
-  runner.eventManager().addListener(&listener); // show each test
-  runner.eventManager().addListener(&collector);
-  // note: the custom outputter will be freed by the runner
-  MyTextOutputter *outputter = new MyTextOutputter(&collector, cout);
-  runner.setOutputter(outputter);
+    // cppunit tests
+    CppUnit::BriefTestProgressListener listener;
+    CppUnit::TestResultCollector collector;
+    CppUnit::TextUi::TestRunner runner;
+    runner.eventManager().addListener(&listener); // show each test
+    runner.eventManager().addListener(&collector);
+    // note: the custom outputter will be freed by the runner
+    MyTextOutputter *outputter = new MyTextOutputter(&collector, cout);
+    runner.setOutputter(outputter);
 
-  // fixed randomization
+    // fixed randomization
     fixed_init_drand();
 
-  // adding test suites
-  runner.addTest(idxIO_test::suite());
-  runner.addTest(idx_test::suite());
-  runner.addTest(idxiter_test::suite());
-  runner.addTest(idxops_test::suite());
-  runner.addTest(idxops_test2::suite());
+    // adding test suites
+    runner.addTest(idxIO_test::suite());
+    runner.addTest(idx_test::suite());
+    runner.addTest(idxiter_test::suite());
+    runner.addTest(idxops_test::suite());
+    runner.addTest(idxops_test2::suite());
 #ifdef __IPP__
-  runner.addTest(ippops_test::suite());
+    runner.addTest(ippops_test::suite());
 #endif
 #ifdef __TH__
-      runner.addTest(thops_test::suite());
+    runner.addTest(thops_test::suite());
 #endif
-  runner.addTest(ClusterTest::suite());
-  runner.addTest(datasource_test::suite());
-  runner.addTest(ebl_basic_test::suite());
-  runner.addTest(ebl_preprocessing_test::suite());
-  runner.addTest(image_test::suite());
-  runner.addTest(detector_test::suite());
-  runner.addTest(ebl_machines_test::suite());
- #ifdef __GUI3D__
-  //   runner.addTest(gui3d_test::suite());
- #endif  
+    runner.addTest(ClusterTest::suite());
+    runner.addTest(datasource_test::suite());
+    runner.addTest(ebl_basic_test::suite());
+    runner.addTest(ebl_preprocessing_test::suite());
+    runner.addTest(image_test::suite());
+    runner.addTest(detector_test::suite());
+    runner.addTest(ebl_machines_test::suite());
+#ifdef __GUI3D__
+    //   runner.addTest(gui3d_test::suite());
+#endif
 
-  // run all tests
-  runner.run();
-  
-  // print summary
-  if (!collector.wasSuccessful()) {
-    outputter->printHeader(); 
-    cout << endl;
+    // run all tests
+    runner.run();
+
+    // print summary
+    if (!collector.wasSuccessful()) {
+      outputter->printHeader();
+      cout << endl;
+    }
+
+    if (gl_mnist_dir) delete gl_mnist_dir;
+    if (gl_data_dir) delete gl_data_dir;
+    if (gl_mnist_errmsg) delete gl_mnist_errmsg;
+    if (gl_data_errmsg) delete gl_data_errmsg;
+
+    return 0;
   }
-
-  if (gl_mnist_dir) delete gl_mnist_dir;
-  if (gl_data_dir) delete gl_data_dir;
-  if (gl_mnist_errmsg) delete gl_mnist_errmsg;
-  if (gl_data_errmsg) delete gl_data_errmsg;
-
-  return 0;
-}

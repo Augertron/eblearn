@@ -45,8 +45,6 @@
 #include "stl.h"
 #include "utils.h"
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -85,7 +83,7 @@ namespace ebl {
     idxdim dims(nlin, ncol, 3);
     return dims;
   }
-  
+
   idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out_) {
     int type, vmax;
     size_t expected_size, read_size;
@@ -103,7 +101,7 @@ namespace ebl {
     // sizes
     size_t sz = (vmax == 65535) ? 2 : 1;
     expected_size = dims.nelements();
-    
+
     switch (type) {
     // case 3: // PPM ASCII
     //   uint val;
@@ -166,7 +164,7 @@ namespace ebl {
 	  )))
       */
     default:
-      cerr << "Format P" << type << " not implemented." << endl;
+      std::cerr << "Format P" << type << " not implemented." << std::endl;
     }
     return *pout;
   }

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2012 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,205 +34,233 @@
 
 #include "ebl_defines.h"
 #include "libidx.h"
-#include "ebl_states.h"
-#include "ebl_basic.h"
 #include "ebl_arch.h"
+#include "ebl_basic.h"
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  //! a slab of standard Lush sigmoids
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class stdsigmoid_module: public module_1_1<T,Tstate> {
-  public:
-    //! empty constructor
-    stdsigmoid_module();
-    virtual ~stdsigmoid_module();
-    //! fprop from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! bprop
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! bbprop
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual stdsigmoid_module<T,Tstate>* copy();
-  protected:
-    idx<T> tmp; //!< Temporary buffer.
-  };
+// stdsigmoid //////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  //! a slab of tanh
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class tanh_module: public module_1_1<T,Tstate> {
-  public:
-    //! default constructor
-    tanh_module(const char *name = "tanh");
-    virtual ~tanh_module();
-    //! fprop from in to out
-    void fprop(Tstate &in, Tstate &out);
-    //! bprop
-    void bprop(Tstate &in, Tstate &out);
-    //! bbprop
-    void bbprop(Tstate &in, Tstate &out);
-    //! Calls fprop and then dumps internal buffers, inputs and outputs
-    //! into files. This can be useful for debugging.
-    virtual void dump_fprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual tanh_module<T,Tstate>* copy();
-  protected:
-    idx<T> tmp; //!< Temporary buffer.
-  };
+//! The standard sigmoid.
+template <typename T> class stdsigmoid_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  stdsigmoid_module();
+  //! Destructor.
+  virtual ~stdsigmoid_module();
 
-  ////////////////////////////////////////////////////////////////
-  //! softmax module
-  //! if in is idx0 -> out is idx0 and equal to 1
-  //! if in is idx1 -> it is just one pool
-  //! if in is idx2 -> it is just one pool
-  //! if in is idx3 -> the last two dimensions are pools
-  //! if in is idx4 -> the last two dimensions are pools
-  //! if in is idx5 -> the last four dimensions are pools
-  //! if in is idx6 -> the last four dimensions are pools
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class softmax: public module_1_1<T,Tstate> {
-  public:
-    double beta;
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
 
-    // <b> is the parameter beta in the softmax
-    // large <b> turns the softmax into a max
-    // <b> equal to 0 turns the softmax into 1/N
+  //! Returns a deep copy of this module.
+  virtual stdsigmoid_module<T>* copy();
 
-  private:
-    void resize_nsame(Tstate &in, Tstate &out, int n);
+ protected:
+  idx<T> tmp; //!< Temporary buffer.
+};
 
-  public:
-    softmax(double b);
-    ~softmax() {};
-    void fprop(Tstate &in, Tstate &out);
-    void bprop(Tstate &in, Tstate &out);
-    void bbprop(Tstate &in, Tstate &out);
-  };
+// tanh ////////////////////////////////////////////////////////////////////////
 
-  ////////////////////////////////////////////////////////////////
-  // abs_module
-  //! This module takes the absolute value of its input.
-  //! This module is spatially replicable 
-  //! (the input can have an order greater than 1 and the operation will apply
-  //! to all elements).
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class abs_module: public module_1_1<T, Tstate> {    
-  public:
-    //! Constructor. threshold makes the derivative of abs flat around zero
-    //! with radius threshold.
-    abs_module(double thresh = 0.0);
-    //! Destructor.
-    virtual ~abs_module();
-    //! forward propagation from in to out
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward propagation from out to in
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! second-derivative backward propagation from out to in
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual abs_module<T,Tstate>* copy();
-  private:
-    double threshold;
-  };
+//! a slab of tanh
+template <typename T> class tanh_module: public module_1_1<T> {
+ public:
+  //! default constructor
+  tanh_module(const char *name = "tanh");
+  virtual ~tanh_module();
 
-  ////////////////////////////////////////////////////////////////
-  // linear_shrink_module
-  //! A piece-wise linear shrinkage module that parametrizes
-  //! the location of the shrinkage operator. This function is 
-  //! useful for learning since there is always gradients flowing 
-  //! through it.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class linear_shrink_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param nf The number of features.
-    linear_shrink_module(parameter<T,Tstate> *p, intg nf, T bias = 0);
-    //! Destructor.
-    virtual ~linear_shrink_module();
-    //! forward
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! 2nd deriv backward
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual linear_shrink_module<T,Tstate>* copy();
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-  protected:
-    Tstate bias;
-    T default_bias;
-  };
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
 
-  ////////////////////////////////////////////////////////////////
-  // smooth_shrink_module
-  //! A smoothed shrinkage module that parametrizes the steepnes
-  //! and location of the shrinkage operator. This function is 
-  //! useful for learning since there is always gradients flowing 
-  //! through it.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class smooth_shrink_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param nf The number of features.
-    smooth_shrink_module(parameter<T,Tstate> *p, intg nf, T beta = 10,
-			 T bias = .3);
-    //! Destructor.
-    virtual ~smooth_shrink_module();
-    //! forward
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! 2nd deriv backward
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual smooth_shrink_module<T,Tstate>* copy();
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
+  //! Returns a deep copy of this module.
+  virtual tanh_module<T>* copy();
 
-  public:
-    Tstate beta, bias;
-  private:
-    Tstate ebb, ebx, tin;
-    abs_module<T,Tstate> absmod;
-    T default_beta, default_bias;
-  };
+ protected:
+  idx<T> tmp; //!< Temporary buffer.
+};
 
-  ////////////////////////////////////////////////////////////////
-  // tanh_shrink_module
-  //! A smoothed shrinkage module using (x - tanh(x))
-  //! that parametrizes the steepnes of the shrinkage operator.
-  //! This function is useful for learning since there is always gradients
-  //! flowing through it.
-  template <typename T, class Tstate = bbstate_idx<T> >
-    class tanh_shrink_module: public module_1_1<T, Tstate> {
-  public:
-    //! Constructor.
-    //! \param nf The number of features.
-    //! \param diags If true, alpha and beta coefficients are learned
-    //!   such that the output is: a * x - tanh(b * x)
-    tanh_shrink_module(parameter<T,Tstate> *p, intg nf, bool diags = false);
-    //! Destructor.
-    virtual ~tanh_shrink_module();
-    //! forward
-    virtual void fprop(Tstate &in, Tstate &out);
-    //! backward
-    virtual void bprop(Tstate &in, Tstate &out);
-    //! 2nd deriv backward
-    virtual void bbprop(Tstate &in, Tstate &out);
-    //! Returns a deep copy of this module.
-    virtual tanh_shrink_module<T,Tstate>* copy();
-    //! Returns a string describing this module and its parameters.
-    virtual std::string describe();
-  protected:
-    intg			 nfeatures;
-    Tstate			 abuf, tbuf, bbuf;
-    diag_module<T,Tstate>	*alpha, *beta;
-    tanh_module<T,Tstate>	 mtanh;
-    diff_module<T,Tstate>	 difmod;	//!< difference module
-    bool                         diags; //!< Use coefficients or not.
-  };
+// softmax /////////////////////////////////////////////////////////////////////
+
+//! softmax module
+//! if in is idx0 -> out is idx0 and equal to 1
+//! if in is idx1 -> it is just one pool
+//! if in is idx2 -> it is just one pool
+//! if in is idx3 -> the last two dimensions are pools
+//! if in is idx4 -> the last two dimensions are pools
+//! if in is idx5 -> the last four dimensions are pools
+//! if in is idx6 -> the last four dimensions are pools
+template <typename T> class softmax: public module_1_1<T> {
+ public:
+  //! Constructor.
+  softmax(double b);
+  //! Destructor.
+  ~softmax();
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+ public:
+  // <b> is the parameter beta in the softmax
+  // large <b> turns the softmax into a max
+  // <b> equal to 0 turns the softmax into 1/N
+  double beta;
+};
+
+// abs /////////////////////////////////////////////////////////////////////////
+
+//! This module takes the absolute value of its input.
+//! This module is spatially replicable
+//! (the input can have an order greater than 1 and the operation will apply
+//! to all elements).
+template <typename T> class abs_module: public module_1_1<T> {
+ public:
+  //! Constructor. threshold makes the derivative of abs flat around zero
+  //! with radius threshold.
+  abs_module(double thresh = 0.0);
+  //! Destructor.
+  virtual ~abs_module();
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+  //! Returns a deep copy of this module.
+  virtual abs_module<T>* copy();
+
+ private:
+  double threshold;
+};
+
+// linear shrink ///////////////////////////////////////////////////////////////
+
+//! A piece-wise linear shrinkage module that parametrizes
+//! the location of the shrinkage operator. This function is
+//! useful for learning since there is always gradients flowing
+//! through it.
+template <typename T> class linear_shrink_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param nf The number of features.
+  linear_shrink_module(parameter<T> *p, intg nf, T bias = 0);
+  //! Destructor.
+  virtual ~linear_shrink_module();
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+  //! Returns a deep copy of this module.
+  virtual linear_shrink_module<T>* copy();
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+ protected:
+  state<T> bias;
+  T default_bias;
+};
+
+// smooth_shrink_module ////////////////////////////////////////////////////////
+
+//! A smoothed shrinkage module that parametrizes the steepnes
+//! and location of the shrinkage operator. This function is
+//! useful for learning since there is always gradients flowing
+//! through it.
+template <typename T> class smooth_shrink_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param nf The number of features.
+  smooth_shrink_module(parameter<T> *p, intg nf, T beta = 10, T bias = .3);
+  //! Destructor.
+  virtual ~smooth_shrink_module();
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+  //! Returns a deep copy of this module.
+  virtual smooth_shrink_module<T>* copy();
+
+ public:
+  state<T> beta, bias;
+ private:
+  state<T> ebb, ebx, tin;
+  abs_module<T> absmod;
+  T default_beta, default_bias;
+};
+
+// tanh_shrink_module //////////////////////////////////////////////////////////
+
+//! A smoothed shrinkage module using (x - tanh(x))
+//! that parametrizes the steepnes of the shrinkage operator.
+//! This function is useful for learning since there is always gradients
+//! flowing through it.
+template <typename T> class tanh_shrink_module: public module_1_1<T> {
+ public:
+  //! Constructor.
+  //! \param nf The number of features.
+  //! \param diags If true, alpha and beta coefficients are learned
+  //!   such that the output is: a * x - tanh(b * x)
+  tanh_shrink_module(parameter<T> *p, intg nf, bool diags = false);
+  //! Destructor.
+  virtual ~tanh_shrink_module();
+
+  // first state tensor propagation //////////////////////////////////////////
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+  //! Returns a deep copy of this module.
+  virtual tanh_shrink_module<T>* copy();
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
+ protected:
+  intg			 nfeatures;
+  state<T>		 abuf, tbuf, bbuf;
+  diag_module<T>	*alpha, *beta;
+  tanh_module<T>	 mtanh;
+  diff_module<T>	 difmod;	//!< difference module
+  bool                         diags; //!< Use coefficients or not.
+};
 
 } // namespace ebl {
 

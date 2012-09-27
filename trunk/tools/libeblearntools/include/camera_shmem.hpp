@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -45,11 +45,11 @@ namespace ebl {
 #ifdef __WINDOWS__
     eblerror("missing shmem implementation for windows");
 #else
-    cout << "Initializing shared buffer camera..." << endl;
+    std::cout << "Initializing shared buffer camera..." << std::endl;
     // connect to shared memory segment
    if ((shmem_key = ftok(shmem_path, 'A')) == -1) {
-     cerr << "ftok couldnt get the shared mem descriptor from ";
-     cerr << shmem_path << endl;
+     std::cerr << "ftok couldnt get the shared mem descriptor from ";
+     std::cerr << shmem_path << std::endl;
      eblerror("could not connect to shared memory");
    }
    // get segment
@@ -58,8 +58,8 @@ namespace ebl {
    }
    // link data to the segment
    buffer = (struct video_buffer *)shmat(shmem_id, (void *)0, 0);
-   cout << "shared frame size: " << buffer->height << "x" << buffer->width;
-   cout << "x" << buffer->bytes_per_pixel << endl;
+   std::cout << "shared frame size: " << buffer->height << "x" << buffer->width;
+   std::cout << "x" << buffer->bytes_per_pixel << std::endl;
    // get segment according to frame size
    if ((shmem_id = shmget(shmem_key, 16 + buffer->height * buffer->width *
 			  buffer->bytes_per_pixel, 0644 | IPC_CREAT)) == -1) {
@@ -69,7 +69,7 @@ namespace ebl {
    buffer = (struct video_buffer *)shmat(shmem_id, (void *)0, 0);
 #endif /* __WINDOW__ */
   }
-  
+
   template <typename Tdata>
   camera_shmem<Tdata>::~camera_shmem() {
 #ifndef __WINDOWS__
@@ -78,7 +78,7 @@ namespace ebl {
       shmdt((const void*)buffer);
 #endif /* __WINDOW__ */
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // frame grabbing
 
@@ -108,7 +108,7 @@ namespace ebl {
     frame_id_++;
     return this->postprocess();
   }
-  
+
 } // end namespace ebl
 
 #endif /* CAMERA_SHMEM_HPP_ */

@@ -38,84 +38,87 @@
 
 namespace ebl {
 
-  //////////////////////////////////////////////////////////////////////////////
-  // random number generator.
+// random number generator /////////////////////////////////////////////////////
 
 #define MMASK  0x7fffffffL
 #define MSEED  161803398L
 #define FAC    ((float)(1.0/(1.0+MMASK)))
 #define FAC2   ((float)(1.0/0x01000000L))
 
-  random::random(int x) {
-    init(x);
-  }
+random::random() {
+  // no seeding, assumes already seeded
+}
 
-  random::random(int argc, char **argv) {
-    uint seed = (uint) time(NULL);
-    init((int) seed);
-    // use command line arguments to introduce more randomization
-    for (int i = 0; i < argc; ++i) {
-      std::string s = argv[i];
-      // note: we don't care about overflow here.
-      for (uint j = 0; j < s.size(); ++j) {
-	seed += (uint) drand(limits<uint32>::min(),
-			     limits<uint32>::max()) * (uint32) s[j];
-      }
+random::random(int x) {
+  init(x);
+}
+
+random::random(int argc, char **argv) {
+  uint seed = (uint) time(NULL);
+  init((int) seed);
+  // use command line arguments to introduce more randomization
+  for (int i = 0; i < argc; ++i) {
+    std::string s = argv[i];
+    // note: we don't care about overflow here.
+    for (uint j = 0; j < s.size(); ++j) {
+      seed += (uint) drand(limits<uint32>::min(),
+                           limits<uint32>::max()) * (uint32) s[j];
     }
-    // use pid to introduce more randomization
-    seed += (uint) drand(limits<uint32>::min(),
-			 limits<uint32>::max()) * (uint32) pid();
-    init((int) seed);
   }
+  // use pid to introduce more randomization
+  seed += (uint) drand(limits<uint32>::min(),
+                       limits<uint32>::max()) * (uint32) pid();
+  init((int) seed);
+}
 
-  random::~random() {
+random::~random() {
+}
+
+double random::drand(void) {
+  register int mj;
+  if (++inext == 56) inext = 1;
+  if (++inextp == 56) inextp = 1;
+  mj = ((ma[inext] - ma[inextp]) * 84589 + 45989) & MMASK;
+  ma[inext] = mj;
+  return (double)(mj * FAC);
+}
+
+double random::drand(double v) {
+  return v*2*drand()-v;
+}
+
+double random::drand(double v0, double v1) {
+  return (v1-v0)*drand()+v0;
+}
+
+// internal methods //////////////////////////////////////////////////////////
+
+void random::init(int x) {
+  dseed(x);
+  srand(x);
+}
+
+void random::dseed(int x) {
+  int mj, mk;
+  int i, ii;
+
+  mj = MSEED - (x < 0 ? -x : x);
+  mj &= MMASK;
+  ma[55] = mj;
+  mk = 1;
+  for (i = 1; i <= 54; i++) {
+    ii = (21 * i) % 55;
+    ma[ii] = mk;
+    mk = (mj - mk) & MMASK;
+    mj = ma[ii];
   }
-
-  double random::drand(void) {
-    register int mj;
-    if (++inext == 56) inext = 1;
-    if (++inextp == 56) inextp = 1;
-    mj = ((ma[inext] - ma[inextp]) * 84589 + 45989) & MMASK;
-    ma[inext] = mj;
-    return (double)(mj * FAC);
-  }
-
-  double random::drand(double v) {
-    return v*2*drand()-v;
-  }
-  
-  double random::drand(double v0, double v1) {
-    return (v1-v0)*drand()+v0;
-  }
-
-  // internal methods //////////////////////////////////////////////////////////
-
-  void random::init(int x) {
-    dseed(x);
-    srand(x);
-  }
-
-  void random::dseed(int x) {
-    int mj, mk;
-    int i, ii;
-
-    mj = MSEED - (x < 0 ? -x : x);
-    mj &= MMASK;
-    ma[55] = mj;
-    mk = 1;
-    for (i = 1; i <= 54; i++) {
-      ii = (21 * i) % 55;
-      ma[ii] = mk;
-      mk = (mj - mk) & MMASK;
-      mj = ma[ii];
+  for (ii = 1; ii <= 4; ii++)
+    for (i = 1; i < 55; i++) {
+      ma[i] -= ma[1 + (i + 30) % 55];
+      ma[i] &= MMASK;
     }
-    for (ii = 1; ii <= 4; ii++)
-      for (i = 1; i < 55; i++) {
-	ma[i] -= ma[1 + (i + 30) % 55];
-	ma[i] &= MMASK;
-      }
-    inext = 0;
-    inextp = 31;			/* Special constant */
-  }
-  
+  inext = 0;
+  inextp = 31;			/* Special constant */
+}
+
 } // end namespace ebl

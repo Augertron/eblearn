@@ -55,8 +55,6 @@
 #include "idxIO.h"
 #include "stl.h"
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -83,18 +81,18 @@ namespace ebl {
     } catch(Magick::Warning &warning) {
       // Handle any other Magick++ warning.
       eblthrow("Warning: " << warning.what());
-    } catch(Magick::ErrorBlob &error) { 
+    } catch(Magick::ErrorBlob &error) {
       // Process Magick++ file open error
       eblthrow("Error: " << error.what());
-    } catch(Magick::ErrorOption &error) { 
+    } catch(Magick::ErrorOption &error) {
       // Process Magick++ file open error
       eblthrow("Error: " << error.what());
     }
 #else
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
-    string cmd;
-    cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \"" 
+    std::string cmd;
+    cmd << IMAGEMAGICK_CONVERT << " -compress lossless -depth 8 \""
 	<< fname << "\" PPM:-";
 #ifdef __WINDOWS__
     FILE* fp = POPEN(cmd.c_str(), "rb");
@@ -103,11 +101,12 @@ namespace ebl {
 #endif
     if (!fp) {
       std::string err;
-      err << "conversion of image " << fname << " failed (errno: " 
+      err << "conversion of image " << fname << " failed (errno: "
 	  << errno << ", " << strerror(errno) << ")";
       if (attempts > 0) {
-	cerr << "Warning: " << err << endl;
-	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
+	std::cerr << "Warning: " << err << std::endl;
+	std::cerr << "trying again... (remaining attempts: " << attempts << ")"
+                  << std::endl;
 	return image_read(fname, out_, attempts - 1);
       } else
 	eblthrow(err);
@@ -117,17 +116,20 @@ namespace ebl {
       tmp = pnm_read(fp);
     } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
-	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
-      } 
+	std::cerr << "Warning: pclose failed (errno: " << errno << ")"
+                  << std::endl;
+      }
       if (attempts > 0) {
-	cerr << "Warning: " << err << endl;
-	cerr << "trying again... (remaining attempts: " << attempts << ")" << endl;
+	std::cerr << "Warning: " << err << std::endl;
+	std::cerr << "trying again... (remaining attempts: " << attempts << ")"
+                  << std::endl;
 	return image_read(fname, out_, attempts - 1);
       } else
 	eblthrow(err);
     }
     if (PCLOSE(fp) != 0) {
-      cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
+      std::cerr << "Warning: pclose failed (errno: " << errno << ")"
+                << std::endl;
     }
 #else
     // nor Magick++ nor convert are available, error
@@ -135,7 +137,7 @@ namespace ebl {
 	     << "please install");
 #endif /* __IMAGEMAGICK__ */
 #endif /* __MAGICK++__ */
-    
+
     idxdim dims(tmp);
     idx<T> out;
     idx<T> *pout = &out;
@@ -167,17 +169,17 @@ namespace ebl {
 	out = out.shift_dim(0, 2);
       return ;
     } catch(eblexception &e) {
-      e = e;
+      ; //e = e;
       // not a mat file, try regular image
     }
     image_read(fname, &out);
   }
 
   template<class T>
-  void load_image(const string &fname, idx<T> &out) {
+  void load_image(const std::string &fname, idx<T> &out) {
     return load_image(fname.c_str(), out);
   }
-  
+
   template<class T>
   idx<T> load_image(const char *fname) {
     // first try if the image is a mat file
@@ -190,13 +192,13 @@ namespace ebl {
 	m = m.shift_dim(0, 2);
       return m;
     } catch(eblexception &e) {
-      e = e; // not a mat file, try regular image
+      ; //e = e; // not a mat file, try regular image
     }
     return image_read<T>(fname);
   }
 
   template<class T>
-  idx<T> load_image(const string &fname) {
+  idx<T> load_image(const std::string &fname) {
     return load_image<T>(fname.c_str());
   }
 
@@ -204,7 +206,7 @@ namespace ebl {
   // I/O: saving
 
   template<class T>
-  bool save_image_ppm(const string &fname, idx<T> &in) {
+  bool save_image_ppm(const std::string &fname, idx<T> &in) {
     return save_image_ppm(fname.c_str(), in);
   }
 
@@ -213,13 +215,14 @@ namespace ebl {
     // check order
     // TODO: support grayscale
     if (in.order() != 3) {
-      cerr << "error: image order (" << in.order() << " not supported." << endl;
+      std::cerr << "error: image order (" << in.order() << " not supported."
+                << std::endl;
       return false;
     }
     // save as ppm
     FILE *fp = fopen(fname, "wb");
     if (!fp) {
-      cerr << "error: failed to open file " << fname << endl;
+      std::cerr << "error: failed to open file " << fname << std::endl;
       return false;
     }
     save_image_ppm(fp, in);
@@ -232,11 +235,12 @@ namespace ebl {
     // check order
     // TODO: support grayscale
     if (in.order() != 3) {
-      cerr << "error: image order (" << in.order() << " not supported." << endl;
+      std::cerr << "error: image order (" << in.order() << " not supported."
+                << std::endl;
       return false;
     }
     if (!fp) {
-      cerr << "error: NULL fp " << endl;
+      std::cerr << "error: NULL fp " << std::endl;
       return false;
     }
     fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
@@ -264,12 +268,12 @@ namespace ebl {
   }
 
   template<class T>
-  bool save_image_jpg(const string &fname, idx<T> &in) {
+  bool save_image_jpg(const std::string &fname, idx<T> &in) {
     return save_image(fname, in, "JPG");
   }
 
   template<class T>
-  bool save_image(const string &fname, idx<T> &in, const char *format) {
+  bool save_image(const std::string &fname, idx<T> &in, const char *format) {
     if (!strcmp(format, "mat")) { // save as idx
       return save_matrix(in, fname);
     }
@@ -304,17 +308,17 @@ namespace ebl {
     } catch(Magick::Warning &warning) {
       // Handle any other Magick++ warning.
       eblthrow("Warning: " << warning.what());
-    } catch(Magick::ErrorBlob &error) { 
+    } catch(Magick::ErrorBlob &error) {
       // Process Magick++ file open error
       eblthrow("Error: " << error.what());
-    } catch(Magick::ErrorOption &error) { 
+    } catch(Magick::ErrorOption &error) {
       // Process Magick++ file open error
       eblthrow("Error: " << error.what());
     }
 #else
 #if (defined(__IMAGEMAGICK__) && !defined(__NOIMAGEMAGICK__))
     // we are under linux or mac and convert is available
-    string cmd;
+    std::string cmd;
     cmd << IMAGEMAGICK_CONVERT << " PPM:- " << format << ":\"" << fname << "\"";
 #ifdef __WINDOWS__
     FILE* fp = POPEN(cmd.c_str(), "wb");
@@ -322,7 +326,7 @@ namespace ebl {
     FILE* fp = POPEN(cmd.c_str(), "w");
 #endif
     if (!fp) {
-      cerr << "conversion of image " << fname << " failed (errno: " 
+      std::cerr << "conversion of image " << fname << " failed (errno: "
 	   << errno << ", " << strerror(errno) << ")";
       return false;
     }
@@ -331,12 +335,14 @@ namespace ebl {
       save_image_ppm(fp, in);
     } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
-	cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
+	std::cerr << "Warning: pclose failed (errno: " << errno << ")"
+                  << std::endl;
       }
       return false;
     }
     if (PCLOSE(fp) != 0) {
-      cerr << "Warning: pclose failed (errno: " << errno << ")" << endl;
+      std::cerr << "Warning: pclose failed (errno: " << errno << ")"
+                << std::endl;
       return false;
     }
 #else

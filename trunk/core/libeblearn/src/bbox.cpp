@@ -136,8 +136,8 @@ namespace ebl {
     width = std::min(width, (float) imw - w0);
   }
 
-  string bbox::pretty(vector<string> *labels) {
-    string s;
+  std::string bbox::pretty(std::vector<std::string> *labels) {
+    std::string s;
     if (labels && class_id < (int)labels->size()) s << (*labels)[class_id];
     else s << "bbox";
     s << " with confidence " << confidence
@@ -153,7 +153,7 @@ namespace ebl {
     return s;
   }
 
-  bbox mean_bbox(vector<bbox*> &boxes, float bonus_per_bbox, int classid) {
+  bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox, int classid) {
     if (boxes.size() == 0)
       eblerror("expected non-empty bbox vector");
     float hcenter = 0.0, wcenter = 0.0, confidence = 0.0,
@@ -213,7 +213,7 @@ namespace ebl {
     return out;
   }
 
-  string& operator<<(string& out, const bbox& b) {
+  std::string& operator<<(std::string& out, const bbox& b) {
     out << "bbox:<class " << b.class_id << ", conf " << b.confidence << ", "
 	<< "nacc " << b.nacc << ", " << (rect<float>&) b << ">";
 #ifdef __DEBUG__
@@ -277,13 +277,13 @@ namespace ebl {
     return false;
   }
 
-  vector<bbox_parts>& bbox_parts::get_parts() {
+  std::vector<bbox_parts>& bbox_parts::get_parts() {
     return parts;
   }
 
   // bboxes ////////////////////////////////////////////////////////////////////
 
-  bboxes::bboxes(t_bbox_saving saving_type_, string *outdir_,
+  bboxes::bboxes(t_bbox_saving saving_type_, std::string *outdir_,
 		 std::ostream &out, std::ostream &err)
     : mout(&out), merr(&err), saving_type(saving_type_) {
     if (outdir_)
@@ -298,7 +298,7 @@ namespace ebl {
     }
   }
 
-  void bboxes::new_group(idxdim &dims, string *name, int index) {
+  void bboxes::new_group(idxdim &dims, std::string *name, int index) {
     if (index < 0) {
       grouped_boxes.push_back(new svector<bbox>());
       group_names.push_back(name ? *name : "");
@@ -314,7 +314,7 @@ namespace ebl {
 	(*merr) << "Warning: replacing existing group of bbox "
 		<< group_names[ind]
 		<< " at index " << index << " with new group "
-		<< (name ? *name : "") << "." << endl;
+		<< (name ? *name : "") << "." << std::endl;
 	delete grouped_boxes[ind];
       }
       grouped_boxes[ind] = new svector<bbox>();
@@ -324,7 +324,7 @@ namespace ebl {
     }
   }
 
-  void bboxes::add(bbox *b, idxdim &dims, string *name, int index) {
+  void bboxes::add(bbox *b, idxdim &dims, std::string *name, int index) {
     if (!b) eblerror("cannot add null bbox");
     svector<bbox> *current_group = NULL;
     if (grouped_boxes.size() == 0)
@@ -341,19 +341,20 @@ namespace ebl {
     this->push_back_new(b); // also add to non-grouped vector
   }
 
-  void bboxes::add(bbox &b, idxdim &dims, string *name, int index) {
+  void bboxes::add(bbox &b, idxdim &dims, std::string *name, int index) {
     add(&b, dims, name, index);
   }
 
-  void bboxes::add(bboxes &bbs, idxdim &dims, string *name, int index) {
+  void bboxes::add(bboxes &bbs, idxdim &dims, std::string *name, int index) {
     for (bboxes::iterator i = bbs.begin(); i != bbs.end(); ++i) {
       if (!i.exists()) eblerror("expected non-null bbox");
       add(*i, dims, name, index);
     }
   }
 
-  void bboxes::add(vector<bbox> &bbs, idxdim &dims, string *name, int index) {
-    for (vector<bbox>::iterator i = bbs.begin(); i != bbs.end(); ++i)
+  void bboxes::add(std::vector<bbox> &bbs, idxdim &dims, std::string *name,
+                   int index) {
+    for (std::vector<bbox>::iterator i = bbs.begin(); i != bbs.end(); ++i)
       add(new bbox(*i), dims, name, index);
   }
 
@@ -371,13 +372,13 @@ namespace ebl {
     return res;
   }
 
-  void bboxes::save(string *dir_) {
-    string dir = outdir;
+  void bboxes::save(std::string *dir_) {
+    std::string dir = outdir;
     if (dir_) dir = *dir_;
     switch (saving_type) {
-    case bbox_none: (*mout) << "No bboxes saved." << endl; break ;
+    case bbox_none: (*mout) << "No bboxes saved." << std::endl; break ;
     case bbox_all:
-      (*mout) << "Saving bboxes in all formats." << endl;
+      (*mout) << "Saving bboxes in all formats." << std::endl;
       save_eblearn(&outdir);
       save_caltech(&outdir);
       break ;
@@ -395,16 +396,16 @@ namespace ebl {
     }
   }
 
-  void bboxes::load_eblearn(const string &fname) {
+  void bboxes::load_eblearn(const std::string &fname) {
     (*mout) << "Loading bounding boxes from bbox-eblearn format file "
-	 << fname << endl;
+	 << fname << std::endl;
     // open file
     FILE *fp = fopen(fname.c_str(), "r");
     if (!fp) {
-      (*merr) << "failed to open " << fname << endl;
+      (*merr) << "failed to open " << fname << std::endl;
       eblerror("open failed");
     }
-    string name, lastname;
+    std::string name, lastname;
     try {
       while (!feof(fp)) {
 	char *str = fscan_str(fp);
@@ -438,23 +439,23 @@ namespace ebl {
 	  break ;
 	ungetc(c, fp);
       }
-    } catch(string &err) { eblerror(err.c_str()); }
-      fclose(fp);
-    (*mout) << "Loaded " << describe() << " from " << fname << endl;
+    } eblcatcherror();
+    fclose(fp);
+    (*mout) << "Loaded " << describe() << " from " << fname << std::endl;
   }
 
-  void bboxes::save_eblearn(string *dir_) {
-    string dir = outdir;
+  void bboxes::save_eblearn(std::string *dir_) {
+    std::string dir = outdir;
     if (dir_) dir = *dir_;
     mkdir_full(dir);
-    string fname = dir;
+    std::string fname = dir;
     fname << "/" << "bbox.txt";
-    (*mout) << "Saving bboxes in eblearn format to " << fname << endl;
+    (*mout) << "Saving bboxes in eblearn format to " << fname << std::endl;
     // open file
     std::ofstream fp;
     fp.open(fname.c_str());
     if (!fp.is_open()) {
-      (*merr) << "failed to open " << fname << endl;
+      (*merr) << "failed to open " << fname << std::endl;
       eblerror("open failed");
     }
     // write
@@ -465,7 +466,7 @@ namespace ebl {
     for (uint i = 0; i < grouped_boxes.size(); ++i) {
       svector<bbox> *bb = grouped_boxes[i];
       if (bb) {
-	string &name = group_names[i];
+	std::string &name = group_names[i];
 	idxdim d = group_dims[i];
 	// loop on boxes
 	for (uint j = 0; j < bb->size(); ++j) {
@@ -473,21 +474,22 @@ namespace ebl {
 	  fp << name << " " << d.dim(0) << " " << d.dim(1) << " "
 	     << b.class_id << " "
 	     << b.confidence << " " << b.w0 << " " << b.h0 << " "
-	     << b.w0 + b.width << " " << b.h0 + b.height << endl;
+	     << b.w0 + b.width << " " << b.h0 + b.height << std::endl;
 	}
       }
     }
     fp.close();
-    (*mout) << "Saved " << describe() << " (eblearn style) to " << fname <<endl;
+    (*mout) << "Saved " << describe() << " (eblearn style) to " << fname
+            << std::endl;
   }
 
-  void bboxes::save_caltech(string *dir_) {
-    string dir = outdir;
+  void bboxes::save_caltech(std::string *dir_) {
+    std::string dir = outdir;
     if (dir_) dir = *dir_;
     dir << "/bbox_caltech/";
     if (!mkdir_full(dir))
       eblerror("failed to create directory " << dir);
-    (*mout) << "Saving bboxes in caltech format to " << dir << endl;
+    (*mout) << "Saving bboxes in caltech format to " << dir << std::endl;
 
     if (group_names.size() != grouped_boxes.size())
       eblerror("group_names and boxes should have the same size but have "
@@ -497,11 +499,11 @@ namespace ebl {
       svector<bbox> *bb = grouped_boxes[i];
       if (bb) {
 	// make names
-	string gname = group_names[i];
-	string subdir = dirname(gname.c_str());
-	string name = basename(gname.c_str());
+	std::string gname = group_names[i];
+	std::string subdir = dirname(gname.c_str());
+	std::string name = basename(gname.c_str());
 	name = noext_name(name.c_str());
-	string fn, fdir;
+	std::string fn, fdir;
 	fdir << dir << "/" << subdir;
 	fn << fdir << "/" << name << ".txt";
 	if (!mkdir_full(fdir))
@@ -517,26 +519,28 @@ namespace ebl {
 	for (uint j = 0; j < bb->size(); ++j) {
 	  bbox &b = (*bb)[j];
 	  fp << b.w0 << "," << b.h0 << "," << b.width << "," << b.height
-	     << "," << b.confidence << endl;
+	     << "," << b.confidence << std::endl;
 	}
 	fp.close();
       }
     }
-    (*mout) << "Saved " << describe() << " (caltech style) to " << dir << endl;
+    (*mout) << "Saved " << describe() << " (caltech style) to " << dir
+            << std::endl;
   }
 
-  void bboxes::save_class(string *dir_) {
-    string dir = outdir;
+  void bboxes::save_class(std::string *dir_) {
+    std::string dir = outdir;
     if (dir_) dir = *dir_;
     mkdir_full(dir);
-    string fname = dir;
+    std::string fname = dir;
     fname << "/" << "bbox_class.txt";
-    (*mout) << "Saving bboxes in classification format to " << fname << endl;
+    (*mout) << "Saving bboxes in classification format to " << fname
+            << std::endl;
     // open file
     std::ofstream fp;
     fp.open(fname.c_str());
     if (!fp) {
-      (*merr) << "failed to open " << fname << endl;
+      (*merr) << "failed to open " << fname << std::endl;
       eblerror("open failed");
     }
     // write
@@ -547,18 +551,18 @@ namespace ebl {
     for (uint i = 0; i < grouped_boxes.size(); ++i) {
       svector<bbox> *bb = grouped_boxes[i];
       if (bb) {
-	string &name = group_names[i];
+	std::string &name = group_names[i];
 	idxdim d = group_dims[i];
 	// loop on boxes
 	for (uint j = 0; j < bb->size(); ++j) {
 	  bbox &b = (*bb)[j];
-	  fp << name << "; " << b.class_id << endl;
+	  fp << name << "; " << b.class_id << std::endl;
 	}
       }
     }
     fp.close();
     (*mout) << "Saved " << describe() << " (classification style) to "
-	 << fname << endl;
+	 << fname << std::endl;
   }
 
   // sorting ///////////////////////////////////////////////////////////////////
@@ -566,7 +570,7 @@ namespace ebl {
   inline bool bbox_compare(bbox *i, bbox *j) {
     return (i->confidence > j->confidence);
   }
-  
+
   void bboxes::sort_by_confidence() {
     std::vector<bbox*>::iterator b = ((std::vector<bbox*>*)this)->begin();
     std::vector<bbox*>::iterator e = ((std::vector<bbox*>*)this)->end();
@@ -624,8 +628,8 @@ namespace ebl {
 
   // printing //////////////////////////////////////////////////////////////////
 
-  string bboxes::describe() {
-    string desc = "bboxes (";
+  std::string bboxes::describe() {
+    std::string desc = "bboxes (";
     uint nbb = 0, ngroups = 0;
     for (uint i = 0; i < grouped_boxes.size(); ++i)
       if (grouped_boxes[i]) {
@@ -649,18 +653,18 @@ namespace ebl {
   void bboxes::print_saving_type() {
     (*mout) << "Saving bboxes ";
     switch (saving_type) {
-    case bbox_none: (*mout) << "disabled." << endl; break ;
-    case bbox_all: (*mout) << "in all formats." << endl; break ;
-    case bbox_eblearn: (*mout) << "in eblearn formats." << endl; break ;
-    case bbox_caltech: (*mout) << "in caltech formats." << endl; break ;
-    case bbox_class: (*mout) << "in classification format." << endl; break ;
+    case bbox_none: (*mout) << "disabled." << std::endl; break ;
+    case bbox_all: (*mout) << "in all formats." << std::endl; break ;
+    case bbox_eblearn: (*mout) << "in eblearn formats." << std::endl; break ;
+    case bbox_caltech: (*mout) << "in caltech formats." << std::endl; break ;
+    case bbox_class: (*mout) << "in classification format." << std::endl; break;
     default:
       eblerror("Unknown saving type " << saving_type);
     }
   }
 
-  string bboxes::pretty(vector<string> *labels) {
-    string s;
+  std::string bboxes::pretty(std::vector<std::string> *labels) {
+    std::string s;
     if (this->size() == 0) {
       s << (int) this->size() << " boxes.";
       return s;
@@ -671,8 +675,8 @@ namespace ebl {
     return s;
   }
 
-  string bboxes::pretty_short(vector<string> &labels) {
-    string s;
+  std::string bboxes::pretty_short(std::vector<std::string> &labels) {
+    std::string s;
     if (this->size() == 0) {
       s << (int) this->size() << " boxes.";
       return s;
@@ -685,8 +689,8 @@ namespace ebl {
     return s;
   }
 
-  string bboxes::str() {
-    string s;
+  std::string bboxes::str() {
+    std::string s;
     if (this->size() == 0) {
       s << (int) this->size() << " boxes.";
       return s;
@@ -698,7 +702,7 @@ namespace ebl {
     return s;
   }
 
-  bboxes* bboxes::get_group(const string &name) {
+  bboxes* bboxes::get_group(const std::string &name) {
     uint i;
     for (i = 0; i < group_names.size(); ++i)
       if (!name.compare(group_names[i]))
@@ -712,7 +716,7 @@ namespace ebl {
     return ret;
   }
 
-  idxdim bboxes::get_group_dims(const string &name) {
+  idxdim bboxes::get_group_dims(const std::string &name) {
     uint i;
     for (i = 0; i < group_names.size(); ++i)
       if (!name.compare(group_names[i]))
@@ -723,4 +727,3 @@ namespace ebl {
   }
 
 } // end namespace ebl
-

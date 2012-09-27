@@ -37,9 +37,10 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // Helper functions
-    
-  void build_fname(string &ds_name, const char *fname, string &fullname) {
-    fullname = ds_name; 
+
+  void build_fname(std::string &ds_name, const char *fname,
+                   std::string &fullname) {
+    fullname = ds_name;
     fullname += "_";
     fullname += fname;
     fullname += MATRIX_EXTENSION;
@@ -66,7 +67,7 @@ namespace ebl {
     height = ymax - ymin;
     width = xmax - xmin;
   }
-  
+
   void object::set_visible(int xmin, int ymin, int xmax, int ymax) {
     visible = new rect<int>(ymin, xmin, ymax - ymin, xmax - xmin);
   }
@@ -97,7 +98,7 @@ namespace ebl {
     jitts.set(w / (float) spatial_norm, 2);
     jitts.set(r, 3);
   }
-  
+
   jitter::jitter()
     : h(0), w(0), s(0), r(0), jitts(JITTERS) {
     idx_clear(jitts);
@@ -105,11 +106,11 @@ namespace ebl {
 
   jitter::~jitter() {
   }
-  
+
   const idx<t_jitter>& jitter::get_jitter_vector() const {
     return jitts;
   }
-  
+
   void jitter::set(const idx<t_jitter> &j) {
     s = j.get(0);
     h = (int) j.get(1);

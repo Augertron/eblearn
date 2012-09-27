@@ -33,25 +33,4 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////////////
-
-  template <class T>
-  max_classer<T>::max_classer(idx<ubyte> *classes) {
-    classindex2label = classes;
-  }
-
-  template <class T>
-  void max_classer<T>::fprop(fstate_idx<T> *in, class_state *out) {
-    intg n = in->x.dim(0);
-    out->resize(n);
-    { idx_bloop2(sc, *(out->sorted_scores), float, insc, in->x, T) {
-	sc.set((float) idx_max(insc));
-      }
-    }
-    idx_copy(*classindex2label, *(out->sorted_classes));
-    idx_sortdown(*(out->sorted_scores), *(out->sorted_classes));
-    out->output_class = out->sorted_classes->get(0);
-    out->confidence = out->sorted_scores->get(0);
-  }
-
 } // end namespace ebl

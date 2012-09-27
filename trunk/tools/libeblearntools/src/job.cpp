@@ -68,7 +68,7 @@ namespace ebl {
 
   job::job(configuration &conf_, const char *oconffname, bool resume)
     : conf(conf_), rconf(conf_), _locally_started(false), _started(false),
-      _running(false), _alive(false), 
+      _running(false), _alive(false),
       pid(-1), resumed_(resume), _finished(false), _progress(-1) {
     // the resolved conf
     rconf.resolve();
@@ -86,7 +86,7 @@ namespace ebl {
     }
     // set resolved elements into unresolved mconf
     conf.set_output_dir(rconf.get_output_dir());
-    conf.set_name(rconf.get_name());    
+    conf.set_name(rconf.get_name());
     // optional original configuration filename
     if (oconffname)
       oconffname_ = oconffname;
@@ -140,14 +140,14 @@ namespace ebl {
   }
 
   bool job::write(bool reset_progress) {
-    ostringstream cmd, tmp;
-    // create directories 
+    std::string cmd, tmp;
+    // create directories
     mkdir_full(outdir.c_str());
     // create configuration file
     conf.set("job_name", rconf.get_name().c_str());// add config name into conf
     // reset progress
     if (reset_progress) {
-      string fn = progress_fname;
+      std::string fn = progress_fname;
       if (!rm_file(fn.c_str()))
 	cerr << "failed to remove " << fn << endl;
       else cout << "removed " << fn << endl;
@@ -160,9 +160,9 @@ namespace ebl {
     if (!conf.write(confname.c_str()))
       return false;
     // copy classes file into directory
-    if (rconf.exists("train") && rconf.exists("root") 
+    if (rconf.exists("train") && rconf.exists("root")
 	&& rconf.exists_true("meta_copy_classes")) {
-      string classesname, tmp, cmd;
+      std::string classesname, tmp, cmd;
       classesname << rconf.get_string("root") << "/" << rconf.get_string("train");
       classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
       if (file_exists(classesname.c_str())) {
@@ -204,16 +204,16 @@ namespace ebl {
     return pid;
   }
 
-  string& job::name() {
+  std::string& job::name() {
     return confname;
   }
-  
-  string job::shortname() {
+
+  std::string job::shortname() {
     return conf.get_string("meta_conf_shortname");
   }
-  
-  string job::get_root() {
-    string root = rconf.get_output_dir();
+
+  std::string job::get_root() {
+    std::string root = rconf.get_output_dir();
     root << "/" << rconf.get_name();
     return root;
   }
@@ -231,7 +231,7 @@ namespace ebl {
     _started = false;
   }
 
-  string job::elapsed() {
+  std::string job::elapsed() {
     return t.elapsed();
   }
 
@@ -242,11 +242,11 @@ namespace ebl {
   bool job::finished() {
     return _finished;
   }
-  
+
   int job::progress() const {
     return _progress;
   }
-  
+
   ////////////////////////////////////////////////////////////////
   // file-based resuming capabilities
 
@@ -260,11 +260,11 @@ namespace ebl {
     of.close();
     // update timestamp
     if (!touch_file(progress_fname))
-      cerr << "warning: failed to update modified timestamp of " 
+      cerr << "warning: failed to update modified timestamp of "
 	   << progress_fname << endl;
     return true;
   }
-  
+
   bool job::declare_finished() {
     // create file if not created, but do not discard content (append)
     ofstream of(finished_fname.c_str(), ios_base::app);
@@ -275,14 +275,14 @@ namespace ebl {
     of.close();
     return true;
   }
-  
+
   bool job::check_started() {
     bool res = file_exists(progress_fname);
     if (res)
       _started = true;
     return res;
   }
-  
+
   bool job::check_running() {
     if (!_started) return false;
     // if progress last modified less than an hour, it is running
@@ -299,9 +299,9 @@ namespace ebl {
 
   void job::write_progress(uint i, uint total, const char *additional,
 			   const char *root) {
-    string fname = get_progress_filename();
+    std::string fname = get_progress_filename();
     ofstream progress(fname.c_str());
-    if (!progress) 
+    if (!progress)
       cerr << "warning: failed to create file " << fname.c_str() << endl;
     else {
       // set retrain to next iteration with current saved weights
@@ -312,9 +312,9 @@ namespace ebl {
       progress.close();
     }
   }
-    
-  string job::get_progress_filename(const char *root) {
-    string fname;
+
+  std::string job::get_progress_filename(const char *root) {
+    std::string fname;
     if (root)
       fname << root << "/";
     fname << "progress";
@@ -322,7 +322,7 @@ namespace ebl {
   }
 
   void job::write_finished(const char *root) {
-    string progname, finname;
+    std::string progname, finname;
     if (root) {
       progname << root << "/";
       finname << root << "/";
@@ -331,17 +331,17 @@ namespace ebl {
     finname << "finished";
     // if progress file exists, move it to finished
     if (file_exists(progname.c_str())) {
-      string cmd;
+      std::string cmd;
       cmd << "mv " << progname << " " << finname;
       int ret = std::system(cmd.c_str());
       if (ret < 0)
-	cerr << "warning: failed to move " << progname << " to " 
+	cerr << "warning: failed to move " << progname << " to "
 	     << finname << endl;
     } else { // otherwise just touch finished
       touch_file(finname);
     }
   }
-    
+
   int job::check_progress() {
     _progress = 0;
     if (!file_exists(progress_fname))
@@ -359,7 +359,7 @@ namespace ebl {
     }
     return _progress;
   }
-  
+
   bool job::check_finished() {
     bool res = file_exists(finished_fname);
     if (res) {
@@ -371,9 +371,9 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
   // protected
-  
+
   void job::figure_resume_out() {
-    string fname = get_root();
+    std::string fname = get_root();
     fname << "/progress";
     if (!file_exists(fname))
       cerr << "no progress file found to resume job " << rconf.get_name();
@@ -391,42 +391,42 @@ namespace ebl {
       // check again if info was found
       if (!conf.exists("retrain_iteration") ||
 	  !conf.exists("retrain_weights")) {
-	cerr << "no resume info found in progress file for job " 
+	cerr << "no resume info found in progress file for job "
 	     << rconf.get_name() << endl;
       } else { // info was found
 	conf.set("retrain", "1"); // enable retraining
-	cout << "Resuming job " << rconf.get_name() << " from iteration " 
-	     << conf.get_int("retrain_iteration") << " and file " 
+	cout << "Resuming job " << rconf.get_name() << " from iteration "
+	     << conf.get_int("retrain_iteration") << " and file "
 	     << conf.get_string("retrain_weights") << endl;
       }
     }
   }
 
   void job::figure_resume_from_weights(const char *dir_) {
-    string dir = outdir;
+    std::string dir = outdir;
     if (dir_) dir = dir_;
     // find latest saved parameters
-    string pattern = ".*_net[0-9]*.mat";
+    std::string pattern = ".*_net[0-9]*.mat";
     cout << "Looking for latest files for job " << rconf.get_name() << " here: "
 	 << dir << " with pattern: " << pattern << endl;
-    list<string> *files = find_fullfiles(dir, pattern.c_str(), NULL,
+    std::list<std::string> *files = find_fullfiles(dir, pattern.c_str(), NULL,
 					 true, false);
     if (!files || files->size() == 0)
       cout << "no parameters to resume for job " << rconf.get_name() << endl;
     else {
-      string resume_file = files->back();
-      cout << "Resuming job " << rconf.get_name() << " with file: " 
+      std::string resume_file = files->back();
+      cout << "Resuming job " << rconf.get_name() << " with file: "
 	   << resume_file << endl;
       conf.set("retrain", "1");
       conf.set("retrain_weights", resume_file.c_str());
       delete files;
       // extract last iteration number
       size_t i1 = resume_file.find_last_of("0123456789");
-      string iter = resume_file.substr(0, i1 + 1);
+      std::string iter = resume_file.substr(0, i1 + 1);
       i1 = iter.find_last_not_of("0123456789");
       iter = iter.substr(i1 + 1);
       uint i = string_to_uint(iter);
-      cout << "Infered iteration # " << i << " from file name " 
+      cout << "Infered iteration # " << i << " from file name "
 	   << resume_file << endl;
       conf.set("retrain_iteration", iter.c_str());
     }
@@ -436,7 +436,7 @@ namespace ebl {
 #ifndef __WINDOWS__
     // start timer
     t.start();
-    string cmd, log, errlog;
+    std::string cmd, log, errlog;
     log << "out_" << rconf.get_name() << ".log";
     errlog << "out_" << rconf.get_name() << ".errlog";
     // prepare command
@@ -453,9 +453,9 @@ namespace ebl {
 	// add retrain params at the end of job's conf
 	ofstream of(confname.c_str(), ios_base::app);
 	if (!of)
-	  eblerror("failed to open conf for appending retrain params: " 
+	  eblerror("failed to open conf for appending retrain params: "
 		   << confname);
-	of << endl 
+	of << endl
 	   << " retrain_iteration=" << conf.get_uint("retrain_iteration")
 	   << endl << " retrain_weights=" << conf.get_string("retrain_weights")
 	   << endl << " retrain=" << conf.get_string("retrain") << endl;
@@ -464,7 +464,7 @@ namespace ebl {
     }
     // set classe filename if defined
     if (rconf.exists("train") || rconf.exists("train_classes")) {
-      string classesname = rconf.get_output_dir();
+      std::string classesname = rconf.get_output_dir();
       if (rconf.exists("train"))
 	classesname << "/" << rconf.get_string("train");
       else if (rconf.exists("train_classes"))
@@ -479,8 +479,8 @@ namespace ebl {
 	<< " 3>&1 1>&2 2>&3 | tee /dev/tty | tee -a " << errlog
 	<< ") 3>&1 1>&2 2>&3) >> " << log << " 2>&1 && touch " << outdir
 	<< "/finished && exit 0";
-    
-    cout << endl << "Executing job " << filename(confname.c_str()) 
+
+    cout << endl << "Executing job " << filename(confname.c_str())
 	 << " with cmd:" << endl << cmd << endl;
     // execl takes over this process (and its pid)
     execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)NULL);
@@ -502,14 +502,14 @@ namespace ebl {
 			       unfinished(1),
 			       ready_slots(max_jobs), swait(30) {
   }
-  
+
   job_manager::~job_manager() {
     for (uint i = 0; i < jobs.size(); ++i)
       if (jobs[i] != NULL)
 	delete jobs[i];
   }
 
-  bool job_manager::read_metaconf(const char *fname, const string *tstamp,
+  bool job_manager::read_metaconf(const char *fname, const std::string *tstamp,
 				  const char *resume_name,
 				  bool resumedir, bool nomax, int maxjobs) {
     mconf_fullfname = fname;
@@ -534,23 +534,23 @@ namespace ebl {
 	  confs = mconf.configurations();
       } else { // determine jobs based on dir
 	// list all directories that start with same dir name + _conf
-	list<string> *l = list_job_dirs(fname);
+	std::list<std::string> *l = list_job_dirs(fname);
 	if (!l || l->size() == 0) eblerror("no job directory found");
 	uint lsize = l->size();
 	// for each dir, check that its conf exists and add it
-	string odir = rmconf.get_output_dir();
+	std::string odir = rmconf.get_output_dir();
 	uint k = 0;
 	configuration tmpconf(rmconf);
-	for (list<string>::iterator li = l->begin(); 
+	for (std::list<std::string>::iterator li = l->begin();
 	     li != l->end(); ++li, ++k) {
-	  string c = *li;
-	  string j = basename(c.c_str());
+	  std::string c = *li;
+	  std::string j = basename(c.c_str());
 	  c << "/" << j << ".conf";
 	  if (file_exists(c.c_str())) {
 // 	    configuration con;
 // 	    con.read(c.c_str(), false, false, true, odir.c_str());
 
-	    // for efficiency, do not actually read conf, just set the right 
+	    // for efficiency, do not actually read conf, just set the right
 	    // name. the configuration is already written anyway.
 	    tmpconf.set_name(j);
 	    confs.push_back(tmpconf);
@@ -567,7 +567,7 @@ namespace ebl {
     vector<configuration>::iterator iconf = confs.begin();
     for ( ; iconf != confs.end(); ++iconf) {
       //iconf->resolve();
-      jobs.push_back(new job(*iconf, mconf_fname.c_str(), 
+      jobs.push_back(new job(*iconf, mconf_fname.c_str(),
 			     (resume_name == NULL) ? false : true));
     }
     // some minor parameters
@@ -589,7 +589,7 @@ namespace ebl {
     return true;
   }
 
-  void job_manager::set_copy(const string &path) {
+  void job_manager::set_copy(const std::string &path) {
     if (path.size()) {
       copy_path = path;
       cout << "Enabling copy into jobs folders of: " << path << endl;
@@ -597,91 +597,91 @@ namespace ebl {
   }
 
   void job_manager::prepare(bool reset_progress) {
-    ostringstream cmd;
+    std::string cmd;
     // create output dir
     mkdir_full(rmconf.get_output_dir().c_str());
     // copy metaconf into jobs' root
-    cmd.str("");
+    cmd = "";
     cmd << "cp " << mconf_fullfname << " " << rmconf.get_output_dir();
-    if (std::system(cmd.str().c_str()))
-      cerr << "warning: failed to execute: " << cmd.str() << endl;
+    if (std::system(cmd.c_str()))
+      cerr << "warning: failed to execute: " << cmd << endl;
     // copy resolved metaconf into jobs' root
-    string fn = rmconf.get_output_dir();
+    std::string fn = rmconf.get_output_dir();
     fn << "/" << mconf_fname << "_resolved.conf";
     rmconf.write(fn.c_str());
     // copy classes file if defined into job's root
     if ((rmconf.exists("train") || rmconf.exists("train_classes"))
 	&& rmconf.exists("root")) {
-      string classesname = rmconf.get_string("root");
+      std::string classesname = rmconf.get_string("root");
       if (rmconf.exists("train"))
 	classesname << "/" << rmconf.get_string("train");
       else if (rmconf.exists("train_classes"))
 	classesname << "/" << rmconf.get_string("train_classes");
       classesname << "_" << CLASSES_NAME << MATRIX_EXTENSION;
       if (file_exists(classesname.c_str())) {
-	cmd.str("");
+	cmd = "";
 	cmd << "cp " << classesname << " " << rmconf.get_output_dir();
-	int res = std::system(cmd.str().c_str());
-	if (res < 0) cerr << "warning: command failed: " << cmd.str() << endl;
-	else cout << "copied class names file: " << cmd.str() << endl;
+	int res = std::system(cmd.c_str());
+	if (res < 0) cerr << "warning: command failed: " << cmd << endl;
+	else cout << "copied class names file: " << cmd << endl;
       }
     }
     // create gnuplot param file in jobs' root
     try {
       if (rmconf.exists("meta_gnuplot_params")) {
-	string params = rmconf.get_string("meta_gnuplot_params");
-	ostringstream gpp;
+	std::string params = rmconf.get_string("meta_gnuplot_params");
+	std::string gpp;
 	gpp << rmconf.get_output_dir() << "/" << "gnuplot_params.txt";
-	ofstream of(gpp.str().c_str());
+	ofstream of(gpp.c_str());
 	if (!of) {
 	  cerr << "warning: failed to write gnuplot parameters to ";
-	  cerr << gpp.str() << endl;
+	  cerr << gpp << endl;
 	} else {
 	  of << params;
 	  of.close();
 	}
       }
-    } catch (const char *s) { cerr << s << endl; }
+    } eblcatchwarn();
     mconf.pretty_combinations();
     cout << "Creating " << jobs.size() << " different combinations in "
 	 << rmconf.get_output_dir() << endl;
     // write job directories and files
     for (uint i = 0; i < jobs.size(); ++i) {
-      cout << i << " / " << jobs.size() << ": creating " << jobs[i]->name() 
+      cout << i << " / " << jobs.size() << ": creating " << jobs[i]->name()
 	   << endl;
       // write conf
       jobs[i]->write(reset_progress);
-      // copy bins into jobs' root 
+      // copy bins into jobs' root
       if (copy_path.size()) {
 	cout << "Copying " << copy_path << " to " << jobs[i]->get_root() << endl;
-	cmd.str("");
+	cmd = "";
 	cmd << "cp -R " << copy_path << " " << jobs[i]->get_root();
-	if (std::system(cmd.str().c_str()))
-	  cerr << "warning: failed to execute: " << cmd.str() << endl;      
+	if (std::system(cmd.c_str()))
+	  cerr << "warning: failed to execute: " << cmd << endl;
       }
     }
   }
-  
-  void job_manager::initialize_other(const string &other_directory) {
+
+  void job_manager::initialize_other(const std::string &other_directory) {
     // find weights in other directory corresponding to each current job
-    cout << "Initializing weights from other job directory " 
+    cout << "Initializing weights from other job directory "
 	 << other_directory << endl;
-    for (uint i = 0; i < jobs.size(); ++i) {      
-      cout << i << " / " << jobs.size() << ": looking for equivalent of " 
+    for (uint i = 0; i < jobs.size(); ++i) {
+      cout << i << " / " << jobs.size() << ": looking for equivalent of "
 	   << jobs[i]->shortname() << ": ";
-      string pattern;
-      pattern << ".*" << jobs[i]->shortname() << ".*/.*" 
+      std::string pattern;
+      pattern << ".*" << jobs[i]->shortname() << ".*/.*"
 	      << jobs[i]->shortname() << ".*[.]mat";
-      list<string> *l = find_fullfiles(other_directory, pattern.c_str(), NULL, 
+      std::list<std::string> *l = find_fullfiles(other_directory, pattern.c_str(), NULL,
 				       true, true, false, false, true);
       if (!l || l->size() == 0) {
 	cout << "no equivalent found." << endl;
 	if (l) delete l;
 	continue ;
       }
-      string dir = ebl::dirname(l->back().c_str());
+      std::string dir = ebl::dirname(l->back().c_str());
       jobs[i]->figure_resume_from_weights(dir.c_str());
-      if (l) delete l;      
+      if (l) delete l;
     }
   }
 
@@ -697,7 +697,7 @@ namespace ebl {
       std::sort(sjobs.begin(), sjobs.end(), job_progress_cmp);
       // if there are jobs waiting to be started, start them if possible
       if (unfinished > 0 && ready_slots > 0) {
-	for (vector<job*>::iterator i = sjobs.begin(); 
+	for (vector<job*>::iterator i = sjobs.begin();
 	     i != sjobs.end() && ready_slots > 0; ++i) {
 	  // check status of job i from files
 	  (*i)->check_finished();
@@ -728,17 +728,17 @@ namespace ebl {
     if (!mconf.read(mconf_fullfname.c_str()))
       eblerror("failed to load configuration from " << mconf_fullfname);
     mconf.resolve();
-    string odir = dirname(fname);
+    std::string odir = dirname(fname);
     mconf.set_output_dir(odir);
     // establish list of jobs given conf's root
-    list<string> *l = list_job_dirs(mconf_fullfname.c_str());
+    std::list<std::string> *l = list_job_dirs(mconf_fullfname.c_str());
     if (!l || l->size() == 0) eblerror("no job directory found");
     // create corresponding jobs
     uint k = 0;
-    for (list<string>::iterator li = l->begin(); 
+    for (std::list<std::string>::iterator li = l->begin();
 	 li != l->end(); ++li, ++k) {
-      string c = *li;
-      string j = basename(c.c_str());
+      std::string c = *li;
+      std::string j = basename(c.c_str());
       mconf.set_name(j);
       jobs.push_back(new job(mconf, mconf_fname.c_str(), false));
     }
@@ -767,7 +767,7 @@ namespace ebl {
     nalive = 0;
     nrunning = 0;
     unstarted = 0;
-    ready_slots = max_jobs; 
+    ready_slots = max_jobs;
     finished = 0;
     unfinished = jobs.size();
     mintime = 0.0;
@@ -797,7 +797,7 @@ namespace ebl {
       if (mintime == 0)
 	mintime = j.minutes();
       else
-	mintime = MIN(j.minutes(), mintime); 
+	mintime = MIN(j.minutes(), mintime);
       // gather jobs infos for reporting
       infos << i << ". pid: " << j.getpid() << ", name: " << j.name()
 	    << ", status: " << (j.alive() ? "alive" : "dead")
@@ -826,11 +826,11 @@ namespace ebl {
     cout << "Jobs progress: " << total_progress / (float) jobs.size()
 	 << "%, finished: " << finished << " / " << jobs.size()
 	 << ", unfinished: " << unfinished
-	 << ", alive: " << nalive 
+	 << ", alive: " << nalive
 	 << ", running: " << nrunning
 	 << ", unstarted: " << unstarted
 	 << ", empty job slots: " << ready_slots << ", Iteration: "
-	 << maxiter << ", elapsed: " << time.elapsed() << ", ETA: " 
+	 << maxiter << ", elapsed: " << time.elapsed() << ", ETA: "
 	 << time.eta(total_progress, jobs.size() * 100) << endl;
   }
 
@@ -844,12 +844,12 @@ namespace ebl {
 	  // send reports at certain iterations
 	  if (rmconf.exists("meta_email_iters")) {
 	    // loop over set of iterations
-	    list<uint> l =
-	      string_to_uintlist(rmconf.get_string("meta_email_iters"));
-	    for (list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
+	    std::list<uint> l =
+                string_to_uintlist(rmconf.get_string("meta_email_iters"));
+	    for (std::list<uint>::iterator i = l.begin(); i != l.end(); ++i) {
 	      if (*i == (uint) maxiter) {
 		cout << "Reached iteration " << *i << endl;
-		// analyze 
+		// analyze
 		best = parser.analyze(rmconf, rmconf.get_output_dir(),
 				      maxiter_tmp, besteach);
 		// send report
@@ -860,7 +860,7 @@ namespace ebl {
 	    }
 	  } else if (rmconf.exists("meta_email_period") &&
 		     (maxiter % rmconf.get_uint("meta_email_period") == 0)) {
-	    // analyze 
+	    // analyze
 	    best = parser.analyze(rmconf, rmconf.get_output_dir(),
 				  maxiter_tmp, besteach);
 	    // send report
@@ -885,16 +885,16 @@ namespace ebl {
 		       maxtime, mintime, &besteach);
   }
 
-  list<string> *job_manager::list_job_dirs(const char *conffname) {
+  std::list<std::string> *job_manager::list_job_dirs(const char *conffname) {
     // list all directories that start with same dir name + _conf
-    string dir = dirname(conffname); 
-    string patt = ".*";// = ebl::basename(dir.c_str());
+    std::string dir = dirname(conffname);
+    std::string patt = ".*";// = ebl::basename(dir.c_str());
     dir << "/";
     patt << "_conf[0-9]*_.*";
-    cout << "List jobs based on directory " << dir 
+    cout << "List jobs based on directory " << dir
 	 << " and pattern " << patt << endl;
     // find dirs non recursively
-    list<string> *l = find_fullfiles(dir, patt.c_str(), 
+    std::list<std::string> *l = find_fullfiles(dir, patt.c_str(),
 				     NULL, true, false, false, true);
     if (!l)
       eblerror("failed to find existing job directories to resume in "

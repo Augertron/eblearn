@@ -126,8 +126,8 @@
       ipp_m2dotm1(in1, in2, out);					\
     } else {								\
       eblerror("not implemented for non contiguous");			\
-    /*      idxiter<T> pi1, pi2, pout;			*/		\
-    /* idx_aloop3_on(pi1,in1,pi2,in2,pout,out) { *pout = (*pi1) * (*pi2); }*/ \
+      /*      idxiter<T> pi1, pi2, pout;			*/      \
+      /* idx_aloop3_on(pi1,in1,pi2,in2,pout,out) { *pout = (*pi1) * (*pi2); }*/ \
     }									\
   }
 
@@ -140,8 +140,8 @@
       ipp_m2dotm2(in1, in2, out);					\
     } else {								\
       eblerror("not implemented for non contiguous");			\
-    /*      idxiter<T> pi1, pi2, pout;			*/		\
-    /* idx_aloop3_on(pi1,in1,pi2,in2,pout,out) { *pout = (*pi1) * (*pi2); }*/ \
+      /*      idxiter<T> pi1, pi2, pout;			*/      \
+      /* idx_aloop3_on(pi1,in1,pi2,in2,pout,out) { *pout = (*pi1) * (*pi2); }*/ \
     }									\
   }
 
@@ -244,7 +244,7 @@
       ipp_abs(inp, out);						\
     } else {								\
       idxiter<T> pinp; idxiter<T> pout;					\
-      idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(abs(*pinp)); }	\
+      idx_aloop2_on(pinp,inp,pout,out) { *pout = (T)(std::abs(*pinp)); } \
     }									\
   }
 
@@ -362,25 +362,25 @@
 ////////////////////////////////////////////////////////////////////////
 // idx_sumabs
 
-#define idx_sumabs_macro(T)					\
-  template<> float64 idx_sumabs(idx<T> & in, T* out) {		\
-    if (in.contiguousp()) {					\
-      if (out != NULL) {					\
-	float64 sum = ipp_sumabs(in);				\
-	*out = saturate(sum, T);				\
-	return sum;						\
-      }								\
-      return ipp_sumabs(in);					\
-    } else {							\
-      /* there is a much faster and parallel way */		\
-      /* of doing this using a tree. */				\
-      float64 z = 0;						\
-      idxiter<T> pinp;						\
-      idx_aloop1_on(pinp,in) { z += abs((float64)(*pinp)); }	\
-      if (out != NULL)						\
-	*out = saturate(z, T);					\
-      return z;							\
-    }								\
+#define idx_sumabs_macro(T)                                             \
+  template<> float64 idx_sumabs(idx<T> & in, T* out) {                  \
+    if (in.contiguousp()) {                                             \
+      if (out != NULL) {                                                \
+	float64 sum = ipp_sumabs(in);                                   \
+	*out = saturate(sum, T);                                        \
+	return sum;                                                     \
+      }                                                                 \
+      return ipp_sumabs(in);                                            \
+    } else {                                                            \
+      /* there is a much faster and parallel way */                     \
+      /* of doing this using a tree. */                                 \
+      float64 z = 0;                                                    \
+      idxiter<T> pinp;                                                  \
+      idx_aloop1_on(pinp,in) { z += std::abs((float64)(*pinp)); }	\
+      if (out != NULL)                                                  \
+	*out = saturate(z, T);                                          \
+      return z;                                                         \
+    }                                                                   \
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -399,20 +399,9 @@
 // idx_mean
 
 #define idx_mean_macro(T)					\
-  template<> T idx_mean(idx<T> & in, T* out) {			\
-    if (in.contiguousp()) {					\
-      if (out != NULL) {					\
-	*out = (T)ipp_mean(in);					\
-	return *out;						\
-      }								\
-      return (T)ipp_mean(in);					\
-    } else {							\
-      if (out != NULL) {					\
-	*out = (T)(idx_sum(in) / (float64)in.nelements());	\
-	return *out;						\
-      }								\
-      return (T)(idx_sum(in) / (float64)in.nelements());	\
-    }								\
+  template<> T idx_mean(idx<T> & in) {                          \
+    if (in.contiguousp()) return (T)ipp_mean(in);               \
+    else return (T)(idx_sum(in) / (float64)in.nelements());	\
   }
 
 ////////////////////////////////////////////////////////////////////////
@@ -505,7 +494,7 @@
 
 ////////////////////////////////////////////////////////////////////////
 // idx_max (between 2 idx's, not-in-place)
-  
+
 #define idx_maxevery2_macro(T)						\
   template<> void idx_max(idx<T> & in1, idx<T> & in2, idx<T> & out) {	\
     if (in1.contiguousp() && in2.contiguousp() && out.contiguousp()) {	\

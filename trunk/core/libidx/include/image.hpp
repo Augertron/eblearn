@@ -36,8 +36,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-using namespace std;
-
 #define BLK_AVRG(nlin, ncol) {						\
     int k,l; int norm = ncol * nlin;					\
     int acc0=0, acc1=0, acc2=0;						\
@@ -63,7 +61,7 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
   // resize
 
-  template<class T> idx<T> image_resize(idx<T> &image, double h, double w, 
+  template<class T> idx<T> image_resize(idx<T> &image, double h, double w,
 					int mode, rect<int> *iregion_,
 					rect<int> *oregion_) {
     if (image.order() < 2) eblerror("image must have at least an order of 2.");
@@ -73,7 +71,7 @@ namespace ebl {
       iregion = *iregion_;
     double ratioh = h / iregion.height;
     double ratiow = w / iregion.width;
-    double ratiomin = min(ratiow, ratioh);
+    double ratiomin = std::min(ratiow, ratioh);
     // if data is not contiguous, copy it to a contiguous buffer
     idx<T> contim(image);
     if (!image.contiguousp()) {
@@ -97,8 +95,8 @@ namespace ebl {
 	  eblerror("desired width and height cannot be both zero"
 		   << " while trying to resize image " << image
 		   << " to " << h << "x" << w << " with mode " << mode)
-	  else	w = max(1, (int) (imw * (w / imh)));
-      } else	h = max(1, (int) (imh * (h / imw)));
+	  else	w = std::max(1, (int) (imw * (w / imh)));
+      } else	h = std::max(1, (int) (imh * (h / imw)));
     }
     if ((mode == 0) || (mode == 3)) { // preserve aspect ratio
       ratiow = ratiomin;
@@ -118,15 +116,15 @@ namespace ebl {
 	       << " to " << h << "x" << w << " with mode " << mode);
     // output sizes of entire image
     if (iregion_ || (mode == 2) || (mode == 0) || (mode == 3)) {
-      ow = rint(max(1.0, imw * ratiow));
-      oh = rint(max(1.0, imh * ratioh));
+      ow = rint(std::max(1.0, imw * ratiow));
+      oh = rint(std::max(1.0, imh * ratioh));
     } else {
-      ow = w;//max(1.0, imw * ratiow);
-      oh = h;//max(1.0, imh * ratioh);
+      ow = w;//std::max(1.0, imw * ratiow);
+      oh = h;//std::max(1.0, imh * ratioh);
     }
     // compute closest integer subsampling ratio
-    //rw = std::max(1, (int) (1 / ratiow));
-    //rh = std::max(1, (int) (1 / ratioh));
+    //rw = std::std::max(1, (int) (1 / ratiow));
+    //rh = std::std::max(1, (int) (1 / ratioh));
     // compute output region
     rect<int> oregion((uint)(iregion.h0 * ratioh), (uint)(iregion.w0 * ratiow),
 		 (uint)(iregion.height * ratioh),
@@ -150,7 +148,7 @@ namespace ebl {
     float x3 = (float) imw - (float) 0.5, y3 = (float) imh - (float) 0.5;
     float p1 = (float) -0.5, q1 = (float) -0.5;
     float p3 = (float) ow - (float) 0.5, q3 = (float) oh - (float) 0.5;
-    image_warp_quad(contim, rez, bg, 1, x1, y1, x3, y1, x3, y3, x1, y3, 
+    image_warp_quad(contim, rez, bg, 1, x1, y1, x3, y1, x3, y3, x1, y3,
 		    p1, q1, p3, q3);
     if (contim.order() == 2)
       return rez.select(2, 0);
@@ -172,7 +170,7 @@ namespace ebl {
 			       rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
-      cerr << "illegal order: " << im << endl;
+      std::cerr << "illegal order: " << im << std::endl;
       eblerror("unexpected image format");
     }
     // iregion is optional, set it to entire image if not given
@@ -193,7 +191,7 @@ namespace ebl {
     if ((iregion.width > owidth) || (iregion.height > oheight)) { // reduce
       rect<uint> exact_inr;
       uint reductions;
-  
+
       switch (mode) {
       case 0: // keep aspect ratio
 	// compute biggest down/up-sizing factor. do not use a double variable
@@ -271,11 +269,11 @@ namespace ebl {
 			   uint mode, rect<int> *iregion_, rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
-      cerr << "illegal order: " << im << endl;
+      std::cerr << "illegal order: " << im << std::endl;
       eblerror("unexpected image format");
     }
     if (oheight == 0 || owidth == 0) {
-      cerr << "oheight: " << oheight << " owidth " << owidth << endl;
+      std::cerr << "oheight: " << oheight << " owidth " << owidth << std::endl;
       eblerror("illegal resize image to zero");
     }
     // iregion is optional, set it to entire image if not given
@@ -329,13 +327,13 @@ namespace ebl {
       uint fact = (std::min)((uint)floor(iregion.height / (float) outr.height),
 			     (uint)floor(iregion.width / (float) outr.width));
       if (fact == 0) // no multiple smaller than input, go straight for bilinear
-	return image_resize(im, oheight, owidth, mode, iregion_, oregion);	
+	return image_resize(im, oheight, owidth, mode, iregion_, oregion);
       // bilinear resize at closest resolution to current resolution
       rim = image_resize(im, inr.height * fact, inr.width * fact, 1);
       //  add extra padding around original image if it's not a multiple of fact
       // rect rrim(0, 0, rim.dim(0), rim.dim(1));
       // rect cropped;
-      // uint hmod = rim.dim(0) % fact; 
+      // uint hmod = rim.dim(0) % fact;
       // if (hmod) hmod = fact - hmod;
       // uint wmod = rim.dim(1) % fact;
       // if (wmod) wmod = fact - wmod;
@@ -368,7 +366,7 @@ namespace ebl {
     return out;
   }
 
-  template <typename T> 
+  template <typename T>
   idx<T> image_region_to_square(idx<T> &im, const rect<uint> &r) {
     // TODO: check expecting 2D or 3D
     // TODO: check that rectangle is within image
@@ -389,12 +387,12 @@ namespace ebl {
     idx_copy(tmpim, tmpres);
     return res;
   }
-  
-  template <typename T> 
+
+  template <typename T>
   idx<ubyte> image_to_ubyte(idx<T> &im, double zoomh, double zoomw,
 			    T minv, T maxv) {
     // check the order and dimensions
-    if ((im.order() < 2) || (im.order() > 3) || 
+    if ((im.order() < 2) || (im.order() > 3) ||
 	((im.order() == 3) && (im.dim(2) != 1) && (im.dim(2) != 3))) {
       eblerror("expected a 2D idx or a 3D idx with 1 or 3 channels only "
 	       << "but got: " << im);
@@ -648,7 +646,7 @@ namespace ebl {
   	    dst_data[ y*os[0] + x*os[1] + k*os[2] ] = background;
   	  continue ;
   	}
-	
+
   	// borders
   	ix = std::max(ix,(float)0);
   	ix = std::min(ix,(float)(width-1));
@@ -666,16 +664,16 @@ namespace ebl {
   	  int iy_sw = iy_nw + 1;
   	  int ix_se = ix_nw + 1;
   	  int iy_se = iy_nw + 1;
-	  
+
   	  // get surfaces to each neighbor:
   	  float nw = ((float)(ix_se-ix))*(iy_se-iy);
   	  float ne = ((float)(ix-ix_sw))*(iy_sw-iy);
   	  float sw = ((float)(ix_ne-ix))*(iy-iy_ne);
   	  float se = ((float)(ix-ix_nw))*(iy-iy_nw);
-	  
+
   	  // weighted sum of neighbors:
   	  for (k=0; k<channels; k++) {
-  	    dst_data[ k*os[2] + y*os[0] + x*os[1] ] = 
+  	    dst_data[ k*os[2] + y*os[0] + x*os[1] ] =
               src_data[ k*is[2] + iy_nw*is[0] + ix_nw*is[1] ] * nw
   	      + src_data[ k*is[2] + iy_ne*is[0]
   			  + std::min(ix_ne,width-1)*is[1]] * ne
@@ -688,7 +686,7 @@ namespace ebl {
   	  // 1 nearest neighbor:
   	  int ix_n = (int) floor(ix+0.5);
   	  int iy_n = (int) floor(iy+0.5);
-	  
+
   	  // weighted sum of neighbors:
   	  for (k = 0; k < channels; k++)
   	    dst_data[ y*os[0] + x*os[1] + k*os[2] ] =
@@ -1045,13 +1043,13 @@ namespace ebl {
     // sum_j (w_j * (in - mean)^2)
     idx<T> out3 = image_filter(out2, kernel);
     // sqrt(sum_j (w_j (in - mean)^2))
-    idx_sqrt(out3, out3);    
+    idx_sqrt(out3, out3);
     // std(std < 1) = 1
     idx_threshold(out3, (T)1.0);
     // 1/std
     idx_inv(out3, out3);
     // out = (in - mean) / std
-    idx<T> out4 = out1.narrow(0, out3.dim(0), 
+    idx<T> out4 = out1.narrow(0, out3.dim(0),
 			      (intg) floor((float)kernel.dim(0)/2));
     out4 = out4.narrow(1, out3.dim(1), (intg) floor((float)kernel.dim(1)/2));
     idx_mul(out4, out3, out3);
@@ -1060,7 +1058,7 @@ namespace ebl {
     out5 = out5.narrow(1, out3.dim(1), (out.dim(1) - out3.dim(1)) / 2);
     idx_clear(out);
     idx_copy(out3, out5);
-    
+
 //     // in - mean
 //     idx_sub(in, tmp5, tmp5);
 //     // (in - mean)^2
@@ -1068,7 +1066,7 @@ namespace ebl {
 //     // sum_j (w_j * (in - mean)^2)
 //     image_apply_filter(tmp4, out, kernel, &tmp);
 //     // sqrt(sum_j (w_j (in - mean)^2))
-//     idx_sqrt(out, out);    
+//     idx_sqrt(out, out);
 //     // std(std < 1) = 1
 //     idx_threshold(out, (T)1.0, out);
 //     // 1/std
@@ -1087,10 +1085,10 @@ namespace ebl {
     idx_clear(out);
     idx<T> tmp = out.narrow(0, in.dim(0) - filter.dim(0) + 1,
 			    (intg) floor((float)filter.dim(0)/2));
-    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1, 
+    tmp = tmp.narrow(1, in.dim(1) - filter.dim(1) + 1,
 		     (intg) floor((float)filter.dim(1)/2));
-    idx_2dconvol(in, filter, tmp);   
-    
+    idx_2dconvol(in, filter, tmp);
+
 //     // compute sizes of the temporary buffer
 //     d.setdim(0, in.dim(0) + filter.dim(0) - 1);
 //     d.setdim(1, in.dim(1) + filter.dim(1) - 1);
@@ -1110,14 +1108,14 @@ namespace ebl {
 //     idx_copy(in, tmp2);
 //     idx_2dconvol(tmp, filter, out);
   }
-  
+
   template <typename T>
   idx<T> image_filter(idx<T> &in, idx<T> &filter) {
     // check that image is bigger than filter
     if ((in.dim(0) < filter.dim(0)) ||
 	(in.dim(1) < filter.dim(1))) {
-      cerr << "error: image " << in << " is too small to be convolved with ";
-      cerr << filter << " filter." << endl;
+      std::cerr << "error: image " << in << " is too small to be convolved with ";
+      std::cerr << filter << " filter." << std::endl;
       eblerror("too small image for convolution");
     }
     idxdim d(in);
@@ -1128,7 +1126,7 @@ namespace ebl {
     idx_2dconvol(in, filter, out);
     return out;
   }
-    
+
   // deformations //////////////////////////////////////////////////////////////
 
   template <typename T>
@@ -1153,7 +1151,7 @@ namespace ebl {
   }
 
   template <typename T>
-  idx<float> image_deformation_flow(idx<T> &in, float th, float tw, 
+  idx<float> image_deformation_flow(idx<T> &in, float th, float tw,
 				    float sh, float sw, float deg,
 				    float shh, float shw,
 				    uint elsize, float elcoeff,
@@ -1176,7 +1174,7 @@ namespace ebl {
     // affine_flow(grid, flow, 0, 0, sh, sw, 0, 0, deg);
     return flow;
   }
-  
+
   template <typename T>
   void image_deformation(idx<T> &in, idx<T> &out, float th, float tw,
 			 float sh, float sw, float deg,
@@ -1188,7 +1186,7 @@ namespace ebl {
     // apply flow
     image_warp_flow(in, out, flow);
   }
-  
+
 } // end namespace ebl
 
 #endif /* IMAGE_HPP_ */

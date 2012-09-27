@@ -39,8 +39,6 @@
 
 #include "libidx.h"
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -57,7 +55,7 @@ namespace ebl {
   //! Warning: idx data will be cast to ubyte.
   template <typename T>
     IplImage* idx_to_ipl(idx<T> &im);
-  
+
   //! Allocate an idx with dimensions of the opencv image, copy data into
   //! idx and return it.
   template <typename T>
@@ -66,7 +64,7 @@ namespace ebl {
   //! Copy data from an opencv image into the passed idx.
   template <typename T>
     void ipl_to_idx(IplImage *im, idx<T> &out);
- 
+
 } // end namespace ebl
 
 #include "opencv.hpp"

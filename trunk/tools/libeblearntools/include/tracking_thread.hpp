@@ -48,8 +48,6 @@
 #include "libeblearngui.h"
 #endif
 
-using namespace std;
-
 namespace ebl {
 
   ////////////////////////////////////////////////////////////////
@@ -68,7 +66,7 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  void tracking_thread<Tnet>::copy_bboxes(vector<bbox*> &bb) {
+  void tracking_thread<Tnet>::copy_bboxes(std::vector<bbox*> &bb) {
     // lock data
     pthread_mutex_lock(&mutex_out);
     // clear bboxes
@@ -92,7 +90,7 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  bool tracking_thread<Tnet>::get_data(vector<bbox*> &bboxes2,
+  bool tracking_thread<Tnet>::get_data(std::vector<bbox*> &bboxes2,
 				       idx<ubyte> &frame2, idx<ubyte> &tpl2) {
     // lock data
     pthread_mutex_lock(&mutex_out);
@@ -113,21 +111,21 @@ namespace ebl {
       bboxes2.push_back(*ibox);
     }
     // check frame is correctly allocated, if not, allocate.
-    if (frame2.order() != frame.order()) 
+    if (frame2.order() != frame.order())
       frame2 = idx<ubyte>(frame.get_idxdim());
     else if (frame2.get_idxdim() != frame.get_idxdim())
       frame2.resize(frame.get_idxdim());
     // copy frame
-    idx_copy(frame, frame2);    
+    idx_copy(frame, frame2);
     // check tpl is correctly allocated, if not, allocate.
-    if (tpl2.order() != tpl.order()) 
+    if (tpl2.order() != tpl.order())
       tpl2 = idx<ubyte>(tpl.get_idxdim());
     else if (tpl2.get_idxdim() != tpl.get_idxdim())
       tpl2.resize(tpl.get_idxdim());
     // copy tpl
-    idx_copy(tpl, tpl2);    
+    idx_copy(tpl, tpl2);
     // reset updated flag
-    out_updated = false; 
+    out_updated = false;
     // unlock data
     pthread_mutex_unlock(&mutex_out);
     // confirm that we copied data.
@@ -154,10 +152,10 @@ namespace ebl {
   }
 
   template <typename Tnet>
-  void tracking_thread<Tnet>::execute() { 
+  void tracking_thread<Tnet>::execute() {
     try {
       // configuration
-      string    cam_type   = conf.get_string("camera");
+      std::string    cam_type   = conf.get_string("camera");
       int       height     = conf.get_int("input_height");
       int       width      = conf.get_int("input_width");
       bool      save_video = conf.exists_bool("save_video");
@@ -187,7 +185,7 @@ namespace ebl {
       // other variables
       bool updated = false;
       bbox *b = new bbox;
-      vector<bbox*> bb;
+      std::vector<bbox*> bb;
 #ifdef __OPENCV__
       IplImage *iplframe = NULL;
       IplImage *ipltpl = NULL;
@@ -226,14 +224,14 @@ namespace ebl {
 	    ipltpl = idx_to_iplptr(tpl);
 	    CvPoint minloc, maxloc;
 	    double minval, maxval;
-	    // vector<CvPoint> found;
-	    // vector<double> confidences;
+	    // std::vector<CvPoint> found;
+	    // std::vector<double> confidences;
 	    // FastMatchTemplate(*iplframe, *ipltpl, &found, &confidences, 1, false,
 	    // 			5, 1, 15);
 	    //      CvRect searchRoi;
 	    //      cvSetImageROI( searchImage, searchRoi );
-	    // vector<CvPoint>::iterator p = found.begin();
-	    // vector<double>::iterator c = confidences.begin();
+	    // std::vector<CvPoint>::iterator p = found.begin();
+	    // std::vector<double>::iterator c = confidences.begin();
 	    // for ( ; p != found.end() && c != confidences.end(); ++p, ++c) {
 	    // 	gui << at(p->x, p->y) << *c;
 	    // }
@@ -246,7 +244,8 @@ namespace ebl {
 	    b->class_id = -42; // tell that this bbox is result of tracking
 	    b->h0 = minloc.y;
 	    b->w0 = minloc.x;
-	    //	    cout << "maxloc h: " << maxloc.y << " w: " << maxloc.x << " minloc h:" << minloc.y << " w: " << minloc.x << endl;
+	    //	    cout << "maxloc h: " << maxloc.y << " w: " << maxloc.x
+            // << " minloc h:" << minloc.y << " w: " << minloc.x << endl;
 #endif
 	  }
 	  // make a copy of found bounding boxes
@@ -256,15 +255,13 @@ namespace ebl {
 	  // display
 	  if (display)
 	    draw(b);
-	} catch (string &err) {
-	  cerr << err << endl;
-	}
+	} eblcatchwarn();
       }
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?
 			    cam->fps() : conf.get_uint("save_video_fps"));
       if (cam) delete cam;
-    } catch(string &err) { eblerror(err.c_str()); }
+    } eblcatcherror();
   }
 
 } // end namespace ebl

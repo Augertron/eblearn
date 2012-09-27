@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Pierre Sermanet   *
+ *   Copyright (C) 2012 by Pierre Sermanet   *
  *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
@@ -10,15 +10,15 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Redistribution under a license not approved by the Open Source 
- *       Initiative (http://www.opensource.org) must display the 
+ *     * Redistribution under a license not approved by the Open Source
+ *       Initiative (http://www.opensource.org) must display the
  *       following acknowledgement in all advertising material:
  *        This product includes software developed at the Courant
  *        Institute of Mathematical Sciences (http://cims.nyu.edu).
  *     * The names of the authors may not be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL ThE AUTHORS BE LIABLE FOR ANY
@@ -43,60 +43,63 @@
 #include "defines.h"
 #include "idx.h"
 #include "job.h"
-#include "ebl_states.h"
 #include "ebl_trainer.h"
 
 #ifdef __GUI__
 #include "ebl_trainer_gui.h"
 #endif
 
-using namespace std;
-
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // training utilities
 
-  //! A function that performs tests, saves current weights and display.
-  //! \param iteration_seconds An optional elapsed time for the iteration,
-  //!   to better estimate the timeout of the training.
-  template <typename Tnet, typename Tdata, typename Tlabel>
-    void test_and_save(uint iter, configuration &conf, string &conffname,
-		       parameter<Tnet> &theparam,
-		       supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
-		       labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
-		       labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
-		       classifier_meter &trainmeter,
-		       classifier_meter &testmeter,
-		       infer_param &infp, gd_param &gdp, string &shortname,
-		       long iteration_seconds = 0);
+// training utilities //////////////////////////////////////////////////////////
 
-  //! A function that performs tests and display.
-  template <typename Tnet, typename Tdata, typename Tlabel>
-    void test(uint iter, configuration &conf, string &conffname,
-	      parameter<Tnet> &theparam,
-	      supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
-	      labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
-	      labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
-	      classifier_meter &trainmeter,
-	      classifier_meter &testmeter,
-	      infer_param &infp, gd_param &gdp, string &shortname);
+//! This creates a trainable network and returns it.
+template <typename Tnet, typename Tdata, typename Tlabel>
+supervised_trainer<Tnet,Tdata,Tlabel>*
+create_trainable_network(bbparameter<Tnet> &theparam, configuration &conf,
+                         uint noutputs);
+//! A function that performs tests, saves current weights and display.
+//! \param iteration_seconds An optional elapsed time for the iteration,
+//!   to better estimate the timeout of the training.
+template <typename Tnet, typename Tdata, typename Tlabel>
+void test_and_save(uint iter, configuration &conf, std::string &conffname,
+                   parameter<Tnet> &theparam,
+                   supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
+                   labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
+                   labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+                   classifier_meter &trainmeter,
+                   classifier_meter &testmeter,
+                   infer_param &infp, gd_param &gdp, std::string &shortname,
+                   long iteration_seconds = 0);
 
-  //! A function that create/loads a validation set given configuration 'conf'.
-  //! \param noutputs The number of outputs will be modified according 
-  //!   to the loaded dataset.
-  //! \param name This is updated to the root of all dataset filenames.
-  template <typename Tnet, typename Tdata, typename Tlabel>
-    labeled_datasource<Tnet,Tdata,Tlabel>* 
-    create_validation_set(configuration &conf, uint &noutputs, string &name);
+//! A function that performs tests and display.
+template <typename Tnet, typename Tdata, typename Tlabel>
+void test(uint iter, configuration &conf, std::string &conffname,
+          parameter<Tnet> &theparam,
+          supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
+          labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
+          labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+          classifier_meter &trainmeter,
+          classifier_meter &testmeter,
+          infer_param &infp, gd_param &gdp, std::string &shortname);
 
-  //! A function that create/loads a training set given configuration 'conf'.
-  //! \param noutputs The number of outputs will be modified according 
-  //!   to the loaded dataset.
-  //! \param name This is updated to the root of all dataset filenames.
-  template <typename Tnet, typename Tdata, typename Tlabel>
-    labeled_datasource<Tnet,Tdata,Tlabel>* 
-    create_training_set(configuration &conf, uint &noutputs, string &name);
+//! A function that create/loads a validation set given configuration 'conf'.
+//! \param noutputs The number of outputs will be modified according
+//!   to the loaded dataset.
+//! \param name This is updated to the root of all dataset filenames.
+template <typename Tnet, typename Tdata, typename Tlabel>
+labeled_datasource<Tnet,Tdata,Tlabel>*
+create_validation_set(configuration &conf, uint &noutputs,
+                      std::string &name);
+
+//! A function that create/loads a training set given configuration 'conf'.
+//! \param noutputs The number of outputs will be modified according
+//!   to the loaded dataset.
+//! \param name This is updated to the root of all dataset filenames.
+template <typename Tnet, typename Tdata, typename Tlabel>
+labeled_datasource<Tnet,Tdata,Tlabel>*
+create_training_set(configuration &conf, uint &noutputs, std::string &name);
 
 } // end namespace ebl
 

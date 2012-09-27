@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Yann LeCun and Pierre Sermanet *
+ *   Copyright (C) 2012 by Yann LeCun and Pierre Sermanet *
  *   yann@cs.nyu.edu, pierre.sermanet@gmail.com *
  *   All rights reserved.
  *
@@ -42,104 +42,111 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  //! Supervised Trainer. A specialisation of the generic trainer, taking
-  //! samples (of type Tnet) and labels (of type Tlabel) as training input.
-  //! Template Tnet is the network's type and also the input data's type.
-  //! However datasources with different data type may be provided in which
-  //! case a conversion will occur after each sample extraction from the
-  //! datasource (via a deep idx_copy).
-  template<typename Tnet, typename Tdata, typename Tlabel>
-    class supervised_trainer {
-  public:
-    //! constructor.
-    supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
-		       parameter<Tnet,bbstate_idx<Tnet> > &p);
-    //! destructor.
-    virtual ~supervised_trainer();
+// supervised_trainer //////////////////////////////////////////////////////////
 
-    // per-sample methods //////////////////////////////////////////////////////
+//! Supervised Trainer. A specialisation of the generic trainer, taking
+//! samples (of type Tnet) and labels (of type Tlabel) as training input.
+//! Template Tnet is the network's type and also the input data's type.
+//! However datasources with different data type may be provided in which
+//! case a conversion will occur after each sample extraction from the
+//! datasource (via a deep idx_copy).
+template <typename Tnet, typename Tdata, typename Tlabel>
+class supervised_trainer {
+ public:
+  //! constructor.
+  supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
+                     bbparameter<Tnet> &p);
+  //! destructor.
+  virtual ~supervised_trainer();
 
-    //! Test the current sample of 'ds', put the answers in 'answers' and
-    //! return true if the infered label equals the groundtruth 'label'.
-    bool test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
-		     bbstate_idx<Tnet> &label, bbstate_idx<Tnet> &answers,
-		     infer_param &infp);
-    //! Perform a learning update on the current sample of 'ds', using
-    //! 'arguments arg' for the parameter update method
-    //! (e.g. learning rate and weight decay).
-    Tnet train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
-		      gd_param &arg);
+  // per-sample methods //////////////////////////////////////////////////////
 
-    // epoch methods ///////////////////////////////////////////////////////////
+  //! Test the current sample of 'ds', put the answers in 'answers' and
+  //! return true if the infered label equals the groundtruth 'label'.
+  bool test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+                   state<Tnet> &label, state<Tnet> &answers,
+                   infer_param &infp);
+  //! Perform a learning update on the current sample of 'ds', using
+  //! 'arguments arg' for the parameter update method
+  //! (e.g. learning rate and weight decay).
+  Tnet train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+                    gd_param &arg);
+  //! Perform a learning update on the 'sample' and 'label', using
+  //! 'arguments arg' for the parameter update method
+  //! (e.g. learning rate and weight decay).
+  //! This assumes label is a unique value and its corresponding target
+  //! can be retrieve by the trainable module.
+  Tnet train_sample(idx<Tnet> &sample, const Tlabel label, gd_param &arg);
 
-    //! Measure the average energy and classification error rate
-    //! on a dataset.
-    //! \param max_test If > 0, limit the number of tests to this number.
-    void test(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-	      classifier_meter &log, infer_param &infp,
-	      uint max_test = 0);
-    //! train for <niter> sweeps over the training set. <samples> contains the
-    //! inputs samples, and <labels> the corresponding desired categories
-    //! <labels>.
-    //! return the average energy computed on-the-fly.
-    //! <update-args> is a list of arguments for the parameter
-    //! update method (e.g. learning rate and weight decay).
-    //! \param hessian_period Recompute 2nd order derivatives at every
-    //!   'hessian_period' samples if > 0.
-    //! \param nhessian Estimate 2nd order derivatives on 'nhessian' samples.
-    void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-	       classifier_meter &log, gd_param &args, int niter,
-	       infer_param &infp, 
-	       intg hessian_period = 0, intg nhessian = 0, double mu = .02);
-    //! compute hessian
-    void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-			     intg niter, double mu);
+  // epoch methods ///////////////////////////////////////////////////////////
 
-    // accessors ///////////////////////////////////////////////////////////////
-    
-    //! Set iteration id to i. This can be useful when resuming a training
-    //! to a certain iteration.
-    void set_iteration(int i);
-    //! pretty some information about training, e.g. input and network sizes.
-    void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
-    //! Sets the name of the file indicating progress of training.
-    //! If set, this file will be 'touched' after each sample is trained 
-    //! or tested to indicate that training is still going on.
-    void set_progress_file(const std::string &s);
-    //! If progress file is defined, touch the file to let outside world
-    //! know that training is still alive.
-    void update_progress();
+  //! Measure the average energy and classification error rate
+  //! on a dataset.
+  //! \param max_test If > 0, limit the number of tests to this number.
+  void test(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+            classifier_meter &log, infer_param &infp,
+            uint max_test = 0);
+  //! train for <niter> sweeps over the training set. <samples> contains the
+  //! inputs samples, and <labels> the corresponding desired categories
+  //! <labels>.
+  //! return the average energy computed on-the-fly.
+  //! <update-args> is a list of arguments for the parameter
+  //! update method (e.g. learning rate and weight decay).
+  //! \param hessian_period Recompute 2nd order derivatives at every
+  //!   'hessian_period' samples if > 0.
+  //! \param nhessian Estimate 2nd order derivatives on 'nhessian' samples.
+  void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+             classifier_meter &log, gd_param &args, int niter,
+             infer_param &infp,
+             intg hessian_period = 0, intg nhessian = 0, double mu = .02);
+  //! compute hessian
+  void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+                           intg niter, double mu);
 
-    // friends /////////////////////////////////////////////////////////////////
-    
-    // template <class Tdata, class Tlabel> friend class supervised_trainer_gui;
-    template <class T1, class T2, class T3> friend class supervised_trainer_gui;
+  // accessors ///////////////////////////////////////////////////////////////
 
-    // internal methods ////////////////////////////////////////////////////////
-  protected:
-    
-    //! init datasource to begining and assign indata to a buffer
-    //! corresponding to ds's sample size. also increment iteration counter,
-    //! unless new_iteration is false.
-    void init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
-	      classifier_meter *log = NULL, bool new_iteration = false);
+  //! Set iteration id to i. This can be useful when resuming a training
+  //! to a certain iteration.
+  void set_iteration(int i);
+  //! pretty some information about training, e.g. input and network sizes.
+  void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
+  //! Sets the name of the file indicating progress of training.
+  //! If set, this file will be 'touched' after each sample is trained
+  //! or tested to indicate that training is still going on.
+  void set_progress_file(const std::string &s);
+  //! If progress file is defined, touch the file to let outside world
+  //! know that training is still alive.
+  void update_progress();
 
-    // members /////////////////////////////////////////////////////////////////
-  protected:
-    trainable_module<Tnet,Tdata,Tlabel> &machine;
-    parameter<Tnet, bbstate_idx<Tnet> >	  &param;	//!< the learned params
-    bbstate_idx<Tnet>	 energy;	//!< Tmp energy buffer.
-    bbstate_idx<Tnet>	*answers;	//!< Tmp answer buffer.
-    bbstate_idx<Tnet>	*label;	        //!< Tmp label buffer.
-    intg		 age;
-    int			 iteration;
-    void		*iteration_ptr;
-    bool		 prettied;	//!< Flag used to pretty info just once.
-    std::string          progress_file; //!< Name of progress file.
-    intg                 progress_cnt;  //!< A count for updating progress.
-    bool                 test_running;//!< Show test on trained.
-  };
+  // friends /////////////////////////////////////////////////////////////////
+
+  // template <class Tdata, class Tlabel> friend class supervised_trainer_gui;
+  template <class T1, class T2, class T3> friend class supervised_trainer_gui;
+
+  // internal methods ////////////////////////////////////////////////////////
+ protected:
+
+  //! init datasource to begining and assign indata to a buffer
+  //! corresponding to ds's sample size. also increment iteration counter,
+  //! unless new_iteration is false.
+  void init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+            classifier_meter *log = NULL, bool new_iteration = false);
+
+  // members /////////////////////////////////////////////////////////////////
+ protected:
+  trainable_module<Tnet,Tdata,Tlabel> &machine;
+  bbparameter<Tnet> &param;             //!< the learned params
+  state<Tnet>      energy;              //!< Tmp energy buffer.
+  state<Tnet>     *answers;             //!< Tmp answer buffer.
+  state<Tnet>     *label;               //!< Tmp label buffer.
+  intg             age;
+  int              iteration;
+  void            *iteration_ptr;
+  bool             prettied;            //!< Flag used to pretty info just once.
+  std::string      progress_file;       //!< Name of progress file.
+  intg             progress_cnt;        //!< A count for updating progress.
+  bool             test_running;        //!< Show test on trained.
+};
 
 } // namespace ebl {
 
