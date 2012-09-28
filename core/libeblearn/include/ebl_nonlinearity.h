@@ -59,7 +59,8 @@ template <typename T> class stdsigmoid_module: public module_1_1<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual stdsigmoid_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
  protected:
   idx<T> tmp; //!< Temporary buffer.
@@ -87,7 +88,8 @@ template <typename T> class tanh_module: public module_1_1<T> {
   //! into files. This can be useful for debugging.
   virtual void fprop1_dump(idx<T> &in, idx<T> &out);
   //! Returns a deep copy of this module.
-  virtual tanh_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
  protected:
   idx<T> tmp; //!< Temporary buffer.
@@ -150,7 +152,8 @@ template <typename T> class abs_module: public module_1_1<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual abs_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
  private:
   double threshold;
@@ -180,7 +183,8 @@ template <typename T> class linear_shrink_module: public module_1_1<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual linear_shrink_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
  protected:
@@ -212,7 +216,8 @@ template <typename T> class smooth_shrink_module: public module_1_1<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual smooth_shrink_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
  public:
   state<T> beta, bias;
@@ -250,7 +255,8 @@ template <typename T> class tanh_shrink_module: public module_1_1<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual tanh_shrink_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
  protected:

@@ -99,13 +99,13 @@ state<T>::state(const state<T> &s) : idx<T>() {
   f.clear();
   // forward
   for (uint i = 0; i < s.f.size(); ++i)
-    if (s.f.exists(i)) add_f(s.f.at_ptr(i));
+    if (s.f.exists(i)) add_f_new(s.f.at_const(i));
   // backward
   for (uint i = 0; i < s.b.size(); ++i)
-    if (s.b.exists(i)) b.push_back(s.b.at_ptr(i));
+    if (s.b.exists(i)) b.push_back_new(s.b.at_const(i));
   // bbackward
   for (uint i = 0; i < s.bb.size(); ++i)
-    if (s.bb.exists(i)) bb.push_back(s.bb.at_ptr(i));
+    if (s.bb.exists(i)) bb.push_back_new(s.bb.at_const(i));
 }
 
 template <typename T>
@@ -455,7 +455,7 @@ template <typename T>
 void state<T>::shallow_copy(midx<T> &s) {
   f.clear();
   for (int i = 0; i < s.dim(0); ++i) {
-    idx<T> tmp = s.get(i);
+    idx<T> tmp = s.mget(i);
     f.push_back_new(tmp);
   }
 }
@@ -463,39 +463,8 @@ void state<T>::shallow_copy(midx<T> &s) {
 template <typename T>
 midx<T> state<T>::shallow_copy_midx() {
   midx<T> s(f.size());
-  for (uint i = 0; i < f.size(); ++i) s.set(f[i], i);
+  for (uint i = 0; i < f.size(); ++i) s.mset(f[i], i);
   return s;
-}
-
-template <typename T>
-state<T>& state<T>::operator=(const state<T>& other) {
-  f.clear();
-  b.clear();
-  bb.clear();
-  forward_only = other.forward_only;
-  // forward
-  for (uint i = 0; i < other.f.size(); i++) {
-    if (other.f.exists(i)) {
-      idx<T> tmp = other.f.at_const(i);
-      f.push_back_new(tmp);
-    }
-  }
-  link_f0();
-  // backward
-  for (uint i = 0; i < other.b.size(); i++) {
-    if (other.b.exists(i)) {
-      idx<T> tmp = other.b.at_const(i);
-      b.push_back_new(tmp);
-    }
-  }
-  // bbackward
-  for (uint i = 0; i < other.bb.size(); i++) {
-    if (other.bb.exists(i)) {
-      idx<T> tmp = other.bb.at_const(i);
-      bb.push_back_new(tmp);
-    }
-  }
-  return *this;
 }
 
 template <typename T>
@@ -505,7 +474,7 @@ void state<T>::get_midx(mfidxdim &dims, midx<T> &all) {
   // now set all x into an midx
   all = midx<T>(n.f.size());
   for (uint i = 0; i < n.f.size(); ++i)
-    all.set(n.f[i], i);
+    all.mset(n.f[i], i);
 }
 
 template <typename T>
@@ -515,7 +484,7 @@ void state<T>::get_max_midx(mfidxdim &dims, midx<T> &all) {
   // now set all x into an midx
   all = midx<T>(n.f.size());
   for (uint i = 0; i < n.f.size(); ++i)
-    all.set(n.f[i], i);
+    all.mset(n.f[i], i);
 }
 
 template <typename T>
@@ -534,7 +503,7 @@ void state<T>::get_padded_midx(mfidxdim &dims, midx<T> &all) {
       d.setdim(0, in.dim(0));
       idx<T> out(d);
       idx_clear(out);
-      all.set(out, n);
+      all.mset(out, n);
       bcopy = true;
       // narrow input, ignoring 1st dim
       for (uint j = 1; j < d.order(); ++j) {
@@ -643,7 +612,7 @@ void state<T>::allocate(const idxdim &d, parameter<T> *p) {
       bb.push_back(new idx<T>(p->bb[0].getstorage(), p->bb[0].footprint(), d));
   }
   // resize parameter accordingly
-  if (p) p->resize(p->footprint() + idx<T>::nelements());
+  if (p) p->resize_parameter(p->footprint() + idx<T>::nelements());
   // clear all allocated tensors
   zero_all();
 }
@@ -717,29 +686,29 @@ void state<T>::reset_tensors(svector<idx<T> > &in, svector<idx<T> > &out,
 
 // state operations //////////////////////////////////////////////////////////
 
-template <typename T>
-void state_copy(state<T> &in, state<T> &out) {
+template <typename T, typename T2>
+void state_copy(state<T> &in, state<T2> &out) {
   if (in.f.empty()) eblerror("expected at least 1 forward tensor");
   out.forward_only = in.forward_only;
   // forward
   for (uint i = 0; i < in.f.size(); i++)
     if (in.f.exists(i)) {
       // increase number of output tensors if necessary
-      if (i >= out.f.size()) out.add_f(new idx<T>(in.f[i].get_idxdim()));
+      if (i >= out.f.size()) out.add_f(new idx<T2>(in.f[i].get_idxdim()));
       idx_copy(in.f[i], out.f[i]);
     } else out.f.push_back_empty();
   // backward
   for (uint i = 0; i < in.b.size(); i++)
     if (in.b.exists(i)) {
       // increase number of output tensors if necessary
-      if (i >= out.f.size()) out.f.push_back(new idx<T>(in.f[i].get_idxdim()));
+      if (i >= out.f.size()) out.f.push_back(new idx<T2>(in.f[i].get_idxdim()));
       idx_copy(in.b[i], out.b[i]);
     } else out.b.push_back_empty();
   // bbackward
   for (uint i = 0; i < in.bb.size(); i++)
     if (in.bb.exists(i)) {
       // increase number of output tensors if necessary
-      if (i >= out.f.size()) out.f.push_back(new idx<T>(in.f[i].get_idxdim()));
+      if (i >= out.f.size()) out.f.push_back(new idx<T2>(in.f[i].get_idxdim()));
       idx_copy(in.bb[i], out.bb[i]);
     } else out.bb.push_back_empty();
 }

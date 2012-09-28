@@ -80,7 +80,7 @@ int chans = -1; // -1: show all chans, 0: chan 0 only, etc
 uint maxwidth = 1000;
 bool interleaved = false;
 bool save_individually = false;
-				      
+
 ////////////////////////////////////////////////////////////////
 // interface
 
@@ -132,24 +132,22 @@ int display_net(list<string>::iterator &ifname,
   // create network
   idx<ubyte> classes(1,1);
   load_matrix<ubyte>(classes, conf->get_cstring("classes"));
-  answer_module<T,T,T,fstate_idx<T> > *answer = 
-    create_answer<T,T,T,fstate_idx<T> >(*conf, classes.dim(0));
+  answer_module<T,T,T> *answer = create_answer<T,T,T>(*conf, classes.dim(0));
   if (!answer) eblerror("no answer module found");
   uint noutputs = answer->get_nfeatures();
-  parameter<fs(T)> theparam;
+  parameter<T> theparam;
   intg thick;
-  module_1_1<fs(T)> *net = create_network<fs(T)>(theparam, *conf, thick,
-						 noutputs);
-  cout << "Network parameters: " << theparam.x << endl;
+  module_1_1<T> *net = create_network<T>(theparam, *conf, thick, noutputs);
+  cout << "Network parameters: " << theparam << endl;
   vector<string> weights =
-    string_to_stringvector(conf->get_string("weights_file"));
+      string_to_stringvector(conf->get_string("weights_file"));
   // loading weights
   theparam.load_x(weights);
   // displaying internals
   uint h0 = 0, w0 = 0;
 #ifdef __GUI__
   disable_window_updates();
-  clear_window(); 
+  clear_window();
   if (show_filename) {
     gui << at(h0, w0) << black_on_white() << ifname->c_str();
     h0 += 16;
@@ -181,7 +179,7 @@ int display(list<string>::iterator &ifname,
     if (interleaved)
       d.shift_dim(0, 2);
     if (save_individually || print || !(d.order() == 2 ||
-		   (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
+                                        (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
       // this is probably not an image, just display info and print matrix
       string type;
       get_matrix_type(ifname->c_str(), type);
@@ -203,13 +201,13 @@ int display(list<string>::iterator &ifname,
 	cout << "This file contains " << m << " matrices: ";
 	if (ms.order() == 1) {
 	  for (intg i = 0; i < ms.dim(0); ++i) {
-	    idx<T> tmp = ms.get(i);
+	    idx<T> tmp = ms.mget(i);
 	    cout << tmp << " ";
 	  }
 	} else if (ms.order() == 2) {
 	  for (intg i = 0; i < ms.dim(0); ++i) {
 	    for (intg j = 0; j < ms.dim(1); ++j) {
-	      idx<T> tmp = ms.get(i, j);
+	      idx<T> tmp = ms.mget(i, j);
 	      cout << tmp << " ";
 	    }
 	    cout << endl;
@@ -259,7 +257,7 @@ int display(list<string>::iterator &ifname,
 	  } else if (signd) {
 	    T matmin = idx_min(mat);
 	    if ((double)matmin < 0) {
-	      min = -1; 
+	      min = -1;
 	      max = -1;
 	    }
 	  }
@@ -268,7 +266,7 @@ int display(list<string>::iterator &ifname,
 	  draw_matrix(mat, rowh, w, zoom, zoom, (T) range[0], (T) range[1]);
 #endif
 	w += mat.dim(1) + 1;
-      } catch(string &err) { 
+      } catch(string &err) {
 	ERROR_MSG(err.c_str());
       }
       fname++;
@@ -321,34 +319,34 @@ int load_display(list<string>::iterator &ifname,
 		 bool load, list<string> *mats) {
   try {
     switch (get_matrix_type((*ifname).c_str())) {
-    case MAGIC_BYTE_MATRIX:
-    case MAGIC_UBYTE_VINCENT:
-      return display<ubyte>(ifname, false, load, mats);
-      break ;
-    case MAGIC_INTEGER_MATRIX:
-    case MAGIC_INT_VINCENT:
-      return display<int>(ifname, true, load, mats);
-    break ;
-    case MAGIC_FLOAT_MATRIX:
-    case MAGIC_FLOAT_VINCENT:
-      return display<float>(ifname, true, load, mats);
-      break ;
-    case MAGIC_DOUBLE_MATRIX:
-    case MAGIC_DOUBLE_VINCENT:
-      return display<double>(ifname, true, load, mats);
-      break ;
-    case MAGIC_LONG_MATRIX:
-      return display<long>(ifname, true, load, mats);
-    break ;
-	case MAGIC_UINT_MATRIX:
+      case MAGIC_BYTE_MATRIX:
+      case MAGIC_UBYTE_VINCENT:
+        return display<ubyte>(ifname, false, load, mats);
+        break ;
+      case MAGIC_INTEGER_MATRIX:
+      case MAGIC_INT_VINCENT:
+        return display<int>(ifname, true, load, mats);
+        break ;
+      case MAGIC_FLOAT_MATRIX:
+      case MAGIC_FLOAT_VINCENT:
+        return display<float>(ifname, true, load, mats);
+        break ;
+      case MAGIC_DOUBLE_MATRIX:
+      case MAGIC_DOUBLE_VINCENT:
+        return display<double>(ifname, true, load, mats);
+        break ;
+      case MAGIC_LONG_MATRIX:
+        return display<long>(ifname, true, load, mats);
+        break ;
+      case MAGIC_UINT_MATRIX:
 #ifndef __WINDOWS__
-      return display<uint>(ifname, false, load, mats);      
+        return display<uint>(ifname, false, load, mats);
 #else
 	eblerror("matshow for UINT disabled in Windows");
 #endif
 	break ;
-    default: // not a matrix, try as regular float image
-      return display<float>(ifname, true, load, mats);
+      default: // not a matrix, try as regular float image
+        return display<float>(ifname, true, load, mats);
     }
   } eblcatcherror();
   return 0;
@@ -356,278 +354,278 @@ int load_display(list<string>::iterator &ifname,
 
 ////////////////////////////////////////////////////////////////
 // main
-    typedef float Tnet;
+typedef float Tnet;
 
 #ifdef __GUI__
 #ifdef NOCONSOLE
-NOCONSOLE_MAIN_QTHREAD(int, argc, char**, argv) { 
+NOCONSOLE_MAIN_QTHREAD(int, argc, char**, argv) {
 #else
-MAIN_QTHREAD(int, argc, char**, argv) { 
+  MAIN_QTHREAD(int, argc, char**, argv) {
 #endif /* NOCONSOLE */
 #else
-int main(int argc, char **argv) {
-  ERROR_MSG("QT not found, install and recompile.");
+    int main(int argc, char **argv) {
+      ERROR_MSG("QT not found, install and recompile.");
 #endif /* __GUI__ */
-  try {
-    if (!parse_args(argc, argv))
-      return -1;
-    // variables
-    range.push_back(-1.0); // default range min
-    range.push_back(1.0); // default range max
-    string conf_fname, diff_fname;
-    // show mat images
-    list<string> *argmats = new list<string>();
-    list<string>::iterator i;
-    for (int i = 1; i < argc; ++i) {
-      // check for options
       try {
-	if (!strcmp(argv[i], "-conf")) {
-	  ++i; if (i >= argc) throw 0;
-	  conf_fname = argv[i];
-	} else if (!strcmp(argv[i], "-diff")) {
-	  ++i; if (i >= argc) throw 0;
-	  diff_fname = argv[i];
-	} else if (!strcmp(argv[i], "-zoom")) {
-	  ++i; if (i >= argc) throw 0;
-	  zoom = (float) atof(argv[i]);
-	} else if (!strcmp(argv[i], "-maxwidth")) {
-	  ++i; if (i >= argc) throw 0;
-	  maxwidth = (int) atoi(argv[i]);
-	} else if (!strcmp(argv[i], "-video")) {
-	  video = true;
-	} else if (!strcmp(argv[i], "-print")) {
-	  print = true;
-	} else if (!strcmp(argv[i], "-interleaved")) {
-	  interleaved = true;
-	} else if (!strcmp(argv[i], "-save_individually")) {
-	  save_individually = true;
-	} else if (!strcmp(argv[i], "-filename")) {
-	  show_filename = true;
-	} else if (!strcmp(argv[i], "-range")) {
-	  range.clear();
-	  ++i; if (i >= argc) throw 0;
-	  string s = argv[i];
-	  int k = 0;
-	  while (s.size()) {
-	    uint j;
-	    for (j = 0; j < s.size(); ++j)
-	      if (s[j] == ',')
-		break ;
-	    string s0 = s.substr(0, j);
-	    if (j >= s.size())
-	      s = "";
-	    else
-	    s = s.substr(j + 1, s.size());
-	    range.push_back(atof(s0.c_str()));
-	    k++;
-	  }
-	  cout << "Fixing input range to " << range[0] << " .. "
-	       << range[1] << endl;
-	  fixed_range = true;
-	}
-	// enqueue file names
-	else {
-	  cout << argv[i] << endl;
-	  argmats->push_back(argv[i]);
-	}
-      } catch (int err) {
-	cerr << "input error: ";
-	switch (err) {
-	case 0: cerr << "expecting string after " << argv[i-1]; break;
-	case 1: cerr << "expecting integer after " << argv[i-1]; break;
-	case 2: cerr << "unknown parameter " << argv[i-1]; break;
-	case 3: cerr << "unknown channel mode " << argv[i-1]; break;
-	default: cerr << "undefined error";
-	}
-	cerr << endl << endl;
-	return false;
-      }
-    }
+        if (!parse_args(argc, argv))
+          return -1;
+        // variables
+        range.push_back(-1.0); // default range min
+        range.push_back(1.0); // default range max
+        string conf_fname, diff_fname;
+        // show mat images
+        list<string> *argmats = new list<string>();
+        list<string>::iterator i;
+        for (int i = 1; i < argc; ++i) {
+          // check for options
+          try {
+            if (!strcmp(argv[i], "-conf")) {
+              ++i; if (i >= argc) throw 0;
+              conf_fname = argv[i];
+            } else if (!strcmp(argv[i], "-diff")) {
+              ++i; if (i >= argc) throw 0;
+              diff_fname = argv[i];
+            } else if (!strcmp(argv[i], "-zoom")) {
+              ++i; if (i >= argc) throw 0;
+              zoom = (float) atof(argv[i]);
+            } else if (!strcmp(argv[i], "-maxwidth")) {
+              ++i; if (i >= argc) throw 0;
+              maxwidth = (int) atoi(argv[i]);
+            } else if (!strcmp(argv[i], "-video")) {
+              video = true;
+            } else if (!strcmp(argv[i], "-print")) {
+              print = true;
+            } else if (!strcmp(argv[i], "-interleaved")) {
+              interleaved = true;
+            } else if (!strcmp(argv[i], "-save_individually")) {
+              save_individually = true;
+            } else if (!strcmp(argv[i], "-filename")) {
+              show_filename = true;
+            } else if (!strcmp(argv[i], "-range")) {
+              range.clear();
+              ++i; if (i >= argc) throw 0;
+              string s = argv[i];
+              int k = 0;
+              while (s.size()) {
+                uint j;
+                for (j = 0; j < s.size(); ++j)
+                  if (s[j] == ',')
+                    break ;
+                string s0 = s.substr(0, j);
+                if (j >= s.size())
+                  s = "";
+                else
+                  s = s.substr(j + 1, s.size());
+                range.push_back(atof(s0.c_str()));
+                k++;
+              }
+              cout << "Fixing input range to " << range[0] << " .. "
+                   << range[1] << endl;
+              fixed_range = true;
+            }
+            // enqueue file names
+            else {
+              cout << argv[i] << endl;
+              argmats->push_back(argv[i]);
+            }
+          } catch (int err) {
+            cerr << "input error: ";
+            switch (err) {
+              case 0: cerr << "expecting string after " << argv[i-1]; break;
+              case 1: cerr << "expecting integer after " << argv[i-1]; break;
+              case 2: cerr << "unknown parameter " << argv[i-1]; break;
+              case 3: cerr << "unknown channel mode " << argv[i-1]; break;
+              default: cerr << "undefined error";
+            }
+            cerr << endl << endl;
+            return false;
+          }
+        }
 
-    // load configuration in conf mode
-    if (conf_fname.size() > 0) {
-      conf = new configuration(conf_fname);
-      if (!conf->exists("root2")) {
-	string dir = dirname(conf_fname.c_str());
-	cout << "Looking for trained files in: " << dir << endl;
-	conf->set("root2", dir.c_str());
-	conf->resolve();
-      }
-      // enable auto range by default in conf mode
-      if (!fixed_range)
-	autorange = true;
-    }
-    // diff mode, just print matrices differences
-    if (!diff_fname.empty()) {
-      i = argmats->begin();
-      idx<double> m1 = load_matrix<double>((*i).c_str());
-      idx<double> m2 = load_matrix<double>(diff_fname);
-      if (!m1.same_dim(m2.get_idxdim())) {
-	eblerror("cannot compare matrices of different dimensions " << m1
-		 << " and " << m2);
-	return -1;
-      }
-      idx_sub(m1, m2);
-      double sum = idx_sum(m1);
-      cout << "sum(m1 - m2) = " << sum << endl;
-      return 0;
-    }
-    
-    // display first matrix/image
-    i = argmats->begin();
-    if (!video) {
-      if (!load_display(i, true, argmats)) {
-	ERROR_MSG("failed to load image(s)");
-	return -1;
-      }
-    }
-    // explore working directory for more images only if a
-    // single file was passed
-    if (argmats->size() == 1)
-      explore = true;
+        // load configuration in conf mode
+        if (conf_fname.size() > 0) {
+          conf = new configuration(conf_fname);
+          if (!conf->exists("root2")) {
+            string dir = dirname(conf_fname.c_str());
+            cout << "Looking for trained files in: " << dir << endl;
+            conf->set("root2", dir.c_str());
+            conf->resolve();
+          }
+          // enable auto range by default in conf mode
+          if (!fixed_range)
+            autorange = true;
+        }
+        // diff mode, just print matrices differences
+        if (!diff_fname.empty()) {
+          i = argmats->begin();
+          idx<double> m1 = load_matrix<double>((*i).c_str());
+          idx<double> m2 = load_matrix<double>(diff_fname);
+          if (!m1.same_dim(m2.get_idxdim())) {
+            eblerror("cannot compare matrices of different dimensions " << m1
+                     << " and " << m2);
+            return -1;
+          }
+          idx_sub(m1, m2);
+          double sum = idx_sum(m1);
+          cout << "sum(m1 - m2) = " << sum << endl;
+          return 0;
+        }
 
-#ifdef __GUI__    
+        // display first matrix/image
+        i = argmats->begin();
+        if (!video) {
+          if (!load_display(i, true, argmats)) {
+            ERROR_MSG("failed to load image(s)");
+            return -1;
+          }
+        }
+        // explore working directory for more images only if a
+        // single file was passed
+        if (argmats->size() == 1)
+          explore = true;
+
+#ifdef __GUI__
 #ifdef __BOOST__
-    // list all other mat files in image directory
-    string dir = argv[1];
-    string imgname, tmpname;
-    size_t pos = dir.find_last_of('/');
-    if (pos == string::npos) {
-      imgname = dir;
-      dir = "./";
-    } else { // it contains a directory
-      imgname = dir.substr(pos + 1, dir.size() - pos + 1);
-      dir = dir.substr(0, pos);
-    }
-    list<string> *mats = argmats;
-    if (explore)
-      mats = find_fullfiles(dir, IMAGE_PATTERN_MAT,
-			    NULL, true, false);
-    // video mode
-    if (video) {
-      string out;
-      out << "video_" << tstamp();
-      mkdir_full(out);
-      uint j = 0;
-      for (i = mats->begin(); i != mats->end(); ++i, ++j) {
-	cout << "video mode: displaying " << *i << endl;
-	if (!load_display(i, true, mats)) {
-	  ERROR_MSG("failed to load image(s)");
-	  return -1;
-	}
-	millisleep(3000);
-	ostringstream fname;
-	fname << out << "/" << setfill('0') << setw(4) << j << "_"
-	      << ebl::basename(i->c_str()) << ".png";
-	save_window(fname.str().c_str());
-	cout << "video mode: saved " << fname.str() << endl;
-      }
-    } else { // interactive mode
-      if ((mats) && (mats->size() >= 1)) {
-	// find current position in this list
-	for (i = mats->begin(); i != mats->end(); ++i) {
-	  tmpname = ebl::basename(i->c_str());
-	  if (!imgname.compare(tmpname))
-	    break ;
-	}
-	if (i == mats->end())
-	  i = mats->begin();
-	// loop and wait for key pressed
-	while (1) {
-	  millisleep(50);
-	  int key = gui.pop_key_pressed();
-	  // next/previous images only if not everuything is already displayed
-	  if (mats->size() > nh * nw) {
-	    if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
-	      // show next image
-	      for (uint k = 0; k < nw * nh; ++k) {
-		i++;
-		if (i == mats->end()) {
-		  i = mats->begin();
-		}
-	      }
-	      load_display(i, true, mats);
-	    } else if ((key == Qt::Key_Backspace) || (key == Qt::Key_Left)) {
-	      // show previous image
-	      for (uint k = 0; k < nw * nh; ++k) {
-		if (i == mats->begin())
-		  i = mats->end();
-		i--;
-	      }
-	      load_display(i, true, mats);
-	    }
-	  }
-	  if (key == Qt::Key_I) {
-	    // show info
-	    show_info = !show_info;
-	    if (show_info)
-	      show_help = false;
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_A) {
-	    // enable autorange
-	    autorange = !autorange;
-	    if (autorange)
-	      cout << "Enabling automatic input range." << endl;
-	    else
-	      cout << "Disabling automatic input range." << endl;
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_H) {
-	    // show help
-	    show_help = !show_help;
-	    if (show_help)
-	      show_info = false;
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_Y) {
-	    // increase number of images shown on height axis
-	    if (nh * nw < mats->size())
-	      nh++;
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_T) {
-	    // decrease number of images shown on height axis
-	    nh = (std::max)((uint) 1, nh - 1);
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_X) {
-	    // increase number of images shown on width axis
-	    if (nh * nw < mats->size())
-	      nw++;
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_Z) {
-	    // decrease number of images shown on width axis
-	    nw = (std::max)((uint) 1, nw - 1);
-	    load_display(i, false, mats);
-	  } else if (key == Qt::Key_0) {
-	    // show only channel 0
-	    chans = 0;
-	    load_display(i, false, mats);
-	    cout << "Showing channel 0 only." << endl;
-	  } else if (key == Qt::Key_1) {
-	    // show only channel 1
-	    chans = 1;
-	    load_display(i, false, mats);
-	    cout << "Showing channel 1 only." << endl;
-	  } else if (key == Qt::Key_2) {
-	    // show only channel 2
-	    chans = 2;
-	    load_display(i, false, mats);
-	    cout << "Showing channel 2 only." << endl;
-	  } else if (key == Qt::Key_9) {
-	    // show all channels
-	    chans = -1;
-	    load_display(i, false, mats);
-	    cout << "Showing alls channel." << endl;
-	  }
-	}
-      }
-    }
-    // free objects
-    if (mats) delete mats;
+        // list all other mat files in image directory
+        string dir = argv[1];
+        string imgname, tmpname;
+        size_t pos = dir.find_last_of('/');
+        if (pos == string::npos) {
+          imgname = dir;
+          dir = "./";
+        } else { // it contains a directory
+          imgname = dir.substr(pos + 1, dir.size() - pos + 1);
+          dir = dir.substr(0, pos);
+        }
+        list<string> *mats = argmats;
+        if (explore)
+          mats = find_fullfiles(dir, IMAGE_PATTERN_MAT,
+                                NULL, true, false);
+        // video mode
+        if (video) {
+          string out;
+          out << "video_" << tstamp();
+          mkdir_full(out);
+          uint j = 0;
+          for (i = mats->begin(); i != mats->end(); ++i, ++j) {
+            cout << "video mode: displaying " << *i << endl;
+            if (!load_display(i, true, mats)) {
+              ERROR_MSG("failed to load image(s)");
+              return -1;
+            }
+            millisleep(3000);
+            ostringstream fname;
+            fname << out << "/" << setfill('0') << setw(4) << j << "_"
+                  << ebl::basename(i->c_str()) << ".png";
+            save_window(fname.str().c_str());
+            cout << "video mode: saved " << fname.str() << endl;
+          }
+        } else { // interactive mode
+          if ((mats) && (mats->size() >= 1)) {
+            // find current position in this list
+            for (i = mats->begin(); i != mats->end(); ++i) {
+              tmpname = ebl::basename(i->c_str());
+              if (!imgname.compare(tmpname))
+                break ;
+            }
+            if (i == mats->end())
+              i = mats->begin();
+            // loop and wait for key pressed
+            while (1) {
+              millisleep(50);
+              int key = gui.pop_key_pressed();
+              // next/previous images only if not everuything is already displayed
+              if (mats->size() > nh * nw) {
+                if ((key == Qt::Key_Space) || (key == Qt::Key_Right)) {
+                  // show next image
+                  for (uint k = 0; k < nw * nh; ++k) {
+                    i++;
+                    if (i == mats->end()) {
+                      i = mats->begin();
+                    }
+                  }
+                  load_display(i, true, mats);
+                } else if ((key == Qt::Key_Backspace) || (key == Qt::Key_Left)) {
+                  // show previous image
+                  for (uint k = 0; k < nw * nh; ++k) {
+                    if (i == mats->begin())
+                      i = mats->end();
+                    i--;
+                  }
+                  load_display(i, true, mats);
+                }
+              }
+              if (key == Qt::Key_I) {
+                // show info
+                show_info = !show_info;
+                if (show_info)
+                  show_help = false;
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_A) {
+                // enable autorange
+                autorange = !autorange;
+                if (autorange)
+                  cout << "Enabling automatic input range." << endl;
+                else
+                  cout << "Disabling automatic input range." << endl;
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_H) {
+                // show help
+                show_help = !show_help;
+                if (show_help)
+                  show_info = false;
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_Y) {
+                // increase number of images shown on height axis
+                if (nh * nw < mats->size())
+                  nh++;
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_T) {
+                // decrease number of images shown on height axis
+                nh = (std::max)((uint) 1, nh - 1);
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_X) {
+                // increase number of images shown on width axis
+                if (nh * nw < mats->size())
+                  nw++;
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_Z) {
+                // decrease number of images shown on width axis
+                nw = (std::max)((uint) 1, nw - 1);
+                load_display(i, false, mats);
+              } else if (key == Qt::Key_0) {
+                // show only channel 0
+                chans = 0;
+                load_display(i, false, mats);
+                cout << "Showing channel 0 only." << endl;
+              } else if (key == Qt::Key_1) {
+                // show only channel 1
+                chans = 1;
+                load_display(i, false, mats);
+                cout << "Showing channel 1 only." << endl;
+              } else if (key == Qt::Key_2) {
+                // show only channel 2
+                chans = 2;
+                load_display(i, false, mats);
+                cout << "Showing channel 2 only." << endl;
+              } else if (key == Qt::Key_9) {
+                // show all channels
+                chans = -1;
+                load_display(i, false, mats);
+                cout << "Showing alls channel." << endl;
+              }
+            }
+          }
+        }
+        // free objects
+        if (mats) delete mats;
 #endif /* __BOOST__ */
 #endif /* __GUI__ */
-    if (argmats) delete argmats;
-    if (conf) delete conf;
-  } catch(string &err) {
-    ERROR_MSG(err.c_str());
-  }
-  millisleep(500); // TODO: this lets time for window to open, fix this issue
-  return 0;
-}
+        if (argmats) delete argmats;
+        if (conf) delete conf;
+      } catch(string &err) {
+        ERROR_MSG(err.c_str());
+      }
+      millisleep(500); // TODO: this lets time for window to open, fix this issue
+      return 0;
+    }

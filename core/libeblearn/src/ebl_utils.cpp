@@ -40,10 +40,8 @@
 
 #include "ebl_utils.h"
 
-#ifdef __DUMP_STATES__
 uint dump_count = 0;
 std::string dump_prefix;
-#endif
 
 using namespace std;
 

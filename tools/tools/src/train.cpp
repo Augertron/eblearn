@@ -55,13 +55,9 @@
 #include <google/profiler.h>
 #endif
 
-#define bbs2 Tnet,bbstate_idx<Tnet>
-#define bbsds Tnet,Tdata,Tlabel,bbstate_idx<Tnet>
-#define bbms3 Tnet,bbstate_idx<Tnet>,mstate<bbstate_idx<Tnet> >
-
 // train ///////////////////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
+template <typename T, typename Tdata, typename Tlabel>
 int train(configuration &conf, string &conffname) {
   try {
     timer titer, gtimer;
@@ -84,23 +80,26 @@ int train(configuration &conf, string &conffname) {
 
     // load datasets
     uint noutputs = 0;
-    labeled_datasource<Tnet,Tdata,Tlabel> *train_ds = NULL;
-    labeled_datasource<Tnet,Tdata,Tlabel> *test_ds = NULL;
+    labeled_datasource<T,Tdata,Tlabel> *train_ds = NULL;
+    labeled_datasource<T,Tdata,Tlabel> *test_ds = NULL;
     string valdata, traindata;
-    test_ds = create_validation_set<Tnet,Tdata,Tlabel>(conf, noutputs, valdata);
+    test_ds = create_validation_set<T,Tdata,Tlabel>(conf, noutputs, valdata);
     if (!test_only)
-      train_ds = create_training_set<Tnet,Tdata,Tlabel>(conf, noutputs,
+      train_ds = create_training_set<T,Tdata,Tlabel>(conf, noutputs,
 							traindata);
     // create the trainable network
-    bbparameter<Tnet> theparam;
-    supervised_trainer<Tnet,Tdata,Tlabel> *thetrainer =
-        create_trainable_network<Tnet,Tdata,Tlabel>(theparam, conf, noutputs);
+    uint iter = 0;
+    bbparameter<T> theparam;
+    module_1_1<T> *net = NULL;
+    supervised_trainer<T,Tdata,Tlabel> *thetrainer =
+        create_trainable_network<T,Tdata,Tlabel>(theparam, conf, noutputs,
+                                                 &net, iter);
     // a classifier-meter measures classification errors
     classifier_meter trainmeter, testmeter;
     trainmeter.init(noutputs);
     testmeter.init(noutputs);
     // find out if jitter module is present
-    jitter_module<bbs2 > *jitt = NULL;
+    jitter_module<T> *jitt = NULL;
     jitt = arch_find(net, jitt);
     if (jitt) jitt->disable(); // disable jitter for testing
 
@@ -163,7 +162,7 @@ int train(configuration &conf, string &conffname) {
 
 // types selection functions ///////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata>
+template <typename T, typename Tdata>
 int select_label_type(configuration &conf, string &conffname) {
   string labels_fname = conf.get_string("val_labels");
   string type;
@@ -175,11 +174,11 @@ int select_label_type(configuration &conf, string &conffname) {
     //   break ;
     case MAGIC_INTEGER_MATRIX:
     case MAGIC_INT_VINCENT:
-      return train<Tnet,Tdata,int>(conf, conffname);
+      return train<T,Tdata,int>(conf, conffname);
     break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
-      return train<Tnet,Tdata,float>(conf, conffname);
+      return train<T,Tdata,float>(conf, conffname);
       break ;
     // case MAGIC_DOUBLE_MATRIX:
     // case MAGIC_DOUBLE_VINCENT:
@@ -194,13 +193,13 @@ int select_label_type(configuration &conf, string &conffname) {
     default:
       cout << "train is not compiled for labels with type " << type
 	   << ", found in " << labels_fname << ", using int instead." << endl;
-      return train<Tnet,Tdata,int>(conf, conffname);
+      return train<T,Tdata,int>(conf, conffname);
     }
   } eblcatcherror();
   return -1;
 }
 
-template <typename Tnet>
+template <typename T>
 int select_data_type(configuration &conf, string &conffname) {
   string data_fname = conf.get_string("val");
   string type;
@@ -216,7 +215,7 @@ int select_data_type(configuration &conf, string &conffname) {
     // break ;
     case MAGIC_FLOAT_MATRIX:
     case MAGIC_FLOAT_VINCENT:
-      return select_label_type<Tnet,float>(conf, conffname);
+      return select_label_type<T,float>(conf, conffname);
       break ;
     // case MAGIC_DOUBLE_MATRIX:
     // case MAGIC_DOUBLE_VINCENT:
@@ -231,7 +230,7 @@ int select_data_type(configuration &conf, string &conffname) {
     default:
       cout << "train is not compiled for data with type " << type
 	   << ", found in " << data_fname << ", using float instead." << endl;
-      return select_label_type<Tnet,float>(conf, conffname);
+      return select_label_type<T,float>(conf, conffname);
     }
   } eblcatcherror();
   return -1;

@@ -57,19 +57,19 @@ void answer_module<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-fprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+fprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   ds.fprop_data(out);
 }
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-bprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+bprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // empty bprop by default
 }
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-bbprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+bbprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // empty bbprop by default
 }
 
@@ -77,20 +77,20 @@ bbprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   if (out.f.size() == 0) out.add_f(new idx<T>());
   ds.fprop_label_net(out);
 }
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-bprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+bprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // empty bprop by default
 }
 
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
-bbprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+bbprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // empty bbprop by default
 }
 
@@ -313,7 +313,7 @@ void class_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void class_answer<T,Tds1,Tds2>::
-fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // get label, i.e. input 2
   ds.fprop_label(last_label);
   // select the target given the class id
@@ -480,7 +480,7 @@ void scalerclass_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void scalerclass_answer<T,Tds1,Tds2>::
-fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // if out has the wrong order, allocate.
   if (out.f.size() == 0) out.add_f(new idx<T>());
   if (out.order() != ds.sample_dims().order()) {
@@ -495,7 +495,7 @@ fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // fprop regular target
   state<T> mout_class;
   mout_class.f.push_back(out_class);
-  class_answer<T,Tds1,Tds2>::fprop2(ds, mout_class);
+  class_answer<T,Tds1,Tds2>::fprop_ds2(ds, mout_class);
   uint jitt_offset = out_class.dim(0);
   // get jitter info
   ds.fprop_jitter(jitter);
@@ -719,7 +719,7 @@ void scaler_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void scaler_answer<T,Tds1,Tds2>::
-fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out){
+fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out){
   // check output size
   idxdim d(out);
   d.setdim(0, jsize);
@@ -767,7 +767,7 @@ void regression_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void regression_answer<T,Tds1,Tds2>::
-fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
+fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   if (out.f.size() == 0) out.add_f(new idx<T>());
   ds.fprop_label_net(out);
 }
@@ -929,24 +929,26 @@ bbprop(state<T> &in1, state<T> &in2, state<T> &energy) {
 template <typename T, typename Tds1, typename Tds2>
 void trainable_module<T,Tds1,Tds2>::
 fprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
-  // flow 1
   TIMING2("between end of fprop/bprop and sample retrieval");
-  // produce input state 1
-  if (dsmod) dsmod->fprop1(ds, in1); // specific data production
+  // forward data 1
+  if (dsmod) dsmod->fprop_ds1(ds, in1); // specific data production
   else ds.fprop_data(in1);           // generic, simply take ds' input 1
+  // forward data 2
+  if (dsmod) dsmod->fprop_ds2(ds, in2); // specific data production
+  else ds.fprop_label_net(in2);      // generic, simply take ds' input 2
+
+  EDEBUG_MAT("input 1: ", in1);
+  EDEBUG_MAT("input 2: ", in2);
   TIMING2("sample retrieval");
+
   // fprop flow 1
   update_scale(ds);
   mod1.fprop(in1, out1);
   TIMING2("entire fprop");
-
-  // flow 2
-  // produce input state 2
-  if (dsmod) dsmod->fprop2(ds, in2); // specific data production
-  else ds.fprop_label_net(in2);      // generic, simply take ds' input 2
   // fprop flow 2
   if (mod2) mod2->fprop(in2, out2);
   else out2 = in2;
+
   // energy
   energy_mod.fprop(out1, out2, energy);
   EDEBUG("outputs " << out1.str() << " target " << out2.str()
@@ -962,13 +964,14 @@ bprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
   out1.resize_b();
   out2.resize_b();
   // clear buffers
+  in1.zero_b();
   out1.zero_b();
   out2.zero_b();
   mod1.zero_b(); // recursively resize and zero out all mod1 states
   // bprop
   energy_mod.bprop(out1, out2, energy);
   mod1.bprop(in1, out1);
-  if (dsmod) dsmod->bprop2(ds, out2);
+  if (dsmod) dsmod->bprop_ds2(ds, out2);
   TIMING2("entire bprop");
 }
 
@@ -981,13 +984,14 @@ bbprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
   out1.resize_bb();
   out2.resize_bb();
   // clear buffers
+  in1.zero_bb();
   out1.zero_bb();
   out2.zero_bb();
   mod1.zero_bb(); // recursively resize and zero out all mod1 states
   // bbprop
   energy_mod.bbprop(out1, out2, energy);
   mod1.bbprop(in1, out1);
-  if (dsmod) dsmod->bbprop2(ds, out2);
+  if (dsmod) dsmod->bbprop_ds2(ds, out2);
   TIMING2("entire bbprop");
 }
 
@@ -1042,7 +1046,7 @@ compute_targets(labeled_datasource<T,Tds1,Tds2> &ds) {
   scalerclass_energy<T> *sce =
       dynamic_cast<scalerclass_energy<T>*>(&energy_mod);
   if (sce) targets = sce->last_target_raw;
-  else dsmod->fprop2(ds, targets);
+  else dsmod->fprop_ds2(ds, targets);
   return targets;
 }
 

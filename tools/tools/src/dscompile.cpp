@@ -36,6 +36,7 @@
 #include "libidxgui.h"
 #endif
 
+#include "ebl_preprocessing.h"
 #include "dataset.h"
 #include "pascal_dataset.h"
 #include "pascalbg_dataset.h"
@@ -48,35 +49,36 @@
 #include "ebl_defines.h"
 #include "eblapp.h"
 
-  //! A class containing preprocessing parameters.
-  class pp {
-  public:
-    pp(midxdim &dims_, const char *ppc, midxdim &kersz,
-       const char *rsz, bool keep, int lp, vector<double> *fov,
-       midxdim *fov_size, bool gn, bool divnorm_, bool divnorm2_,
-       bool colornorm_, bool colornorm_across_, double bbhf, double bbwf)
+using namespace std;
+
+//! A class containing preprocessing parameters.
+class pp {
+ public:
+  pp(midxdim &dims_, const char *ppc, midxdim &kersz,
+     const char *rsz, bool keep, int lp, vector<double> *fov,
+     midxdim *fov_size, bool gn, bool divnorm_, bool divnorm2_,
+     bool colornorm_, bool colornorm_across_, double bbhf, double bbwf)
       : dims(dims_), ppchan(ppc), resize_method(rsz), kernel_sz(kersz),
-        keep_aspect_ratio(keep), lpyramid(lp), fovea(fov), 
+        keep_aspect_ratio(keep), lpyramid(lp), fovea(fov),
         fovea_scales_size(fov_size), global_norm(gn),
 	divnorm(divnorm_), divnorm2(divnorm2_), colornorm(colornorm_),
 	colornorm_across(colornorm_across_), bboxhfact(bbhf), bboxwfact(bbwf) {
-    };
-    virtual ~pp() {}
-    
-    midxdim dims;
-    string ppchan, resize_method;
-    midxdim kernel_sz;
-    bool keep_aspect_ratio;
-    int lpyramid;
-    vector<double> *fovea;
-    midxdim *fovea_scales_size;
-    string name;
-    bool global_norm, divnorm, divnorm2, colornorm, colornorm_across;
-    double bboxhfact, bboxwfact;
   };
+  virtual ~pp() {}
 
-////////////////////////////////////////////////////////////////
-// global variables
+  midxdim dims;
+  string ppchan, resize_method;
+  midxdim kernel_sz;
+  bool keep_aspect_ratio;
+  int lpyramid;
+  vector<double> *fovea;
+  midxdim *fovea_scales_size;
+  string name;
+  bool global_norm, divnorm, divnorm2, colornorm, colornorm_across;
+  double bboxhfact, bboxwfact;
+};
+
+// global variables ////////////////////////////////////////////////////////////
 
 string		images_root	 = ".";
 string		image_pattern	 = IMAGE_PATTERN_MAT;
@@ -179,8 +181,7 @@ bool            videobox = false; // read bboxes in video sequences
 uint            videobox_stride; // the stride for videobox
 uint            videobox_n; // number of images to read-ahead
 
-////////////////////////////////////////////////////////////////
-// command line
+// command line ////////////////////////////////////////////////////////////////
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -370,17 +371,17 @@ bool parse_args(int argc, char **argv) {
 	preprocessing = true;
       } else if (strcmp(argv[i], "-fovea") == 0) {
 	++i; if (i >= argc) throw 0;
-	fovea_mode = (bool) atoi(argv[i]);	
+	fovea_mode = (bool) atoi(argv[i]);
 	if (!fovea_mode) {
 	  fovea_scales.clear();
 	  fovea_scales_size.clear();
 	}
       } else if (strcmp(argv[i], "-lpyramid") == 0) {
 	++i; if (i >= argc) throw 0;
-	lpyramid = (uint) atoi(argv[i]);	
+	lpyramid = (uint) atoi(argv[i]);
       } else if (strcmp(argv[i], "-aspect_ratio") == 0) {
 	++i; if (i >= argc) throw 0;
-	keep_aspect_ratio = (bool) atoi(argv[i]);	
+	keep_aspect_ratio = (bool) atoi(argv[i]);
       } else if (strcmp(argv[i], "-global_norm") == 0) {
 	++i; if (i >= argc) throw 0;
 	global_norm = (bool) atoi(argv[i]);
@@ -400,7 +401,7 @@ bool parse_args(int argc, char **argv) {
 	nocount = true;
       } else if (strcmp(argv[i], "-njitter") == 0) {
 	++i; if (i >= argc) throw 0;
-	njitter = (uint) atoi(argv[i]);	
+	njitter = (uint) atoi(argv[i]);
       } else if (strcmp(argv[i], "-jitter_translation") == 0) {
 	++i; if (i >= argc) throw 0;
 	vector<uint> l = string_to_uintvector(argv[i]);
@@ -481,11 +482,11 @@ bool parse_args(int argc, char **argv) {
     } catch (int err) {
       cerr << "input error: ";
       switch (err) {
-      case 0: cerr << "expecting string after " << argv[i-1]; break;
-      case 1: cerr << "expecting integer after " << argv[i-1]; break;
-      case 2: cerr << "unknown parameter " << argv[i-1]; break;
-      case 3: cerr << "unknown channel mode " << channels_mode; break;
-      default: cerr << "undefined error";
+        case 0: cerr << "expecting string after " << argv[i-1]; break;
+        case 1: cerr << "expecting integer after " << argv[i-1]; break;
+        case 2: cerr << "unknown parameter " << argv[i-1]; break;
+        case 3: cerr << "unknown channel mode " << channels_mode; break;
+        default: cerr << "undefined error";
       }
       cerr << endl << endl;
       return false;
@@ -581,7 +582,7 @@ void print_usage() {
   cout << "  -bboxwfact <float factor> (multiply bboxes width by a factor)";
   cout << endl;
   cout << "  -bbox_woverh <float factor> (force w to be h * this factor)"<<endl;
-  cout << "  -resize <mean(default)|gaussian|bilinear" << endl; 
+  cout << "  -resize <mean(default)|gaussian|bilinear" << endl;
   cout << "  -exclude <class name> (include all but excluded classes," << endl;
   cout << "                         exclude can be called multiple times)";
   cout << endl;
@@ -632,21 +633,20 @@ void print_usage() {
        << "     Do not count samples prior extraction." << endl;
   cout << "  -videobox <n> <stride>" << endl
        << "     For video sequences, the bbox regions in the next 'n' frames "
-       << endl <<"are taken, for every 'stride' frame and added as a feature." 
+       << endl <<"are taken, for every 'stride' frame and added as a feature."
        << endl;
 }
 
-////////////////////////////////////////////////////////////////
-// compilation
+// compilation /////////////////////////////////////////////////////////////////
 
-template <class Tdata>
+template <typename Tdata>
 void compile() {
   // create preprocessing modules
-  vector<resizepp_module<fs(Tdata)>*> ppmodules;
+  vector<resizepp_module<Tdata>*> ppmodules;
   if (!nopp) {
     midxdim dummy_zpad; // dummy var because we dont have zpad option in dscompile
     if (pp_params.size() == 0) // no pp added yet, add only 1
-      ppmodules.push_back(create_preprocessing<fs(Tdata)>
+      ppmodules.push_back(create_preprocessing<Tdata>
 			  (outdims, channels_mode.c_str(),
 			   kernelsz, dummy_zpad, resize.c_str(),
                            keep_aspect_ratio, lpyramid, &fovea_scales,
@@ -655,9 +655,9 @@ void compile() {
     else // add vector of all preprocessing params
       for (uint i = 0; i < pp_params.size(); ++i) {
 	pp &p = *(pp_params[i]);
-	ppmodules.push_back(create_preprocessing<fs(Tdata)>
+	ppmodules.push_back(create_preprocessing<Tdata>
 			    (p.dims, p.ppchan.c_str(), p.kernel_sz,
-			     dummy_zpad, p.resize_method.c_str(), 
+			     dummy_zpad, p.resize_method.c_str(),
                              p.keep_aspect_ratio,
 			     p.lpyramid, p.fovea, p.fovea_scales_size,
 			     p.global_norm, p.divnorm, p.divnorm2, p.colornorm,
@@ -671,10 +671,10 @@ void compile() {
 				 gridsz.dim(0), gridsz.dim(1));
   else if (!strcmp(stype.c_str(), "pascal")) {
     pascal_dataset<Tdata> *d =
-      new pascal_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
-				ignore_difficult, ignore_truncated,
-				ignore_occluded, annotations.c_str(),
-				ignore_path.c_str(), ignore_bbox);
+        new pascal_dataset<Tdata>(dataset_name.c_str(), images_root.c_str(),
+                                  ignore_difficult, ignore_truncated,
+                                  ignore_occluded, annotations.c_str(),
+                                  ignore_path.c_str(), ignore_bbox);
     ds = d;
     if (min_aspect_ratio_set) d->set_min_aspect_ratio(min_aspect_ratio);
     if (max_aspect_ratio_set) d->set_max_aspect_ratio(max_aspect_ratio);
@@ -682,21 +682,21 @@ void compile() {
     if (max_jitt_match > 0.0) d->set_max_jitter_match(max_jitt_match);
   } else if (!strcmp(stype.c_str(), "pascalbg")) {
     ds = new pascalbg_dataset<Tdata>
-      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(), maxperclass,
-       ignore_difficult, ignore_truncated, ignore_occluded, annotations.c_str(),
-       tmpout.c_str());
+        (dataset_name.c_str(), images_root.c_str(), outdir.c_str(), maxperclass,
+         ignore_difficult, ignore_truncated, ignore_occluded, annotations.c_str(),
+         tmpout.c_str());
     if (force_label) { // force all labels to a unique "bg" background label
       force_label = true;
       label = "bg";
     }
   } else if (!strcmp(stype.c_str(), "pascalclear"))
     ds = new pascalclear_dataset<Tdata>
-      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
-       annotations.c_str());
+        (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
+         annotations.c_str());
   else if (!strcmp(stype.c_str(), "pascalfull"))
     ds = new pascalfull_dataset<Tdata>
-      (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
-       annotations.c_str());
+        (dataset_name.c_str(), images_root.c_str(), outdir.c_str(),
+         annotations.c_str());
   else if (!strcmp(stype.c_str(), "regular"))
     ds = new dataset<Tdata>(dataset_name.c_str(), images_root.c_str());
   else if (!strcmp(stype.c_str(), "patch"))
@@ -710,9 +710,9 @@ void compile() {
   if (wmirror) ds->set_wmirror();
   if (njitter > 0)
     ds->set_jitter(tjitter_step, tjitter_hmin, tjitter_hmax,
-		  tjitter_wmin, tjitter_wmax,
-		  sjitter_steps, sjitter_min, sjitter_max,
-		  rjitter_steps, rjitter, njitter);
+                   tjitter_wmin, tjitter_wmax,
+                   sjitter_steps, sjitter_min, sjitter_max,
+                   rjitter_steps, rjitter, njitter);
   if(videobox)
     ds->set_videobox(videobox_n, videobox_stride);
   if (bbox_woverh_set) ds->set_bbox_woverh(bbox_woverh);
@@ -727,7 +727,7 @@ void compile() {
   ds->set_display(display);
   if (save_display)
     ds->save_display(save_display_dir, save_display_dims.dim(0),
-		    save_display_dims.dim(1));
+                     save_display_dims.dim(1));
   ds->set_nopadded(nopadded);
   ds->set_sleepdisplay(sleep_delay);
   if (save_set) ds->set_save(save);
@@ -739,7 +739,7 @@ void compile() {
   if (force_label) ds->set_label(label);
   if (scale_mode) ds->set_scales(scales, outdir);
   if (minvisibility_set) ds->set_minvisibility(minvisibility);
-  if (planar_loading) ds->set_planar_loading();  
+  if (planar_loading) ds->set_planar_loading();
   // execute extraction
   // switch between load and normal mode
   if (load_set) { // in load mode, do nothing but loading dataset
@@ -769,7 +769,7 @@ void compile() {
 }
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
+MAIN_QTHREAD(int, argc, char**, argv) {
 #else
   int main(int argc, char **argv) {
 #endif
@@ -849,5 +849,5 @@ MAIN_QTHREAD(int, argc, char**, argv) {
     cout << "Closing windows..." << endl;
     quit_gui(); // close all windows
 #endif
-  return 0;
-}
+    return 0;
+  }

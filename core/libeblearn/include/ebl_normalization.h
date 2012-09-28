@@ -79,11 +79,10 @@ template <typename T> class divisive_norm_module : public module_1_1<T> {
 
   //! Calls fprop and then dumps internal buffers, inputs and outputs
   //! into files. This can be useful for debugging.
-  virtual void fprop1_dump(state<T> &in, state<T> &out);
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
   //! Returns a deep copy of this module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual divisive_norm_module<T>* copy(parameter<T> *p = NULL);
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Pre-determine the order of hidden buffers to use only 2 buffers
   //! in order to reduce memory footprint.
   //! This returns true if outputs is actually put in out, false if it's
@@ -181,11 +180,10 @@ template <typename T> class subtractive_norm_module : public module_1_1<T> {
 
   //! Calls fprop and then dumps internal buffers, inputs and outputs
   //! into files. This can be useful for debugging.
-  virtual void fprop1_dump(state<T> &in, state<T> &out);
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
   //! Returns a deep copy of this module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual subtractive_norm_module<T>* copy(parameter<T> *p = NULL);
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Pre-determine the order of hidden buffers to use only 2 buffers
   //! in order to reduce memory footprint.
   //! This returns true if outputs is actually put in out, false if it's
@@ -273,11 +271,10 @@ class contrast_norm_module : public module_1_1<T> {
 
   //! Calls fprop and then dumps internal buffers, inputs and outputs
   //! into files. This can be useful for debugging.
-  virtual void fprop1_dump(state<T> &in, state<T> &out);
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
   //! Returns a deep copy of this module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual contrast_norm_module<T>* copy(parameter<T> *p = NULL);
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Pre-determine the order of hidden buffers to use only 2 buffers
   //! in order to reduce memory footprint.
   //! This returns true if outputs is actually put in out, false if it's
@@ -320,7 +317,8 @@ template <typename T> class laplacian_module : public module_1_1<T> {
   virtual void fprop1(idx<T> &in, idx<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual laplacian_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 

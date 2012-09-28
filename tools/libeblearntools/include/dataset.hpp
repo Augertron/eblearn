@@ -461,10 +461,8 @@ bool dataset<Tdata>::load(const std::string &root) {
   data_cnt = data.dim(0);
   allocated = true;
   idx<Tdata> sample;
-  if (data.order() == 2)
-    sample = data.get(0, 0);
-  else
-    sample = data.get(0);
+  if (data.order() == 2) sample = data.mget(0, 0);
+  else sample = data.mget(0);
   outdims = sample.get_idxdim();
   print_stats();
   dataset_loaded = true;
@@ -678,16 +676,16 @@ bool dataset<Tdata>::allocate(intg n, idxdim &d) {
 // data
 
 template <class Tdata>
-bool dataset<Tdata>::add_data(midx<Tdata> &original_sample,
-                              const t_label label,
-                              const std::string *class_name,
-                              const char *filename, const rect<int> *r,
-                              std::pair<int,int> *center,
-                              const rect<int> *visr,
-                              const rect<int> *cropr,
-                              const std::vector<object*> *objs,
-                              const jitter *jittforce) {
-  idx<Tdata> dat = original_sample.get(0);
+bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
+                               const t_label label,
+                               const std::string *class_name,
+                               const char *filename, const rect<int> *r,
+                               std::pair<int,int> *center,
+                               const rect<int> *visr,
+                               const rect<int> *cropr,
+                               const std::vector<object*> *objs,
+                               const jitter *jittforce) {
+  idx<Tdata> dat = original_sample.mget(0);
 #ifdef __DEBUG__
   std::cout << "Adding image " << dat << " with label " << label;
   if (class_name) std::cout << ", class name " << *class_name;
@@ -743,7 +741,7 @@ bool dataset<Tdata>::add_data(midx<Tdata> &original_sample,
         dat_cropped = dat_cropped.narrow(0, cropr->height, cropr->h0);
         dat_cropped = dat_cropped.narrow(1, cropr->width, cropr->w0);
         dat = dat_cropped;
-        original_sample.set(dat,0);
+        original_sample.mset(dat,0);
       }
     }
     // draw random jitter
@@ -781,7 +779,7 @@ bool dataset<Tdata>::add_data(midx<Tdata> &original_sample,
         sample = preprocess_data(original_sample, class_name, filename, r, 0,
                                  NULL, center, &(*ijit), visr, cropr, &inr);
       else sample = original_sample;
-      dat = original_sample.get(0);
+      dat = original_sample.mget(0);
       // ignore this sample if it is not visibile enough
       if (r && r->overlap_ratio(inr) < minvisibility)
         continue ;
@@ -860,7 +858,7 @@ void dataset<Tdata>::add_data2(midx<Tdata> &sample, t_label label,
   add_label(label, class_name, filename, jitt, js);
   std::cout << std::endl;
   // check for dimensions
-  idx<Tdata> sample0 = sample.get(0);
+  idx<Tdata> sample0 = sample.mget(0);
   if (!sample0.same_dim(outdims) && !no_outdims) {
     idxdim d2(sample0);
     d2.setdim(2, outdims.dim(2)); // try with same # of channels
@@ -878,7 +876,7 @@ void dataset<Tdata>::add_data2(midx<Tdata> &sample, t_label label,
           }
         }
       }
-      sample.set(sample2, 0);
+      sample.mset(sample2, 0);
       // TODO: apply replication to all layers of sample, not just 0
     }
     //       else
@@ -921,13 +919,13 @@ void dataset<Tdata>::add_data2(midx<Tdata> &sample, t_label label,
     if (separate_layers_save && sample.dim(0) > 1) {
       for (uint i = 0; i < sample.dim(0); ++i) {
         std::string fname2;
-        idx<Tdata> sample2 = sample.get(i);
+        idx<Tdata> sample2 = sample.mget(i);
         fname2 << fname_tmp << "_" << i << "." << format;
         save_image(fname2, sample2, format.c_str());
         std::cout << "  saved " << fname2 << " (" << sample2 << ")" << std::endl;
       }
     } else if (sample.dim(0) == 1) {
-      idx<Tdata> tmp = sample.get(0);
+      idx<Tdata> tmp = sample.mget(0);
       if (!strcmp(format.c_str(), "mat"))
         save_matrix(tmp, fname);
       else {
@@ -1029,7 +1027,7 @@ void dataset<Tdata>::display_added(midx<Tdata> &added, idx<Tdata> &original,
     ppmods[0]->get_display_range(minval, maxval);
     // draw output in RGB
     //      gui << at(h, w) << pp_names; h += 15;
-    idx<Tdata> added0 = added.get(0);
+    idx<Tdata> added0 = added.mget(0);
     if ((added0.dim(0) == 3 || added0.dim(0) == 1) && fovea.size() == 0) {
       idx<Tdata> tmp = added0.shift_dim(0, 2);
       draw_matrix(tmp, h, w, 1, 1, minval, maxval);
@@ -1063,7 +1061,7 @@ void dataset<Tdata>::display_added(midx<Tdata> &added, idx<Tdata> &original,
         h += 16;
         ppmods[ppi]->get_display_range(minval, maxval);
       }
-      idx<Tdata> addedi = added.get(i);
+      idx<Tdata> addedi = added.mget(i);
       gui << at(h, w) << addedi;
       idx<Tdata> tmp = addedi.shift_dim(0, 2);
       w += 100;
@@ -1611,8 +1609,8 @@ void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
       idx<int64> offss = off1[cnt];
       idx_copy(offs, offss);
       if (bjitter && jitters.exists(*i)) {
-        jitt = jitters.get(*i);
-        ds1.jitters.set(jitt, cnt);
+        jitt = jitters.mget(*i);
+        ds1.jitters.mset(jitt, cnt);
       }
     } catch(eblexception &e) { // adding to ds2
       try {
@@ -1627,8 +1625,8 @@ void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
         idx<int64> offss = off2[cnt];
         idx_copy(offs, offss);
         if (bjitter && jitters.exists(*i)) {
-          jitt = jitters.get(*i);
-          ds2.jitters.set(jitt, cnt);
+          jitt = jitters.mget(*i);
+          ds2.jitters.mset(jitt, cnt);
         }
       } eblcatchwarn_msg("failed adding sample");
     }
@@ -1707,8 +1705,8 @@ void dataset<Tdata>::merge_and_save(const char *name1, const char *name2,
   if (ds1.jitters.order() > 0)
     for (uint i = 0; i < ds1.jitters.dim(0); ++i) {
       if (ds1.jitters.exists(i)) {
-        idx<t_jitter> tmp = ds1.jitters.get(i);
-        jittnew.set(tmp, i);
+        idx<t_jitter> tmp = ds1.jitters.mget(i);
+        jittnew.mset(tmp, i);
       }
     }
   // copy data 2 into new dataset
@@ -1721,8 +1719,8 @@ void dataset<Tdata>::merge_and_save(const char *name1, const char *name2,
   if (ds2.jitters.order() > 0)
     for (uint i = 0; i < ds2.jitters.dim(0); ++i) {
       if (ds2.jitters.exists(i)) {
-        idx<t_jitter> tmp = ds2.jitters.get(i);
-        jittnew.set(tmp, i);
+        idx<t_jitter> tmp = ds2.jitters.mget(i);
+        jittnew.mset(tmp, i);
       }
     }
   // update counter
@@ -1803,7 +1801,7 @@ preprocess_data(midx<Tdata> &dat, const std::string *class_name,
                 const rect<int> *cropr,
                 rect<int> *inr_out) {
   // input region
-  idx<Tdata> dat0 = dat.get(0);
+  idx<Tdata> dat0 = dat.mget(0);
 
   rect<int> inr(0, 0, dat0.dim(0), dat0.dim(1));
   if (r) inr = *r;
@@ -1820,9 +1818,9 @@ preprocess_data(midx<Tdata> &dat, const std::string *class_name,
   midx<Tdata> sample(nlayers * (1 + videobox_nframes));
   uint nadded = 0;
   std::string next_file = filename;
-  for(uint i = 0; i < videobox_nframes + 1; ++i) {
+  for (uint i = 0; i < videobox_nframes + 1; ++i) {
     //copy the current image into in.x
-    idx_copy(tmp, in.x);
+    idx_copy(tmp, in);
     // loop on all preprocessing modules
     for (uint i = 0; i < ppmods.size(); ++i) {
       resizepp_module<Tdata> *resizepp = ppmods[i];
@@ -1843,8 +1841,8 @@ preprocess_data(midx<Tdata> &dat, const std::string *class_name,
       if (inr_out)
         *inr_out = resizepp->get_input_bbox();
       for (uint j = 0; j < sampletmp.dim(0); ++j) {
-        idx<Tdata> stmp = sampletmp.get(j);
-        sample.set(stmp, j + nadded);
+        idx<Tdata> stmp = sampletmp.mget(j);
+        sample.mset(stmp, j + nadded);
       }
       nadded += resizepp->nlayers();
     }
@@ -1855,7 +1853,7 @@ preprocess_data(midx<Tdata> &dat, const std::string *class_name,
       // which makes the sample to be not added
       next_file = ebl::increment_filename(next_file.c_str(), videobox_stride);
       load_data(next_file);
-      dat0 = load_img.get(0);
+      dat0 = load_img.mget(0);
       if (cropr) {
         dat0 = dat0.narrow(0, cropr->height, cropr->h0);
         dat0 = dat0.narrow(1, cropr->width, cropr->w0);
@@ -1979,8 +1977,8 @@ void dataset<Tdata>::process_dir(const std::string &dir,
           // 	  if (scale_mode) // saving image at different scales
           // 	    save_scales(load_img, itr->leaf());
           // 	  else // adding data to dataset
-	  this->add_data(load_img, label, &class_name,
-			 itr->path().string().c_str());
+	  this->add_mdata(load_img, label, &class_name,
+                          itr->path().string().c_str());
 	  load_img.clear();
 	} catch(const char *err) {
 	  std::cerr << "error: failed to add " << itr->path().string();
@@ -2003,7 +2001,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
     } else {
       load_img.clear();
       idx<Tdata> tmp = load_image<Tdata>(fname.c_str());
-      load_img.set(tmp, 0);
+      load_img.mset(tmp, 0);
     }
     if (load_planar)
       load_img.shift_dim_internal(0, 2);
@@ -2072,7 +2070,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
         mat = midx<T>(single.dim(0));
         for (uint i = 0; i < single.dim(0); ++i) {
           idx<T> sample = single.select(0, i);
-          mat.set(sample, i);
+          mat.mset(sample, i);
         }
       }
     } eblcatcherror_msg("failed to load dataset file");

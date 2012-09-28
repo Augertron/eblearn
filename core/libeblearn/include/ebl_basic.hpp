@@ -108,30 +108,29 @@ void linear_module<T>::normalize() {
 }
 
 template <typename T>
-fidxdim linear_module<T>::fprop_size(fidxdim &isize) {
+fidxdim linear_module<T>::fprop1_size(fidxdim &isize) {
   //! Update output size based on weight dimensions
   fidxdim osize = isize;
   osize.setdim(0, w.dim(0));
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim linear_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim linear_module<T>::bprop1_size(const fidxdim &osize) {
   fidxdim isize = osize;
   isize.setdim(0, w.dim(1));
   return isize;
 }
 
 template <typename T>
-linear_module<T>* linear_module<T>::
-copy(parameter<T> *p) {
+module_1_1<T>* linear_module<T>::copy(parameter<T> *p) {
   // new module
   linear_module<T> *l2 =
       new linear_module<T>(p, w.dim(1), w.dim(0), this->name());
   // assign same parameter state if no parameters were specified
   if (!p) l2->w = w;
-  return l2;
+  return (module_1_1<T>*)l2;
 }
 
 template <typename T>
@@ -558,7 +557,7 @@ bool convolution_module<T>::resize_output(idx<T> &in, idx<T> &out,
 }
 
 template <typename T>
-fidxdim convolution_module<T>::fprop_size(fidxdim &isize) {
+fidxdim convolution_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim osize = isize;
   if (osize.empty()) return osize;
   // features dimension
@@ -567,12 +566,12 @@ fidxdim convolution_module<T>::fprop_size(fidxdim &isize) {
   for (uint i = 1; i < isize.order(); ++i)
     osize.setdim(i, std::max((float) 1, isize.dim(i) - kernel.dim(i) + 1));
   //! Recompute the input size to be compliant with the output
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim convolution_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim convolution_module<T>::bprop1_size(const fidxdim &osize) {
   fidxdim isize = osize;
   // features dimension
   isize.setdim(0, thickness);
@@ -585,13 +584,12 @@ fidxdim convolution_module<T>::bprop_size(const fidxdim &osize) {
 }
 
 template <typename T>
-convolution_module<T>* convolution_module<T>::
-copy(parameter<T> *p) {
+module_1_1<T>* convolution_module<T>::copy(parameter<T> *p) {
   convolution_module<T> *l2 =
       new convolution_module<T>(p, ker, stride, table, this->name());
   if (!p) // assign same parameter state if no parameters were specified
     l2->kernel = kernel;
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 template <typename T>
@@ -693,13 +691,13 @@ void addc_module<T>::forget(forget_param_linear& fp) {
 }
 
 template <typename T>
-addc_module<T>* addc_module<T>::copy(parameter<T> *p) {
+module_1_1<T>* addc_module<T>::copy(parameter<T> *p) {
   // new module (with its own local parameter buffers)
   addc_module<T> *l2 =
       new addc_module<T>(p, bias.dim(0), this->name());
   // assign same parameter state if no parameters were specified
   if (!p) l2->bias = bias;
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 template <typename T>
@@ -1156,19 +1154,19 @@ void zpad_module<T>::set_kernels(midxdim &kers) {
 }
 
 template <typename T>
-fidxdim zpad_module<T>::fprop_size(fidxdim &isize) {
+fidxdim zpad_module<T>::fprop1_size(fidxdim &isize) {
   int top = pad.dim(0), left = pad.dim(1), bottom = pad.dim(2),
       right = pad.dim(3);
   fidxdim osize = isize;
   osize.setdim(1, isize.dim(1) + top + bottom);
   osize.setdim(2, isize.dim(2) + left + right);
   //! Recompute the input size to be compliant with the output
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim zpad_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim zpad_module<T>::bprop1_size(const fidxdim &osize) {
   int top = pad.dim(0), left = pad.dim(1);
   fidxdim isize = osize;
   isize.setoffset(1, osize.offset(1) - top);
@@ -1182,7 +1180,7 @@ mfidxdim zpad_module<T>::fprop_size(mfidxdim &isize) {
   for (uint i = 0; i < isize.size(); ++i) {
     if (i < pads.size()) pad = pads[i];
     if (isize.exists(i)) {
-      fidxdim s = fprop_size(isize[i]);
+      fidxdim s = fprop1_size(isize[i]);
       osize.push_back(s);
     } else osize.push_back_empty();
   }
@@ -1196,7 +1194,7 @@ mfidxdim zpad_module<T>::bprop_size(mfidxdim &osize) {
   for (uint i = 0; i < osize.size(); ++i) {
     if (i < pads.size()) pad = pads[i];
     if (osize.exists(i)) {
-      fidxdim s = bprop_size(osize[i]);
+      fidxdim s = bprop1_size(osize[i]);
       isize.push_back(s);
     } else isize.push_back_empty();
   }
@@ -1213,11 +1211,10 @@ std::string zpad_module<T>::describe() {
 }
 
 template <typename T>
-zpad_module<T>* zpad_module<T>::
-copy(parameter<T> *p) {
+module_1_1<T>* zpad_module<T>::copy(parameter<T> *p) {
   zpad_module<T> *z = new zpad_module<T>(this->name());
   z->pads = pads;
-  return z;
+  return (module_1_1<T>*) z;
 }
 
 // mirrorpad_module ////////////////////////////////////////////////////////////
@@ -1285,8 +1282,8 @@ void mirrorpad_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-mirrorpad_module<T>* mirrorpad_module<T>::copy(parameter<T> *p) {
-  return new mirrorpad_module<T>(pad.dim(0), pad.dim(1));
+module_1_1<T>* mirrorpad_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new mirrorpad_module<T>(pad.dim(0), pad.dim(1));
 }
 
 // fsum_module /////////////////////////////////////////////////////////////////
@@ -1498,7 +1495,7 @@ void diag_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-bool diag_module<T>::resize_output(idx<T> &in, idx<T> &out) {
+bool diag_module<T>::resize_output(idx<T> &in, idx<T> &out, idxdim *ignore) {
   // resize output based on input dimensions
   idxdim d(in); // use same dimensions as in
   d.setdim(0, coeff.dim(0)); // except for the first one
@@ -1538,11 +1535,11 @@ std::string diag_module<T>::describe() {
 }
 
 template <typename T>
-diag_module<T>* diag_module<T>::copy(parameter<T> *p) {
+module_1_1<T>* diag_module<T>::copy(parameter<T> *p) {
   diag_module<T>* d = new diag_module<T>(p, coeff.dim(0));
   // assign same parameter state if no parameters were specified
   if (!p) d->coeff = coeff;
-  return d;
+  return (module_1_1<T>*) d;
 }
 
 // copy_module /////////////////////////////////////////////////////////////////
@@ -1690,7 +1687,7 @@ bool back_module<T>::resize_output(idx<T> &in, idx<T> &out, idxdim *ignore) {
 }
 
 template <typename T>
-fidxdim back_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim back_module<T>::bprop1_size(const fidxdim &osize) {
   pixel_size = osize;
   std::cout << "back_module: 1 output pixel corresponds here to " << pixel_size
             << std::endl;

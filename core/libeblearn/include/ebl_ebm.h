@@ -73,7 +73,7 @@ template <typename T> class ebm_1 : public module_1_1<T> {
   //! 2nd order backward propagation of all tensors from out to in.
   virtual void bbprop(state<T> &in, state<T> &out);
 
-  virtual void forget(forget_param &fp);
+  virtual void forget(forget_param_linear &fp);
   virtual void normalize();
 };
 
@@ -106,11 +106,11 @@ template<typename T> class ebm_module_1_1 : public module_1_1<T> {
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim fprop_size(fidxdim &isize);
+  virtual fidxdim fprop1_size(fidxdim &isize);
   //! Returns input dimensions corresponding to output dimensions 'osize'.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &osize);
+  virtual fidxdim bprop1_size(const fidxdim &osize);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 
@@ -123,7 +123,7 @@ template<typename T> class ebm_module_1_1 : public module_1_1<T> {
 // ebm_2 ///////////////////////////////////////////////////////////////////////
 
 //! An abstract class for a module with two inputs and one energy output.
-template <typename T> class ebm_2 : public module_1_1<T> {
+template <typename T> class ebm_2 : public module_2_1<T> {
  public:
   ebm_2(const char *name = "ebm_2");
   virtual ~ebm_2();
@@ -157,10 +157,9 @@ template <typename T> class ebm_2 : public module_1_1<T> {
   //! compute value of in1 that minimizes the energy, given in2
   virtual double infer1(state<T> &i1, state<T> &i2, state<T> &energy,
                         infer_param &ip);
-  //! compute value of in2 that minimizes the energy, given in1
-  //! if label is given, fill the corresponding energy.
-  virtual double infer2(state<T> &i1, state<T> &i2, infer_param &ip,
-                        state<T> *label = NULL, state<T> *energy = NULL);
+  //! Compute and sets in2 that minimizes the energy, given in1.
+  virtual void infer2(state<T> &i1, state<T> &i2, infer_param &ip,
+                      state<T> *energy = NULL);
   virtual void infer2_copy(state<T> &i1, state<T> &i2, state<T> &energy);
 };
 
@@ -182,7 +181,7 @@ public:
   //! 2nd order backward propagation from out to in (first state tensor only).
   virtual void bbprop1(state<T> &in, state<T> &energy);
 
-  virtual void forget(forget_param &fp);
+  virtual void forget(forget_param_linear &fp);
 
 public:
   module_1_1<T>	&fmod;
@@ -209,8 +208,9 @@ public:
   virtual void bbprop1(state<T> &in1, state<T> &in2, state<T> &energy);
 
   virtual void forget(forget_param_linear &fp);
-  virtual double infer2(state<T> &i1, state<T> &i2, infer_param &ip,
-                        state<T> *label = NULL, state<T> *energy = NULL);
+  //! Compute and sets in2 that minimizes the energy, given in1.
+  virtual void infer2(state<T> &i1, state<T> &i2, infer_param &ip,
+                      state<T> *energy = NULL);
 public:
   module_1_1<T>	&fmod;
   state<T>	&fout;

@@ -327,15 +327,15 @@ template <class Tdata> class dataset {
   //!    for display purposes.
   //! \param jittforce If not null, ignore other jittering and use only this
   //!   one.
-  virtual bool add_data(midx<Tdata> &d, const t_label label,
-                        const std::string *class_name,
-                        const char *filename = NULL,
-                        const rect<int> *r = NULL,
-                        std::pair<int,int> *center = NULL,
-                        const rect<int> *visr = NULL,
-                        const rect<int> *cropr = NULL,
-                        const std::vector<object*> *objs = NULL,
-                        const jitter *jittforce = NULL);
+  virtual bool add_mdata(midx<Tdata> &d, const t_label label,
+                         const std::string *class_name,
+                         const char *filename = NULL,
+                         const rect<int> *r = NULL,
+                         std::pair<int,int> *center = NULL,
+                         const rect<int> *visr = NULL,
+                         const rect<int> *cropr = NULL,
+                         const std::vector<object*> *objs = NULL,
+                         const jitter *jittforce = NULL);
   //! add/save sample, called at the end of add_data().
   void add_data2(midx<Tdata> &sample, t_label label, const std::string *class_name,
                  const char *filename, const jitter *jitt,

@@ -344,21 +344,22 @@ void layers_gui::display_internals(module_1_1<T> &m, uint &h0, uint &w0,
     ms.noutputs = out.f.size();						\
   }
 
-#define DISPLAY_MSMODULE_B(name1, name2, TYPE)				\
+#define DISPLAY_MSMODULE_B(name1, name2)				\
   template <typename T>                                                 \
   void ms_module_gui::name1(module_1_1_gui &g, ms_module<T> &ms,	\
                             state<T> &in, state<T> &out,                \
                             uint &h0, uint &w0, double zoom, T vmin, T vmax, \
                             bool show_out) {				\
     for (uint i = (int) ms.used_pipes.size() - 1; i >= 0; ++i)		\
-      g.name2(*(ms.used_pipes[i]), ms.ins.TYPE[i], ms.mbuffers.TYPE[i], h0, w0,\
+      g.name2(*(ms.used_pipes[i]), ms.ins[i],                           \
+              ms.mbuffers[i], h0, w0,                                   \
               zoom, vmin, vmax, false, g.display_wid_fprop);            \
   }
 
 // in: state<T> out: state<T>
 DISPLAY_MSMODULE_F(display_fprop, display_fprop2)
-DISPLAY_MSMODULE_B(display_bprop, display_bprop2, b)
-DISPLAY_MSMODULE_B(display_bbprop, display_bbprop2, bb)
+DISPLAY_MSMODULE_B(display_bprop, display_bprop2)
+DISPLAY_MSMODULE_B(display_bbprop, display_bbprop2)
 
 // layers2_gui /////////////////////////////////////////////////////////////////
 

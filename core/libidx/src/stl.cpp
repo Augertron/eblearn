@@ -238,9 +238,9 @@ CONCAT_SPRINTF(float, "%f", float)
 CONCAT_SPRINTF(double, "%f", double)
 CONCAT_SPRINTF(long, "%ld", long)
 CONCAT_SPRINTF(unsigned char, "%c", unsigned char)
-#ifndef __ANDROID__
-CONCAT_SPRINTF(size_t, "%u", uint)
-#endif
+// #ifndef __ANDROID__
+// CONCAT_SPRINTF(size_t, "%u", uint)
+// #endif
 
 #else // extending STL
 
@@ -261,9 +261,7 @@ CONCAT_SPRINTF(const float, "%f", const float)
 CONCAT_SPRINTF(const double, "%f", const double)
 CONCAT_SPRINTF(const long, "%ld", const long)
 CONCAT_SPRINTF(const unsigned char, "%c", const unsigned char)
- #ifndef __ANDROID__
-  CONCAT_SPRINTF(const size_t, "%u", const uint)
- #endif
+//CONCAT_SPRINTF(const size_t, "%u", const uint)
 
 #endif
 

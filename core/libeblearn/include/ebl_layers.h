@@ -71,12 +71,13 @@ template <typename T> class full_layer : public module_1_1<T> {
   void forget(forget_param_linear &fp);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual idxdim bprop_size(const idxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual full_layer<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 
@@ -122,12 +123,13 @@ template <typename T> class convolution_layer : public module_1_1<T> {
   void forget(forget_param_linear &fp);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual convolution_layer<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
   // members ////////////////////////////////////////////////////////
  private:
@@ -179,12 +181,13 @@ template <typename T> class convabsnorm_layer : public module_1_1<T> {
   void forget(forget_param_linear &fp);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual convabsnorm_layer<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
   // members ////////////////////////////////////////////////////////
  private:
@@ -229,12 +232,13 @@ template <typename T> class subsampling_layer : public module_1_1<T> {
   void forget(forget_param_linear &fp);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual subsampling_layer<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 

@@ -94,7 +94,8 @@ template <typename T> class channorm_module: public channels_module<T> {
   //! Forward propagation from in to out (abstract).
   virtual void fprop1(idx<T> &in, idx<T> &out) = 0;
   //! Returns a deep copy of this module (abstract).
-  virtual channorm_module<T>* copy() = 0;
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL) = 0;
   //! Returns a string containing describe() string of all modules.
   virtual std::string describe();
   //! Returns a new norm module.
@@ -138,8 +139,9 @@ template <typename T> class rgb_to_ynuv_module: public channorm_module<T> {
   virtual ~rgb_to_ynuv_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_ynuv_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_ynuvn_module /////////////////////////////////////////////////////////
@@ -163,8 +165,9 @@ template <typename T> class rgb_to_ynuvn_module: public channorm_module<T> {
   virtual ~rgb_to_ynuvn_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_ynuvn_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
  protected:
   module_1_1<T> *norm2; //!< Normalization for UV.
 };
@@ -190,8 +193,9 @@ template <typename T> class rgb_to_ynunvn_module: public channorm_module<T> {
   virtual ~rgb_to_ynunvn_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_ynunvn_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_yuv_module ///////////////////////////////////////////////////////////
@@ -205,8 +209,9 @@ template <typename T> class rgb_to_yuv_module: public channels_module<T> {
   virtual ~rgb_to_yuv_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_yuv_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_yuvn_module //////////////////////////////////////////////////////////
@@ -230,8 +235,9 @@ template <typename T> class rgb_to_yuvn_module: public channorm_module<T> {
   virtual ~rgb_to_yuvn_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_yuvn_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_rgb_module ///////////////////////////////////////////////////////////
@@ -245,8 +251,9 @@ template <typename T> class rgb_to_rgb_module: public channels_module<T> {
   virtual ~rgb_to_rgb_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_rgb_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_rgbn_module //////////////////////////////////////////////////////////
@@ -270,8 +277,9 @@ template <typename T> class rgb_to_rgbn_module: public channorm_module<T> {
   virtual ~rgb_to_rgbn_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_rgbn_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_y_module /////////////////////////////////////////////////////////////
@@ -285,8 +293,9 @@ template <typename T> class rgb_to_y_module: public channels_module<T> {
   virtual ~rgb_to_y_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_y_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_yn_module ////////////////////////////////////////////////////////////
@@ -310,8 +319,9 @@ template <typename T> class rgb_to_yn_module: public channorm_module<T> {
   virtual ~rgb_to_yn_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_yn_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // y_to_yp_module //////////////////////////////////////////////////////////////
@@ -335,8 +345,9 @@ template <typename T> class y_to_yp_module: public channorm_module<T> {
   virtual ~y_to_yp_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual y_to_yp_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // bgr_to_ypuv_module //////////////////////////////////////////////////////////
@@ -360,8 +371,9 @@ template <typename T> class bgr_to_ypuv_module: public channorm_module<T> {
   virtual ~bgr_to_ypuv_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual bgr_to_ypuv_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // bgr_to_yp_module ////////////////////////////////////////////////////////////
@@ -385,8 +397,9 @@ template <typename T> class bgr_to_yp_module : public channorm_module<T> {
   virtual ~bgr_to_yp_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual bgr_to_yp_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // rgb_to_hp_module ////////////////////////////////////////////////////////////
@@ -410,8 +423,9 @@ template <typename T> class rgb_to_hp_module: public channorm_module<T> {
   virtual ~rgb_to_hp_module();
   //! forward propagation from in to out
   virtual void fprop1(idx<T> &in, idx<T> &out);
-  //! Returns a deep copy of this module (abstract).
-  virtual rgb_to_hp_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
 // resize_module ///////////////////////////////////////////////////////////////
@@ -516,7 +530,8 @@ template <typename T> class resize_module: virtual public module_1_1<T> {
   virtual void bbprop(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual resize_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a reference to the last output state set by fprop.
@@ -533,7 +548,7 @@ template <typename T> class resize_module: virtual public module_1_1<T> {
   //! Returns input dimensions corresponding to output dimensions 'osize'.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &osize);
+  virtual fidxdim bprop1_size(const fidxdim &osize);
   //! Returns input dimensions corresponding to output dimensions 'osize'.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
@@ -653,7 +668,8 @@ template <typename T> class resizepp_module: public resize_module<T> {
   virtual void fprop(state<T> &in, midx<T> &out);
 
   //! Returns a deep copy of this module.
-  virtual resizepp_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 
@@ -1021,7 +1037,7 @@ template <typename T> class mschan_module : public module_1_1<T> {
   uint nstates;
 };
 
-// jitter ////////////////////////////////////////////////////////////////////
+// jitter //////////////////////////////////////////////////////////////////////
 
 //! This module jitters inputs into outputs.
 template<typename T> class EXPORT jitter_module : public module_1_1<T> {
@@ -1032,6 +1048,7 @@ public:
   virtual ~jitter_module();
 
   // jitters setting /////////////////////////////////////////////////////////
+
   //! Set translation jitter between v[0] and v[1] for height
   //! and v[2] and v[3] for width (in pixels).
   void set_translations(std::vector<int> &v);
@@ -1057,8 +1074,9 @@ public:
 
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
-  //! Returns a deep copy of current module.
-  virtual jitter_module<T>* copy();
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 protected:
   // variable members ////////////////////////////////////////////////////////
   int th0, th1, tw0, tw1; //!< Min and max height and widths translations.

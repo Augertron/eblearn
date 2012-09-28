@@ -20,7 +20,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 # Extra compilation flags
-SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
+SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}  -Werror=overloaded-virtual"
   CACHE STRING "CMAKE CXX flags " FORCE )
 
 # use STL or not
@@ -102,11 +102,11 @@ IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
 SET(EFENCE_FLAG "")
 if (MAC)
 SET(CMAKE_CXX_FLAGS_DEBUG
-  "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fexceptions -Wno-overloaded-virtual"
+  "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fexceptions -Werror=overloaded-virtual"
   CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 else (MAC)
 SET(CMAKE_CXX_FLAGS_DEBUG
-  "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fsignaling-nans -fexceptions"
+  "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fsignaling-nans -fexceptions -Werror=overloaded-virtual"
   CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 endif (MAC)
 

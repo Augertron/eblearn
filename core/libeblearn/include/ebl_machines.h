@@ -40,6 +40,7 @@
 #include "ebl_arch.h"
 #include "ebl_nonlinearity.h"
 #include "ebl_layers.h"
+#include "ebl_energy.h"
 
 namespace ebl {
 

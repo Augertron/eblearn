@@ -96,24 +96,24 @@ void full_layer<T>::forget(forget_param_linear &fp) {
 }
 
 template <typename T>
-fidxdim full_layer<T>::fprop_size(fidxdim &isize) {
-  return linear.fprop_size(isize);
+fidxdim full_layer<T>::fprop1_size(fidxdim &isize) {
+  return linear.fprop1_size(isize);
 }
 
 template <typename T>
-idxdim full_layer<T>::bprop_size(const idxdim &osize) {
-  return linear.bprop_size(osize);
+fidxdim full_layer<T>::bprop1_size(const fidxdim &osize) {
+  return linear.bprop1_size(osize);
 }
 
 template <typename T>
-full_layer<T>* full_layer<T>::copy() {
+module_1_1<T>* full_layer<T>::copy(parameter<T> *p) {
   // allocate
   full_layer<T>* l2 = new full_layer<T>(NULL, linear.w.dim(1), linear.w.dim(0),
                                         btanh);
   // copy data
   idx_copy(linear.w, l2->linear.w);
   idx_copy(adder.bias, l2->adder.bias);
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 template <typename T>
@@ -190,24 +190,24 @@ void convolution_layer<T>::forget(forget_param_linear &fp) {
 }
 
 template <typename T>
-fidxdim convolution_layer<T>::fprop_size(fidxdim &isize) {
-  return convol.fprop_size(isize);
+fidxdim convolution_layer<T>::fprop1_size(fidxdim &isize) {
+  return convol.fprop1_size(isize);
 }
 
 template <typename T>
-fidxdim convolution_layer<T>::bprop_size(const fidxdim &osize) {
-  return convol.bprop_size(osize);
+fidxdim convolution_layer<T>::bprop1_size(const fidxdim &osize) {
+  return convol.bprop1_size(osize);
 }
 
 template <typename T>
-convolution_layer<T>* convolution_layer<T>::copy() {
+module_1_1<T>* convolution_layer<T>::copy(parameter<T> *p) {
   // allocate
   convolution_layer<T> *l2 = new convolution_layer<T>
       (NULL, convol.ker, convol.stride, convol.table, btanh);
   // copy data
   idx_copy(convol.kernel, l2->convol.kernel);
   idx_copy(adder.bias, l2->adder.bias);
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 // convabsnorm_layer ///////////////////////////////////////////////////////////
@@ -281,17 +281,17 @@ void convabsnorm_layer<T>::forget(forget_param_linear &fp) {
 }
 
 template <typename T>
-fidxdim convabsnorm_layer<T>::fprop_size(fidxdim &isize) {
-  return lconv.fprop_size(isize);
+fidxdim convabsnorm_layer<T>::fprop1_size(fidxdim &isize) {
+  return lconv.fprop1_size(isize);
 }
 
 template <typename T>
-fidxdim convabsnorm_layer<T>::bprop_size(const fidxdim &osize) {
-  return lconv.bprop_size(osize);
+fidxdim convabsnorm_layer<T>::bprop1_size(const fidxdim &osize) {
+  return lconv.bprop1_size(osize);
 }
 
 template <typename T>
-convabsnorm_layer<T>* convabsnorm_layer<T>::copy() {
+module_1_1<T>* convabsnorm_layer<T>::copy(parameter<T> *p) {
   // allocate
   convabsnorm_layer<T> *l2 = new convabsnorm_layer<T>
       (NULL, lconv.convol.ker, lconv.convol.stride, lconv.convol.table,
@@ -299,7 +299,7 @@ convabsnorm_layer<T>* convabsnorm_layer<T>::copy() {
   // copy data
   idx_copy(lconv.convol.kernel, l2->lconv.convol.kernel);
   idx_copy(lconv.adder.bias, l2->lconv.adder.bias);
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 // subsampling_layer ///////////////////////////////////////////////////////////
@@ -367,17 +367,17 @@ void subsampling_layer<T>::forget(forget_param_linear &fp) {
 }
 
 template <typename T>
-fidxdim subsampling_layer<T>::fprop_size(fidxdim &isize) {
-  return subsampler.fprop_size(isize);
+fidxdim subsampling_layer<T>::fprop1_size(fidxdim &isize) {
+  return subsampler.fprop1_size(isize);
 }
 
 template <typename T>
-fidxdim subsampling_layer<T>::bprop_size(const fidxdim &osize) {
-  return subsampler.bprop_size(osize);
+fidxdim subsampling_layer<T>::bprop1_size(const fidxdim &osize) {
+  return subsampler.bprop1_size(osize);
 }
 
 template <typename T>
-subsampling_layer<T>* subsampling_layer<T>::copy() {
+module_1_1<T>* subsampling_layer<T>::copy(parameter<T> *p) {
   // allocate
   subsampling_layer<T> *l2 =
       new subsampling_layer<T>(NULL, subsampler.thickness, subsampler.kernel,
@@ -385,7 +385,7 @@ subsampling_layer<T>* subsampling_layer<T>::copy() {
   // copy data
   idx_copy(subsampler.coeff, l2->subsampler.coeff);
   idx_copy(adder.bias, l2->adder.bias);
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 template <typename T>

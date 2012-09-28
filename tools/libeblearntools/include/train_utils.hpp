@@ -40,7 +40,8 @@ namespace ebl {
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T,Tdata,Tlabel>*
 create_trainable_network(bbparameter<T> &theparam, configuration &conf,
-                         uint noutputs) {
+                         uint noutputs, module_1_1<T> **network,
+                         uint &iter) {
   answer_module<T,Tdata,Tlabel> *answer =
       create_answer<T,Tdata,Tlabel>(conf, noutputs);
   if (!answer) eblerror("no answer module found");
@@ -51,6 +52,7 @@ create_trainable_network(bbparameter<T> &theparam, configuration &conf,
   //! create the network weights, network and trainer
   module_1_1<T> *net = create_network<T>(theparam, conf, inthick, noutputs,
                                          "arch");
+  *network = net;
   if (!net) eblerror("failed to create network");
   if (((layers<T>*)net)->size() == 0) eblerror("0 modules in network");
   trainable_module<T,Tdata,Tlabel> *train =
@@ -59,8 +61,8 @@ create_trainable_network(bbparameter<T> &theparam, configuration &conf,
       new supervised_trainer<T,Tdata,Tlabel>(*train, theparam);
   thetrainer->set_progress_file(job::get_progress_filename());
   // initialize the network weights
-  forget_param_linear fgp(1, 0.5);
-  uint iter = 0;
+  forget_param_linear fgp(1, 0.5, /* random seed */ 0, NULL);
+  iter = 0;
   if (conf.exists_true("retrain")) {
     if (!conf.exists("retrain_weights"))
       eblerror("retrain_weights variable not defined");

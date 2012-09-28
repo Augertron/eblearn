@@ -214,7 +214,7 @@ void fprop_thread<T>::execute() {
     if (conf.exists("classes")) {
       classes = load_matrix<ubyte>(conf.get_cstring("classes"));
       sclasses = ubyteidx_to_stringvector(classes);
-      ans = create_answer<T>(conf, classes.dim(0));
+      ans = create_answer<T,T,T>(conf, classes.dim(0));
       noutputs = ans->get_nfeatures();
     }
     module_1_1<T> *net = create_network<T>(theparam, conf, thick, noutputs);

@@ -204,10 +204,12 @@ display_internals(supervised_trainer<T, Tdata, Tlabel> &st,
   // display first ninternals samples
   trainable_module_gui mg;
   state<T> input(ds.sample_dims());
-  state<Tlabel> label(ds.label_dims());
+  state<Tlabel> lab(ds.label_dims());
   for (unsigned int i = 0; (i < ds.size()) && (i < ninternals); ++i) {
     // prepare input
-    ds.fprop(input, label);
+    ds.fprop(input, lab);
+    state<T> label(ds.label_dims());
+    state_copy(lab, label);
     // // fprop and bprop
     // //st.test_sample(*st.input, st.label, infp);
     // // TODO: display is influencing learning, remove influence

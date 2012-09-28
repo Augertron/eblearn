@@ -471,12 +471,12 @@ display_preprocessed(svector<midx<T> > &pp, bboxes &bbs,
       // loop on each layer of input to get maximum width
       int maxw = 0;
       for (uint j = 0; j < m.dim(0); ++j) {
-        l = m.get(j);
+        l = m.mget(j);
         maxw = std::max(maxw, (int) l.dim(2));
       }
       // draw all layers of preprocessed region
       for (uint j = 0; j < m.dim(0); ++j) {
-        l = m.get(j);
+        l = m.mget(j);
         int ww = std::max(0, (int) (w + (maxw - l.dim(2)) / 2));
         l = l.shift_dim(0, 2);
         draw_matrix(l, h, ww, dzoom, dzoom, (T)vmin, (T)vmax);

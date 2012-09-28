@@ -102,16 +102,16 @@ void idxIO_test::test_save_load_matrix_matrix() {
     idx<float> im3 = load_image<float>(sim3);
 
     midx<float> all(3);
-    all.set(im1, 0);
-    all.set(im2, 1);
-    all.set(im3, 2);
+    all.mset(im1, 0);
+    all.mset(im2, 1);
+    all.mset(im3, 2);
 
     save_matrices(all, sall);
     // midx<float> all2 = load_matrices<float>(sall, false);
     midx<float> all2 = load_matrices<float>(sall);
-    idx<float> m1 = all.get(0);
-    idx<float> m2 = all.get(1);
-    idx<float> m3 = all.get(2);
+    idx<float> m1 = all.mget(0);
+    idx<float> m2 = all.mget(1);
+    idx<float> m3 = all.mget(2);
     float sum = idx_sum(im1) - idx_sum(m1) + idx_sum(im2) - idx_sum(m2)
       + idx_sum(im3) - idx_sum(m3);
     CPPUNIT_ASSERT_EQUAL(sum, (float) 0);
@@ -139,15 +139,15 @@ void idxIO_test::test_save_load_matrices() {
     midx<float> all2 = load_matrices<float>(sall, true);
     // check 1st matrix is ok
     idx<float> m1 = load_matrix<float>(sim1);
-    idx<float> m2 = all2.get(0);
+    idx<float> m2 = all2.mget(0);
     CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
     // check 2nd matrix is ok
     m1 = load_matrix<float>(sim2);
-    m2 = all2.get(1);
+    m2 = all2.mget(1);
     CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
     // check 3rd matrix is ok
     m1 = load_matrix<float>(sim3);
-    m2 = all2.get(2);
+    m2 = all2.mget(2);
     CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
     // check has_multiple_matrices
     CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sall.c_str()), true);

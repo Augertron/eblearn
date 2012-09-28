@@ -103,11 +103,11 @@ template <typename T> class layers : public module_1_1<T> {
   //! modified input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! given the output dimensions, returns the input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Modifies multi-input dimensions 'isize' to be compliant with module's
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
@@ -126,7 +126,8 @@ template <typename T> class layers : public module_1_1<T> {
   //! given the input.
   virtual std::string pretty(mfidxdim &isize);
   //! Returns a deep copy of current module.
-  virtual layers<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Swap the dual buffers used for memory optimization.
   virtual void swap_buffers();
   //! Return the number of layers contained in this object.
@@ -218,7 +219,8 @@ public:
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a deep copy of current module.
-  virtual narrow_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Modifies multi-input dimensions 'isize' to be compliant with module's
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
@@ -260,7 +262,8 @@ public:
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a deep copy of current module.
-  virtual table_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Modifies multi-input dimensions 'isize' to be compliant with module's
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data

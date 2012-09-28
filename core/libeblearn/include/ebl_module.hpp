@@ -202,12 +202,12 @@ bool module_1_1<T>::resize_output(idx<T> &in, idx<T> &out, idxdim *d) {
 }
 
 template <typename T>
-fidxdim module_1_1<T>::fprop_size(fidxdim &isize) {
+fidxdim module_1_1<T>::fprop1_size(fidxdim &isize) {
   return isize;
 }
 
 template <typename T>
-fidxdim module_1_1<T>::bprop_size(const fidxdim &osize) {
+fidxdim module_1_1<T>::bprop1_size(const fidxdim &osize) {
   //EDEBUG(this->name() << ": " << osize << " -> same");
   return osize;
 }
@@ -218,7 +218,7 @@ mfidxdim module_1_1<T>::fprop_size(mfidxdim &isize) {
   mfidxdim osize;
   for (uint i = 0; i < isize.size(); ++i)
     if (!isize.exists(i)) osize.push_back_empty();
-    else osize.push_back(this->fprop_size(isize[i]));
+    else osize.push_back(this->fprop1_size(isize[i]));
   EDEBUG(this->name() << ": " << isize << " f-> " << osize);
   return osize;
 }
@@ -229,7 +229,7 @@ mfidxdim module_1_1<T>::fprop_size(mfidxdim &isize) {
 //   mfidxdim isize;
 //   for (mfidxdim::const_iterator i = osize.begin(); i != osize.end(); ++i) {
 //     if (i.exists())
-// 	isize.push_back(this->bprop_size(*i));
+// 	isize.push_back(this->bprop1_size(*i));
 //     else
 // 	isize.push_back_empty();
 //   }
@@ -243,7 +243,7 @@ mfidxdim module_1_1<T>::bprop_size(mfidxdim &osize) {
   mfidxdim isize;
   for (mfidxdim::iterator i = osize.begin(); i != osize.end(); ++i) {
     if (i.exists())
-      isize.push_back(this->bprop_size(*i));
+      isize.push_back(this->bprop1_size(*i));
     else
       isize.push_back_empty();
   }
@@ -255,7 +255,7 @@ template <typename T>
 std::string module_1_1<T>::pretty(idxdim &isize) {
   std::string s;
   fidxdim d = isize;
-  s << " -> " << this->_name.c_str() << " -> " << fprop_size(d);
+  s << " -> " << this->_name.c_str() << " -> " << fprop1_size(d);
   return s;
 }
 
@@ -265,11 +265,6 @@ std::string module_1_1<T>::pretty(mfidxdim &isize) {
   midxdim d = fprop_size(isize);
   s << " -> " << this->_name.c_str() << " -> " << d;
   return s;
-}
-
-template <typename T>
-module_1_1<T>* module_1_1<T>::copy() {
-  return this->copy(NULL);
 }
 
 template <typename T>
@@ -401,7 +396,7 @@ void module_2_1<T>::bbprop(state<T> &in1, state<T> &in2, state<T> &out) {
 //////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-void module_2_1<T>::forget(forget_param &fp) { err_not_implemented(); }
+void module_2_1<T>::forget(forget_param_linear &fp) { err_not_implemented(); }
 
 template <typename T>
 void module_2_1<T>::normalize() { err_not_implemented(); }

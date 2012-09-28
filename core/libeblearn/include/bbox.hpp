@@ -58,7 +58,7 @@ namespace ebl {
 	  else d += idx_l2(e1, e2);
 	  // accumulate dimensions differences
 	  for (uint l = 0; l < e1.dim(0); ++l) {
-	    idx<T> e11 = e1.get(l), e22 = e2.get(l);
+	    idx<T> e11 = e1.mget(l), e22 = e2.mget(l);
 	    for (int m = 0; m < e11.order(); ++m)
 	      s += std::abs(e11.dim(m) - e22.dim(m));
 	  }

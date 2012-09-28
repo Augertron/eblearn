@@ -121,7 +121,7 @@ public:
   // weights manipulation ////////////////////////////////////////////////////
 
   //! (Re)initializes weights of this module.
-  virtual void forget(forget_param_linear& fp);
+  virtual void forget(forget_param_linear &fp);
   //! Normalization.
   virtual void normalize();
   //! Zero-out internal hidden's states backward tensors.
@@ -150,11 +150,11 @@ public:
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim fprop_size(fidxdim &isize);
+  virtual fidxdim fprop1_size(fidxdim &isize);
   //! Returns input dimensions corresponding to output dimensions 'osize'.
   //! Implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &osize);
+  virtual fidxdim bprop1_size(const fidxdim &osize);
   //! Modifies multi-input dimensions 'isize' to be compliant with module's
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
@@ -177,10 +177,8 @@ public:
   //! given the input.
   virtual std::string pretty(mfidxdim &isize);
   //! Returns a deep copy of current module.
-  virtual module_1_1<T>* copy();
-  //! Returns a deep copy of current module.
   //! \param p If NULL, the copy points to the same weights as this module.
-  virtual module_1_1<T>* copy(parameter<T> *p);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Pre-determine the order of hidden buffers to use only 2 buffers
   //! in order to reduce memory footprint.
   //! This returns true if outputs is actually put in out, false if it's
@@ -252,7 +250,7 @@ public:
 
   // weights manipulation //////////////////////////////////////////////////////
 
-  virtual void forget(forget_param &fp);
+  virtual void forget(forget_param_linear &fp);
   virtual void normalize();
 
   // resizing //////////////////////////////////////////////////////////////////

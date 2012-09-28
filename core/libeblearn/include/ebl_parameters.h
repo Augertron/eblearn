@@ -119,7 +119,7 @@ template <typename T> class parameter : public state<T> {
   virtual ~parameter();
 
   //! Resize the current parameter to size 's0'.
-  virtual void resize(intg s0);
+  void resize_parameter(intg s0);
 
   // I/O methods /////////////////////////////////////////////////////////////
 
@@ -156,7 +156,6 @@ template <typename T> class parameter : public state<T> {
 
   // protected methods ///////////////////////////////////////////////////////
  protected:
-
   //! Update weights and gradients.
   //! Depending on gradient parameters 'arg', an l1 and/or l2 regularization
   //! decay may first be applied to the gradients (b).

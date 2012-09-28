@@ -66,8 +66,8 @@ void stdsigmoid_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-stdsigmoid_module<T>* stdsigmoid_module<T>::copy() {
-  return new stdsigmoid_module<T>();
+module_1_1<T>* stdsigmoid_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new stdsigmoid_module<T>();
 }
 
 // tanh ////////////////////////////////////////////////////////////////////////
@@ -111,8 +111,8 @@ void tanh_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-tanh_module<T>* tanh_module<T>::copy() {
-  return new tanh_module<T>();
+module_1_1<T>* tanh_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new tanh_module<T>();
 }
 
 // softmax /////////////////////////////////////////////////////////////////////
@@ -231,8 +231,8 @@ void abs_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-abs_module<T>* abs_module<T>::copy() {
-  return new abs_module<T>();
+module_1_1<T>* abs_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new abs_module<T>();
 }
 
 // linear_shrink_module ////////////////////////////////////////////////////////
@@ -299,12 +299,12 @@ void linear_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
 }
 
 template <typename T>
-linear_shrink_module<T>* linear_shrink_module<T>::copy() {
+module_1_1<T>* linear_shrink_module<T>::copy(parameter<T> *p) {
   linear_shrink_module<T>* s2 =
       new linear_shrink_module<T>(NULL, bias.dim(0), default_bias);
   // assign same parameter state
   s2->bias = bias;
-  return s2;
+  return (module_1_1<T>*) s2;
 }
 
 template <typename T>
@@ -505,14 +505,14 @@ void smooth_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
 }
 
 template <typename T>
-smooth_shrink_module<T>* smooth_shrink_module<T>::copy() {
+module_1_1<T>* smooth_shrink_module<T>::copy(parameter<T> *p) {
   smooth_shrink_module<T>* s2 =
       new smooth_shrink_module<T>(NULL, beta.dim(0), default_beta,
                                   default_bias);
   // assign same parameter state
   s2->beta = beta;
   s2->bias = bias;
-  return s2;
+  return (module_1_1<T>*) s2;
 }
 
 // tanh_shrink_module //////////////////////////////////////////////////////////
@@ -606,14 +606,14 @@ void tanh_shrink_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-tanh_shrink_module<T>* tanh_shrink_module<T>::copy() {
+module_1_1<T>* tanh_shrink_module<T>::copy(parameter<T> *p) {
   tanh_shrink_module<T>* s2 = new tanh_shrink_module<T>(NULL, nfeatures);
   // assign same parameter state
   if (s2->alpha) delete s2->alpha;
   if (s2->beta) delete s2->beta;
-  s2->alpha = alpha->copy();
-  s2->beta = beta->copy();
-  return s2;
+  s2->alpha = (diag_module<T>*) alpha->copy();
+  s2->beta = (diag_module<T>*) beta->copy();
+  return (module_1_1<T>*) s2;
 }
 
 template <typename T>

@@ -72,7 +72,7 @@ template <class T>
 idx<double> module_tester<T>::
 test_jacobian_param(parameter<T> &p, module_1_1<T> &module,
                     state<T> &in, state<T> &out) {
-  forget_param_linear fp(2,0);
+  forget_param_linear fp(2, 0, 0 /* fixed seed */);
   idx_random(in, rrange_min, rrange_max); // randomize input for fprop
   module.fprop(in,out); // just to resize states
   module.forget(fp); // randomize parametes if there are any
@@ -93,7 +93,7 @@ test_jacobian_param(parameter<T> &p, module_1_1<T> &module,
 template <class T>
 idx<double> module_tester<T>::
 test_hessian(module_1_1<T>  &module, state<T> &in, state<T> &out) {
-  forget_param_linear fp(2,0.5);
+  forget_param_linear fp(2, 0.5, 0 /* fixed seed */);
   idx_random(in, rrange_min, rrange_max); // randomize input for fprop
   module.fprop(in,out); // just to resize states
   module.forget(fp); // randomize parametes if there are any
@@ -116,7 +116,7 @@ template <class T>
 idx<double> module_tester<T>::
 test_hessian_param(parameter<T> &p, module_1_1<T> &module,
                    state<T> &in, state<T> &out) {
-  forget_param_linear fp(2,0);
+  forget_param_linear fp(2, 0, 0 /* fixed seed */);
   idx_random(in, rrange_min, rrange_max); // randomize input for fprop
   module.fprop(in,out); // just to resize states
   module.forget(fp); // randomize parametes if there are any

@@ -55,31 +55,31 @@ namespace ebl {
 // training utilities //////////////////////////////////////////////////////////
 
 //! This creates a trainable network and returns it.
-template <typename Tnet, typename Tdata, typename Tlabel>
-supervised_trainer<Tnet,Tdata,Tlabel>*
-create_trainable_network(bbparameter<Tnet> &theparam, configuration &conf,
-                         uint noutputs);
+template <typename T, typename Tdata, typename Tlabel>
+supervised_trainer<T,Tdata,Tlabel>*
+create_trainable_network(bbparameter<T> &theparam, configuration &conf,
+                         uint noutputs, module_1_1<T> **net, uint &iter);
 //! A function that performs tests, saves current weights and display.
 //! \param iteration_seconds An optional elapsed time for the iteration,
 //!   to better estimate the timeout of the training.
-template <typename Tnet, typename Tdata, typename Tlabel>
+template <typename T, typename Tdata, typename Tlabel>
 void test_and_save(uint iter, configuration &conf, std::string &conffname,
-                   parameter<Tnet> &theparam,
-                   supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
-                   labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
-                   labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+                   parameter<T> &theparam,
+                   supervised_trainer<T,Tdata,Tlabel> &thetrainer,
+                   labeled_datasource<T,Tdata,Tlabel> &train_ds,
+                   labeled_datasource<T,Tdata,Tlabel> &test_ds,
                    classifier_meter &trainmeter,
                    classifier_meter &testmeter,
                    infer_param &infp, gd_param &gdp, std::string &shortname,
                    long iteration_seconds = 0);
 
 //! A function that performs tests and display.
-template <typename Tnet, typename Tdata, typename Tlabel>
+template <typename T, typename Tdata, typename Tlabel>
 void test(uint iter, configuration &conf, std::string &conffname,
-          parameter<Tnet> &theparam,
-          supervised_trainer<Tnet,Tdata,Tlabel> &thetrainer,
-          labeled_datasource<Tnet,Tdata,Tlabel> &train_ds,
-          labeled_datasource<Tnet,Tdata,Tlabel> &test_ds,
+          parameter<T> &theparam,
+          supervised_trainer<T,Tdata,Tlabel> &thetrainer,
+          labeled_datasource<T,Tdata,Tlabel> &train_ds,
+          labeled_datasource<T,Tdata,Tlabel> &test_ds,
           classifier_meter &trainmeter,
           classifier_meter &testmeter,
           infer_param &infp, gd_param &gdp, std::string &shortname);
@@ -88,8 +88,8 @@ void test(uint iter, configuration &conf, std::string &conffname,
 //! \param noutputs The number of outputs will be modified according
 //!   to the loaded dataset.
 //! \param name This is updated to the root of all dataset filenames.
-template <typename Tnet, typename Tdata, typename Tlabel>
-labeled_datasource<Tnet,Tdata,Tlabel>*
+template <typename T, typename Tdata, typename Tlabel>
+labeled_datasource<T,Tdata,Tlabel>*
 create_validation_set(configuration &conf, uint &noutputs,
                       std::string &name);
 
@@ -97,8 +97,8 @@ create_validation_set(configuration &conf, uint &noutputs,
 //! \param noutputs The number of outputs will be modified according
 //!   to the loaded dataset.
 //! \param name This is updated to the root of all dataset filenames.
-template <typename Tnet, typename Tdata, typename Tlabel>
-labeled_datasource<Tnet,Tdata,Tlabel>*
+template <typename T, typename Tdata, typename Tlabel>
+labeled_datasource<T,Tdata,Tlabel>*
 create_training_set(configuration &conf, uint &noutputs, std::string &name);
 
 } // end namespace ebl
