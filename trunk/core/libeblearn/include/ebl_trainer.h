@@ -45,17 +45,17 @@ namespace ebl {
 // supervised_trainer //////////////////////////////////////////////////////////
 
 //! Supervised Trainer. A specialisation of the generic trainer, taking
-//! samples (of type Tnet) and labels (of type Tlabel) as training input.
-//! Template Tnet is the network's type and also the input data's type.
+//! samples (of type T) and labels (of type Tlabel) as training input.
+//! Template T is the network's type and also the input data's type.
 //! However datasources with different data type may be provided in which
 //! case a conversion will occur after each sample extraction from the
 //! datasource (via a deep idx_copy).
-template <typename Tnet, typename Tdata, typename Tlabel>
+template <typename T, typename Tdata, typename Tlabel>
 class supervised_trainer {
  public:
   //! constructor.
-  supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m,
-                     bbparameter<Tnet> &p);
+  supervised_trainer(trainable_module<T,Tdata,Tlabel> &m,
+                     bbparameter<T> &p);
   //! destructor.
   virtual ~supervised_trainer();
 
@@ -63,27 +63,27 @@ class supervised_trainer {
 
   //! Test the current sample of 'ds', put the answers in 'answers' and
   //! return true if the infered label equals the groundtruth 'label'.
-  bool test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
-                   state<Tnet> &label, state<Tnet> &answers,
+  bool test_sample(labeled_datasource<T,Tdata,Tlabel> &ds,
+                   state<T> &label, state<T> &answers,
                    infer_param &infp);
   //! Perform a learning update on the current sample of 'ds', using
   //! 'arguments arg' for the parameter update method
   //! (e.g. learning rate and weight decay).
-  Tnet train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
+  T train_sample(labeled_datasource<T,Tdata,Tlabel> &ds,
                     gd_param &arg);
   //! Perform a learning update on the 'sample' and 'label', using
   //! 'arguments arg' for the parameter update method
   //! (e.g. learning rate and weight decay).
   //! This assumes label is a unique value and its corresponding target
   //! can be retrieve by the trainable module.
-  Tnet train_sample(idx<Tnet> &sample, const Tlabel label, gd_param &arg);
+  T train_sample(state<T> &sample, const Tlabel label, gd_param &arg);
 
   // epoch methods ///////////////////////////////////////////////////////////
 
   //! Measure the average energy and classification error rate
   //! on a dataset.
   //! \param max_test If > 0, limit the number of tests to this number.
-  void test(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+  void test(labeled_datasource<T, Tdata, Tlabel> &ds,
             classifier_meter &log, infer_param &infp,
             uint max_test = 0);
   //! train for <niter> sweeps over the training set. <samples> contains the
@@ -95,12 +95,12 @@ class supervised_trainer {
   //! \param hessian_period Recompute 2nd order derivatives at every
   //!   'hessian_period' samples if > 0.
   //! \param nhessian Estimate 2nd order derivatives on 'nhessian' samples.
-  void train(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+  void train(labeled_datasource<T, Tdata, Tlabel> &ds,
              classifier_meter &log, gd_param &args, int niter,
              infer_param &infp,
              intg hessian_period = 0, intg nhessian = 0, double mu = .02);
   //! compute hessian
-  void compute_diaghessian(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+  void compute_diaghessian(labeled_datasource<T, Tdata, Tlabel> &ds,
                            intg niter, double mu);
 
   // accessors ///////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ class supervised_trainer {
   //! to a certain iteration.
   void set_iteration(int i);
   //! pretty some information about training, e.g. input and network sizes.
-  void pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds);
+  void pretty(labeled_datasource<T, Tdata, Tlabel> &ds);
   //! Sets the name of the file indicating progress of training.
   //! If set, this file will be 'touched' after each sample is trained
   //! or tested to indicate that training is still going on.
@@ -129,23 +129,23 @@ class supervised_trainer {
   //! init datasource to begining and assign indata to a buffer
   //! corresponding to ds's sample size. also increment iteration counter,
   //! unless new_iteration is false.
-  void init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+  void init(labeled_datasource<T, Tdata, Tlabel> &ds,
             classifier_meter *log = NULL, bool new_iteration = false);
 
   // members /////////////////////////////////////////////////////////////////
  protected:
-  trainable_module<Tnet,Tdata,Tlabel> &machine;
-  bbparameter<Tnet> &param;             //!< the learned params
-  state<Tnet>      energy;              //!< Tmp energy buffer.
-  state<Tnet>     *answers;             //!< Tmp answer buffer.
-  state<Tnet>     *label;               //!< Tmp label buffer.
-  intg             age;
-  int              iteration;
-  void            *iteration_ptr;
-  bool             prettied;            //!< Flag used to pretty info just once.
-  std::string      progress_file;       //!< Name of progress file.
-  intg             progress_cnt;        //!< A count for updating progress.
-  bool             test_running;        //!< Show test on trained.
+  trainable_module<T,Tdata,Tlabel> &machine;
+  bbparameter<T> &param;                //!< the learned params
+  state<T>        energy;               //!< Tmp energy buffer.
+  state<T>       *answers;              //!< Tmp answer buffer.
+  state<T>       *label;                //!< Tmp label buffer.
+  intg            age;
+  int             iteration;
+  void           *iteration_ptr;
+  bool            prettied;             //!< Flag used to pretty info just once.
+  std::string     progress_file;        //!< Name of progress file.
+  intg            progress_cnt;         //!< A count for updating progress.
+  bool            test_running;         //!< Show test on trained.
 };
 
 } // namespace ebl {

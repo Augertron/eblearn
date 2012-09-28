@@ -174,7 +174,7 @@ init2(const char *name_) {
         for (intg j = 0; j < datas.dim(1); ++j) {
           if (datas.exists(i, j)) {
             found = true;
-            e = datas.get(i, j);
+            e = datas.mget(i, j);
             samplemfdims.push_back_new(e.get_idxdim());
           }
         }
@@ -183,7 +183,7 @@ init2(const char *name_) {
       while (!found && i < datas.dim(0)) {
         if (datas.exists(i)) {
           found = true;
-          e = datas.get(i);
+          e = datas.mget(i);
           samplemfdims.push_back_new(e.get_idxdim());
         }
         std::cout << std::endl;
@@ -278,7 +278,7 @@ void datasource<T,Tdata>::fprop1_data(idx<T> &out) {
   if (out.order() != sampledims.order()) out = idx<T>(sampledims);
   else out.resize(sampledims);
   idx<Tdata> dat;
-  if (multimat) dat = datas.get(it);
+  if (multimat) dat = datas.mget(it);
   else dat = data[it];
   idx_copy(dat, out);
   if (bias != 0.0) idx_addc(out, bias, out);
@@ -297,34 +297,31 @@ void datasource<T,Tdata>::fprop_data(state<T> &out) {
   }
   // reallocate if necessary
   if (out.f.size() != nstates) {
-    out.f.clear();
     idxdim d = sampledims;
     d.setdims(1);
-    for (uint i = 0; i < nstates; ++i)
-      out.f.push_back(new idx<T>(d));
+    out.reset(d, nstates);
   }
   // copy data
   if (multimat) { // multiple matrices per sample
     for (uint i = 0; i < nstates; ++i) {
       idx<Tdata> dat;
-      if (datas.order() == 2) dat = datas.get(it, i);
-      else if (datas.order() == 1) dat = datas.get(it);
+      if (datas.order() == 2) dat = datas.mget(it, i);
+      else if (datas.order() == 1) dat = datas.mget(it);
       else eblerror("not implemented");
       // resize if necessary
       idxdim d(dat);
       idx<T> &ts = out.f[i];
       if (!ts.same_dim(d)) ts.resize(d);
-      fprop1_data(ts);
+      this->fprop1_data(ts);
     }
-  } else fprop1_data(out); // single matrix per sample
+  } else this->fprop1_data(out); // single matrix per sample
+  EDEBUG_MAT("datasource sample " << it << ":", out);
 }
 
 template <typename T, typename Tdata>
 idx<Tdata> datasource<T,Tdata>::get_sample(intg index) {
-  if (multimat)
-    return datas.get(index);
-  else
-    return data[index];
+  if (multimat) return datas.mget(index);
+  else return data[index];
 }
 
 template <typename T, typename Tdata>
@@ -987,6 +984,7 @@ void labeled_datasource<T,Tdata,Tlabel>::fprop_label(state<Tlabel> &label) {
   idx_copy(lab, label);
   if (label_bias != 0) idx_addc(label, label_bias, label);
   if (label_coeff != 1) idx_dotc(label, label_coeff, label);
+  EDEBUG("datasource label " << it << ":" << label.str());
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -996,6 +994,7 @@ fprop_label_net(state<T> &label) {
   idx_copy(lab, label);
   if (label_bias != 0) idx_addc(label, label_bias, label);
   if (label_coeff != 1) idx_dotc(label, label_coeff, label);
+  EDEBUG("datasource label " << it << ":" << label.str());
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -1003,7 +1002,7 @@ void labeled_datasource<T,Tdata,Tlabel>::
 fprop_jitter(state<T> &jitt) {
   if (jitters.order() < 1) eblerror("jitter information was not loaded");
   if (jitters.exists(it)) {
-    idx<float> j = jitters.get(it);
+    idx<float> j = jitters.mget(it);
     idxdim d(j.get_idxdim());
     if (!jitt.same_dim(d)) jitt.resize(d);
     idx_copy(j, jitt);
@@ -1456,7 +1455,7 @@ bool class_datasource<T,Tdata,Tlabel>::next_train() {
       random_shuffle(clist.begin(), clist.end());
     }
     if (weigh_samples)
-      normalize_probas(class_it);
+      normalize_probas_by_class(class_it);
   }
   // recursion failsafe, allow 1000 max recursions
   if (!bexclusion &&
@@ -1636,14 +1635,14 @@ void class_datasource<T,Tdata,Tlabel>::normalize_all_probas() {
   if (weigh_samples) {
     if (perclass_norm && balance) {
       for (uint i = 0; i < bal_indices.size(); ++i)
-        normalize_probas(i);
+        normalize_probas_by_class(i);
     } else
-      normalize_probas();
+      this->normalize_probas();
   }
 }
 
 template <typename T, typename Tdata, typename Tlabel>
-void class_datasource<T,Tdata,Tlabel>::normalize_probas(int classid) {
+void class_datasource<T,Tdata,Tlabel>::normalize_probas_by_class(int classid) {
   std::vector<intg> *cindices = NULL;
   if (perclass_norm && balance) { // use only class_it class samples
     if (classid < 0)
@@ -2917,8 +2916,7 @@ unsigned int labeled_pair_datasource<T, Tdata, Tlabel>::size() {
   return pairs.dim(0);
 }
 
-////////////////////////////////////////////////////////////////
-// mnist_datasource
+// mnist_datasource ////////////////////////////////////////////////////////////
 
 template <typename T, typename Tdata, typename Tlabel>
 mnist_datasource<T, Tdata, Tlabel>::
@@ -2968,21 +2966,18 @@ template <typename T, typename Tdata, typename Tlabel>
 mnist_datasource<T, Tdata, Tlabel>::~mnist_datasource() {
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
 template <typename T, typename Tdata, typename Tlabel>
-void mnist_datasource<T, Tdata, Tlabel>::
-fprop_data(state<T> &out) {
-  if (out.order() != sampledims.order()) out = state<T>(sampledims);
+void mnist_datasource<T, Tdata, Tlabel>::fprop1_data(idx<T> &out) {
+  if (out.order() != sampledims.order()) out = idx<T>(sampledims);
   else out.resize(this->sample_dims());
   idx<Tdata> dat;
-  if (multimat) dat = datas.get(it);
+  if (multimat) dat = datas.mget(it);
   else dat = data[it];
   uint ni = data.dim(1);
   uint nj = data.dim(2);
   uint di = (uint) (0.5 * (height - ni));
   uint dj = (uint) (0.5 * (width - nj));
-  out.zero_f();
+  idx_clear(out);
   idx<T> tgt = out.select(0, 0);
   tgt = tgt.narrow(0, ni, di);
   tgt = tgt.narrow(1, nj, dj);

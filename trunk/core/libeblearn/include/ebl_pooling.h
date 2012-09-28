@@ -89,12 +89,13 @@ template <typename T> class subsampling_module: public module_1_1<T> {
   virtual bool resize_output(state<T> &in, state<T> &out, idxdim *ignore = NULL);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual subsampling_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 
@@ -160,12 +161,13 @@ template <typename T> class lppooling_module: public module_1_1<T> {
 
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual lppooling_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Calls fprop and then dumps internal buffers, inputs and outputs
@@ -218,12 +220,13 @@ class wavg_pooling_module: public module_1_1<T> {
 
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
-  virtual wavg_pooling_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Calls fprop and then dumps internal buffers, inputs and outputs
@@ -359,9 +362,8 @@ template <typename T> class maxss_module : public subsampling_module<T> {
   virtual void bbprop1(state<T> &in, state<T> &out);
 
   //! Returns a deep copy of this module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual maxss_module<T>* copy(parameter<T> *p = NULL);
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 

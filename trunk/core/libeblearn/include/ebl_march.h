@@ -88,7 +88,7 @@ template <typename T> class ms_module : public module_1_1<T> {
   //! modified input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Modifies multi-input dimensions 'isize' to be compliant with module's
   //! architecture, and returns corresponding output dimensions.
   //! Implementation of this method helps automatic scaling of input data
@@ -97,7 +97,7 @@ template <typename T> class ms_module : public module_1_1<T> {
   //! given the output dimensions, returns the input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Given the multi-output dimensions, returns the multi-input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
@@ -184,11 +184,11 @@ template<typename T> class msc_module : public ms_module<T> {
   //! modified input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! given the output dimensions, returns the input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Given the multi-output dimensions, returns the multi-input dimensions.
   //! the implementation of this method helps automatic scaling of input data
   //! but is optional.

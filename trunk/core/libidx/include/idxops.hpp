@@ -983,16 +983,16 @@ template <class T> midx<T> idx_flip(midx<T> &m, uint n, midx<T> *m2) {
       // loop on each object of m and flip it
       if (m.order() == 1) {
         for (intg i = 0; i < m.dim(0); ++i) {
-          idx<T> tmp = m.get(i);
+          idx<T> tmp = m.mget(i);
           tmp = idx_flip(tmp, n);
-          m2->set(tmp, i);
+          m2->mset(tmp, i);
         }
       } else if (m.order() == 2) {
         for (intg i = 0; i < m.dim(0); ++i)
           for (intg j = 0; j < m.dim(1); ++j) {
-            idx<T> tmp = m.get(i, j);
+            idx<T> tmp = m.mget(i, j);
             tmp = idx_flip(tmp, n);
-            m2->set(tmp, i, j);
+            m2->mset(tmp, i, j);
           }
       }
     }

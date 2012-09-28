@@ -20,7 +20,7 @@ ENDIF(COMMAND CMAKE_POLICY)
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts 
+SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 SET(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../tools/data")
 MESSAGE(STATUS "Data path for testing is: ${DATA_PATH}")
@@ -34,13 +34,13 @@ SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
 IF ($ENV{NOSTL})
   MESSAGE(STATUS "STL DISABLED by env variable $NOSTL=1.")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__NOSTL__")
-ENDIF ($ENV{NOSTL})   
+ENDIF ($ENV{NOSTL})
 
 # MPI
 IF ($ENV{USEMPI})
    MESSAGE(STATUS "Compiling with MPI compiler")
    SET(CMAKE_CXX_COMPILER "mpicxx")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared-intel -O3 -fPIC -align -Zp8 -axP -unroll -ip -xP -vec-report -par-report -openmp-report")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -shared-intel -O3 -fPIC -align -Zp8 -axP -unroll -ip -xP -vec-report -par-report -openmp-report -Werror=overloaded-virtual")
 ENDIF ($ENV{USEMPI})
 
 # check for required and optional external packages
@@ -74,21 +74,21 @@ ENDIF (WINDOWS)
 SET(EFENCE_FLAG "")
 IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
   FIND_PACKAGE(EFence)
-  IF (NOT EFENCE_FOUND) 
+  IF (NOT EFENCE_FOUND)
     MESSAGE("*** Please install electric-fence to catch memory-related bugs in debug mode ***\n")
-  ELSEIF (EFENCE_FOUND) 
+  ELSEIF (EFENCE_FOUND)
     SET(EFENCE_FLAG "-lefence")
-  ENDIF (NOT EFENCE_FOUND) 
+  ENDIF (NOT EFENCE_FOUND)
 
   FIND_PACKAGE(Valgrind)
-  IF (NOT VALGRIND_FOUND) 
+  IF (NOT VALGRIND_FOUND)
     MESSAGE("*** Please install valgrind to catch memory-related bugs in debug mode ***")
     MESSAGE("*** Call 'valgrind ./myprogram' at least once before committing ***\n")
-  ENDIF (NOT VALGRIND_FOUND) 
+  ENDIF (NOT VALGRIND_FOUND)
 
 # Debug compilation flags
 SET(EFENCE_FLAG "")
-SET(CMAKE_CXX_FLAGS_DEBUG 
+SET(CMAKE_CXX_FLAGS_DEBUG
   "${EFENCE_FLAG} -D__DEBUG__ -g -Wall -ggdb -gdwarf-2 -Wunused-variable -Wno-long-long -Wno-unknown-pragmas -Wno-system-headers -pedantic -O0 -fsignaling-nans -fexceptions"
   CACHE STRING "Debug builds CMAKE CXX flags " FORCE )
 
@@ -100,7 +100,7 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 # display regular flags
 MESSAGE(STATUS "Compilation flags: ${CMAKE_CXX_FLAGS}")
 
-# set include directories		
+# set include directories
 SET(LIBIDX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libidx/include)
 SET(LIBEBLEARN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libeblearn/include)
 

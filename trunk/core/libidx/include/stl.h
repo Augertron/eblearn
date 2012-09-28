@@ -124,30 +124,17 @@ protected:
 #else // extending STL
 
 //! Operator to concatenate elements into the string.
-template<class T>
-EXPORT string& operator<<(string& e, const T v);
-template<>
-EXPORT string& operator<<(string& e, void *v);
-template<>
-EXPORT string& operator<<(string& e, const int v);
-template<>
-EXPORT string& operator<<(string& e, const uint v);
-template<>
-EXPORT string& operator<<(string& e, const char v);
-template<>
-EXPORT string& operator<<(string& e, const unsigned char v);
-template<>
-EXPORT string& operator<<(string& e, const float v);
-template<>
-EXPORT string& operator<<(string& e, const double v);
-template<>
-EXPORT string& operator<<(string& e, const long v);
-template<>
-EXPORT string& operator<<(string& e, const ebl::intg v);
-//#ifndef __ANDROID__
-template<>
-EXPORT string& operator<<(string& e, const size_t &v);
-//#endif
+template<class T> EXPORT string& operator<<(string& e, const T v);
+template<> EXPORT string& operator<<(string& e, void *v);
+template<> EXPORT string& operator<<(string& e, const int v);
+template<> EXPORT string& operator<<(string& e, const uint v);
+template<> EXPORT string& operator<<(string& e, const char v);
+template<> EXPORT string& operator<<(string& e, const unsigned char v);
+template<> EXPORT string& operator<<(string& e, const float v);
+template<> EXPORT string& operator<<(string& e, const double v);
+template<> EXPORT string& operator<<(string& e, const long v);
+template<> EXPORT string& operator<<(string& e, const ebl::intg v);
+//template<> EXPORT string& operator<<(string& e, const size_t &v);
 
 #endif
 

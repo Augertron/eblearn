@@ -37,9 +37,9 @@ namespace ebl {
 
 // supervised_trainer //////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-supervised_trainer<Tnet, Tdata, Tlabel>::
-supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m, bbparameter<Tnet> &p)
+template <typename T, typename Tdata, typename Tlabel>
+supervised_trainer<T, Tdata, Tlabel>::
+supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, bbparameter<T> &p)
     : machine(m), param(p), energy(), answers(NULL), label(NULL), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false), progress_cnt(0),
       test_running(false) {
@@ -50,23 +50,23 @@ supervised_trainer(trainable_module<Tnet,Tdata,Tlabel> &m, bbparameter<Tnet> &p)
   std::cout << "Training with: " << m.describe() << std::endl;
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-supervised_trainer<Tnet, Tdata, Tlabel>::~supervised_trainer() {
+template <typename T, typename Tdata, typename Tlabel>
+supervised_trainer<T, Tdata, Tlabel>::~supervised_trainer() {
 }
 
 // per-sample methods ////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-bool supervised_trainer<Tnet, Tdata, Tlabel>::
-test_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds,
-            state<Tnet> &label, state<Tnet> &answers, infer_param &infp) {
+template <typename T, typename Tdata, typename Tlabel>
+bool supervised_trainer<T, Tdata, Tlabel>::
+test_sample(labeled_datasource<T,Tdata,Tlabel> &ds,
+            state<T> &label, state<T> &answers, infer_param &infp) {
   machine.compute_answers(answers);
   return machine.correct(answers, label);
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-Tnet supervised_trainer<Tnet, Tdata, Tlabel>::
-train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds, gd_param &args) {
+template <typename T, typename Tdata, typename Tlabel>
+T supervised_trainer<T, Tdata, Tlabel>::
+train_sample(labeled_datasource<T,Tdata,Tlabel> &ds, gd_param &args) {
   TIMING2("until train_sample");
   machine.fprop(ds, energy);
   param.zero_b();
@@ -76,36 +76,33 @@ train_sample(labeled_datasource<Tnet,Tdata,Tlabel> &ds, gd_param &args) {
   return energy.get();
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-Tnet supervised_trainer<Tnet, Tdata, Tlabel>::
-train_sample(idx<Tnet> &sample, const Tlabel lab, gd_param &args) {
-  idx<Tnet> target = machine.get_target(lab);
+template <typename T, typename Tdata, typename Tlabel>
+T supervised_trainer<T, Tdata, Tlabel>::
+train_sample(state<T> &sample, const Tlabel lab, gd_param &args) {
+  idx<T> target = machine.get_target(lab);
   if (!label || label->get_idxdim() != target.get_idxdim()) {
     delete label;
-    label = new state<Tnet>(target.get_idxdim());
+    label = new state<T>(target.get_idxdim());
   }
-  state<Tnet> in;
-  in = sample;
-
   EDEBUG("machine: " << machine.describe());
   EDEBUG_MAT("training sample ", sample);
   EDEBUG("training with label " << lab << " target: " << target.str());
 
-  machine.fprop(in, *label, energy);
+  machine.fprop(sample, *label, energy);
   param.zero_bb();
-  machine.bprop(in, *label, energy);
+  machine.bprop(sample, *label, energy);
   param.update(args);
   return energy.get();
 }
 
 // epoch methods /////////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::
-test(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::
+test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
      infer_param &infp, uint max_test) {
   init(ds, &log, true);
-  idx<Tnet> target;
+  idx<T> target;
   uint ntest = ds.size();
   if (max_test > 0) { // limit the number of tests
     ntest = std::min(ntest, max_test);
@@ -132,17 +129,17 @@ test(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
   ds.normalize_all_probas();
   // TODO: simplify this
   std::vector<std::string*> lblstr;
-  class_datasource<Tnet,Tdata,Tlabel> *cds =
-      dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+  class_datasource<T,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
   if (cds)
     lblstr = cds->get_label_strings();
   log.display(iteration, ds.name(), &lblstr, ds.is_test());
   std::cout << std::endl;
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::
-train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::
+train(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
       gd_param &gdp, int niter, infer_param &infp,
       intg hessian_period, intg nhessian, double mu) {
   std::cout << "training on " << niter * ds.get_epoch_size();
@@ -157,7 +154,7 @@ train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
   timer t;
   init(ds, &log);
   bool selected = true, correct;
-  idx<Tnet> target;
+  idx<T> target;
   for (int i = 0; i < niter; ++i) { // niter iterations
     t.start();
     ds.init_epoch();
@@ -200,8 +197,8 @@ train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
     if (test_running) {
       std::cout << "Training running test:" << std::endl;
       // TODO: simplify this
-      class_datasource<Tnet,Tdata,Tlabel> *cds =
-	  dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>*>(&ds);
+      class_datasource<T,Tdata,Tlabel> *cds =
+	  dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
       log.display(iteration, ds.name(), cds ? cds->lblstr : NULL,
                   ds.is_test());
       std::cout << std::endl;
@@ -209,12 +206,12 @@ train(labeled_datasource<Tnet, Tdata, Tlabel> &ds, classifier_meter &log,
   }
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet,Tdata,Tlabel>::
-compute_diaghessian(labeled_datasource<Tnet,Tdata,Tlabel> &ds, intg niter,
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T,Tdata,Tlabel>::
+compute_diaghessian(labeled_datasource<T,Tdata,Tlabel> &ds, intg niter,
                     double mu) {
-  std::cout << "computing 2nd order derivatives on " << niter
-            << " samples..." << std::endl;
+  std::cout << "computing 2nd order derivatives on " << niter << " samples..."
+            << std::endl << "parameters: " << param.info() << std::endl;
   timer t;
   t.start();
   //     init(ds, NULL);
@@ -229,7 +226,10 @@ compute_diaghessian(labeled_datasource<Tnet,Tdata,Tlabel> &ds, intg niter,
     machine.bprop(ds, energy);
     param.zero_bb();
     machine.bbprop(ds, energy);
+    EDEBUG("param: " << param.info());
     param.update_ddeltax((1 / (double) niter), 1.0);
+    EDEBUG("param: " << param.info());
+    EDEBUG_MAT("param.ddeltax:", param.ddeltax);
     while (!ds.next_train()) ; // skipping all non selected samples
     ds.pretty_progress();
     update_progress(); // tell the outside world we're still running
@@ -243,15 +243,15 @@ compute_diaghessian(labeled_datasource<Tnet,Tdata,Tlabel> &ds, intg niter,
 
 // accessors /////////////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::set_iteration(int i) {
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::set_iteration(int i) {
   std::cout << "Setting iteration id to " << i << std::endl;
   iteration = i;
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::
-pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds) {
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::
+pretty(labeled_datasource<T, Tdata, Tlabel> &ds) {
   if (!prettied) {
     // pretty sizes of input/output for each module the first time
     mfidxdim d(ds.sample_mfdims());
@@ -261,15 +261,15 @@ pretty(labeled_datasource<Tnet, Tdata, Tlabel> &ds) {
   }
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::
 set_progress_file(const std::string &f) {
   progress_file = f;
   std::cout << "Setting progress file to \"" << f << "\"" << std::endl;
 }
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::update_progress() {
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::update_progress() {
   progress_cnt++;
 #if __WINDOWS__ !=1
   // tell the outside world we are still running every 20 samples
@@ -280,9 +280,9 @@ void supervised_trainer<Tnet, Tdata, Tlabel>::update_progress() {
 
 // internal methods //////////////////////////////////////////////////////////
 
-template <typename Tnet, typename Tdata, typename Tlabel>
-void supervised_trainer<Tnet, Tdata, Tlabel>::
-init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::
+init(labeled_datasource<T, Tdata, Tlabel> &ds,
      classifier_meter *log, bool new_iteration) {
   pretty(ds); // pretty info
   // if not allocated, allocate answers. answers are allocated dynamically
@@ -291,17 +291,17 @@ init(labeled_datasource<Tnet, Tdata, Tlabel> &ds,
   d.setdims(1);
   if (answers)
     delete answers;
-  answers = new state<Tnet>(d);
+  answers = new state<T>(d);
   //
   idxdim dl = ds.label_dims();
   if (label)
     delete label;
-  label = new state<Tnet>(dl);
+  label = new state<T>(dl);
   // reinit ds
   ds.seek_begin();
   if (log) { // reinit logger
-    class_datasource<Tnet,Tdata,Tlabel> *cds =
-	dynamic_cast<class_datasource<Tnet,Tdata,Tlabel>* >(&ds);
+    class_datasource<T,Tdata,Tlabel> *cds =
+	dynamic_cast<class_datasource<T,Tdata,Tlabel>* >(&ds);
     log->init(cds ? cds->get_nclasses() : 0);
   }
   // new iteration

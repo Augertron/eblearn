@@ -37,53 +37,53 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // constructors & initializations
+////////////////////////////////////////////////////////////////
+// constructors & initializations
 
-  template <class Tdata>
-  grid_dataset<Tdata>::grid_dataset(const char *name_,
-				    const char *inroot_, uint cellh, uint cellw)
+template <class Tdata>
+grid_dataset<Tdata>::grid_dataset(const char *name_,
+                                  const char *inroot_, uint cellh, uint cellw)
     : dataset<Tdata>(name_, inroot_), cell_height(cellh), cell_width(cellw) {
-    cout << "Grid dataset: using each " << cellh << "x" << cellw
-	 << " patch as new sample." << endl;
-  }
+  cout << "Grid dataset: using each " << cellh << "x" << cellw
+       << " patch as new sample." << endl;
+}
 
-  template <class Tdata>
-  grid_dataset<Tdata>::~grid_dataset() {
-  }
+template <class Tdata>
+grid_dataset<Tdata>::~grid_dataset() {
+}
 
-  ////////////////////////////////////////////////////////////////
-  // data extraction
+////////////////////////////////////////////////////////////////
+// data extraction
 
-  template <class Tdata>
-  intg grid_dataset<Tdata>::count_samples() {
-    // TODO: implement finding biggest sample size and divide by number of cells
-    // and return the maximum possible number of samples
-    dataset<Tdata>::count_samples();
-    this->total_samples *= 100;
-    return this->total_samples;
-  }
+template <class Tdata>
+intg grid_dataset<Tdata>::count_samples() {
+  // TODO: implement finding biggest sample size and divide by number of cells
+  // and return the maximum possible number of samples
+  dataset<Tdata>::count_samples();
+  this->total_samples *= 100;
+  return this->total_samples;
+}
 
-  template <class Tdata>
-  bool grid_dataset<Tdata>::
-  add_data(idx<Tdata> &d, const string &class_name,
-	   const char *filename, const rect<int> *r,
-	   pair<uint,uint> *center) {
-    bool ret;
+template <class Tdata>
+bool grid_dataset<Tdata>::
+add_data(idx<Tdata> &d, const string &class_name,
+         const char *filename, const rect<int> *r,
+         pair<uint,uint> *center) {
+  bool ret;
 
-    for (uint i = 0; i <= d.dim(0) - cell_height; i += cell_height) {
-      for (uint j = 0; j <= d.dim(1) - cell_width; j += cell_width) {
-	rect<int> roi(i, j, cell_height, cell_width);
-	cout << "roi: " << roi << endl;
-	t_label label = this->get_label_from_class(class_name);
-	midx<Tdata> dd(1);
-	dd.set(d, 0);
-	ret = dataset<Tdata>::add_data(dd, label, &class_name, filename, &roi);
-	dd.clear();
-      }
+  for (uint i = 0; i <= d.dim(0) - cell_height; i += cell_height) {
+    for (uint j = 0; j <= d.dim(1) - cell_width; j += cell_width) {
+      rect<int> roi(i, j, cell_height, cell_width);
+      cout << "roi: " << roi << endl;
+      t_label label = this->get_label_from_class(class_name);
+      midx<Tdata> dd(1);
+      dd.mset(d, 0);
+      ret = dataset<Tdata>::add_mdata(dd, label, &class_name, filename, &roi);
+      dd.clear();
     }
-    return true;
   }
+  return true;
+}
 
 } // end namespace ebl
 

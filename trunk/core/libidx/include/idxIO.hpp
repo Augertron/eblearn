@@ -289,7 +289,7 @@ namespace ebl {
 	  }
 	  // move fp to matrix beginning
 	  idx<T> m = load_matrix<T>(fp);
-	  all.set(m, i);
+	  all.mset(m, i);
 	}
       }
       delete f;
@@ -363,7 +363,7 @@ namespace ebl {
     if (m.order() != 1) eblerror("expected order 1");
     if (m.dim(0) < 1) eblerror("expected atleast 1 sample");
     idxdim alld(m.dim(0));
-    idx<T> e = m.get(0);
+    idx<T> e = m.mget(0);
     if (e.order() != 3) eblerror("expected only 3 channels");
     idxdim d = e.get_idxdim();
     for (uint i = 0; i < d.order(); ++i)
@@ -374,7 +374,7 @@ namespace ebl {
     // add all matrices
     for (long i = 0; i < m.dim(0); ++i) {
       idx<T> e = all.select(0,i);
-      idx_copy(m.get(i), e);
+      idx_copy(m.mget(i), e);
     }
     // save matrix
     return save_matrix(all, filename);
@@ -413,7 +413,7 @@ namespace ebl {
 	  offsets.set((int64) pos.__pos, i);
 #endif
 	  // save matrix to file
-	  idx<T> e = m.get(i);
+	  idx<T> e = m.mget(i);
 	  ret = save_matrix(e, fp);
 	  if (!ret) {
 	    std::cerr << "failed to write matrix " << e << " to " << filename << "."
@@ -435,7 +435,7 @@ namespace ebl {
 	    offsets.set((int64) pos.__pos, i, j);
 #endif
 	    // save matrix to file
-	    idx<T> e = m.get(i, j);
+	    idx<T> e = m.mget(i, j);
 	    ret = save_matrix(e, fp);
 	    if (!ret) {
 	      std::cerr << "failed to write matrix " << e << " to "
@@ -476,7 +476,7 @@ namespace ebl {
 	if (m.exists(i)) {
 	  // save matrix to file
 	  std::string fname; fname << root << "_" << id++ << ".mat";
-	  idx<T> e = m.get(i);
+	  idx<T> e = m.mget(i);
 	  if (!save_matrix(e, fname)) return false;
 	  if (print) std::cout << "saved " << fname << std::endl;
 	}
@@ -487,7 +487,7 @@ namespace ebl {
 	  if (m.exists(i, j)) {
 	    // save matrix to file
 	    std::string fname; fname << root << "_" << id++ << ".mat";
-	    idx<T> e = m.get(i, j);
+	    idx<T> e = m.mget(i, j);
 	    if (!save_matrix(e, fname)) return false;
 	    if (print) std::cout << "saved " << fname << std::endl;
 	  }
@@ -545,7 +545,7 @@ namespace ebl {
 	  offsets.set((int64) pos.__pos, i);
 #endif
 	  // save matrix to file
-	  idx<T> e = m->get(k);
+	  idx<T> e = m->mget(k);
 	  ret = save_matrix(e, fp);
 	  if (!ret) {
 	    std::cerr << "failed to write matrix " << e << " to " << filename << "."
@@ -572,7 +572,7 @@ namespace ebl {
 	    offsets.set((int64) pos.__pos, i, j);
 #endif
 	    // save matrix to file
-	    idx<T> e = m->get(k, j);
+	    idx<T> e = m->mget(k, j);
 	    ret = save_matrix(e, fp);
 	    if (!ret) {
 	      std::cerr << "failed to write matrix " << e << " to "
@@ -651,7 +651,7 @@ namespace ebl {
 	  offsets.set((int64) pos.__pos, j, k);
 #endif
 	  // save matrix into file
-	  idx<T> ee = e.get(k);
+	  idx<T> ee = e.mget(k);
 	  ret = save_matrix(ee, fp);
 	  if (!ret) {
 	    std::cerr << "failed to write matrix " << k << " to " << filename << "."

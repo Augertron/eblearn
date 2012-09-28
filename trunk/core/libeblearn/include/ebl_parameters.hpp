@@ -43,7 +43,7 @@ template <typename T> parameter<T>::parameter(intg initial_size)
   idx_clear(deltax);
   idx_clear(epsilons);
   idx_clear(ddeltax);
-  resize(0);
+  resize_parameter(0);
 }
 
 template <typename T>
@@ -70,11 +70,10 @@ parameter<T>::~parameter() {
 // resize(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
 //		intg s6, intg s7);
 template <typename T>
-void parameter<T>::resize(intg s0) {
+void parameter<T>::resize_parameter(intg s0) {
   f[0].resize(s0);
   if (!b.empty()) b[0].resize(s0);
   if (!bb.empty()) bb[0].resize(s0);
-  //gradient.resize(s0);
   deltax.resize(s0);
   epsilons.resize(s0);
   ddeltax.resize(s0);
@@ -108,7 +107,7 @@ bool parameter<T>::load_x(const char *s) {
       eblerror("Trying to load a network with " << m.dim(0)
                << " parameters into a network with " << idx<T>::dim(0)
                << " parameters");
-    this->resize(m.dim(0));
+    this->resize_parameter(m.dim(0));
     idx_copy(m, *this);
     std::cout << "Loaded weights from " << s << ": " << *this << std::endl;
     return true;
@@ -124,7 +123,7 @@ bool parameter<T>::load_x(idx<T> &m) {
              << " parameters into a network with " << idx<T>::dim(0)
              << " parameters");
   }
-  this->resize(m.dim(0));
+  this->resize_parameter(m.dim(0));
   idx_copy(m, *this);
   std::cout << "Loaded weights from " << m << ": " << *this << std::endl;
   return true;
@@ -232,7 +231,7 @@ template <typename T> bparameter<T>::bparameter(intg initial_size)
     : parameter<T>(initial_size) {
   // initialize backward tensors
   this->b.push_back(new idx<T>(this->get_idxdim()));
-  this->resize(0);
+  this->resize_parameter(0);
 }
 
 template <typename T>
@@ -257,7 +256,7 @@ template <typename T> bbparameter<T>::bbparameter(intg initial_size)
   // initialize backward tensors
   this->b.push_back(new idx<T>(this->get_idxdim()));
   this->bb.push_back(new idx<T>(this->get_idxdim()));
-  this->resize(0);
+  this->resize_parameter(0);
 }
 
 template <typename T>

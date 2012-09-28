@@ -340,7 +340,7 @@ void scalerclass_energy<T>::fprop1(idx<T> &in, idx<T> &in2, idx<T> &energy) {
     }
   }
   // l2 energy
-  l2_energy<T>::fprop(tmp, last_class_target, energy);
+  l2_energy<T>::fprop1(tmp, last_class_target, energy);
   // energy of scale component
   T e = 0;
   // penalize quadraticaly only if scale is > 0
@@ -384,7 +384,7 @@ void scalerclass_energy<T>::bprop1(state<T> &in, state<T> &in2,
     conf_offset = in.dim(0) - 1;
   // narrow inputs for regular l2 energy
   tmp = in.narrow_state(0, nclass, 0);
-  l2_energy<T>::bprop(tmp, last_class_target, energy);
+  l2_energy<T>::bprop1(tmp, last_class_target, energy);
   // get values
   T s = last_target_raw.gget(nclass);
   // penalize quadraticaly only if scale is > 0
@@ -409,7 +409,7 @@ void scalerclass_energy<T>::bbprop1(state<T> &in1, state<T> &in2,
   DEBUG_CHECK_BB(in1); // in debug mode, check backward tensors are allocated
   DEBUG_CHECK_BB(in2); // in debug mode, check backward tensors are allocated
   // backprop
-  last_target.clear_ddx();
+  last_target.zero_bb();
   // derivatives are all the same for everybody
   l2_energy<T>::bbprop1(in1, last_target, energy);
 }

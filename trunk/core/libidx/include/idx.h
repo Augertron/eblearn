@@ -417,18 +417,18 @@ class midx : public idx<idx<T>*> {
   //! Deletes all idx present and set all to NULL.
   void clear();
 
-  // accessors ///////////////////////////////////////////////////////////////
+  // accessors /////////////////////////////////////////////////////////////////
 
   //! Set matrix 'e' at position 'i0'.
-  void set(idx<T> &e, intg i0);
+  void mset(idx<T> &e, intg i0);
   //! Set matrix 'e' at position ('i0', 'i1').
-  void set(idx<T> &e, intg i0, intg i1);
+  void mset(idx<T> &e, intg i0, intg i1);
   //! Get matrix at position 'i0'. This throws an error if matrix does not
   //! exist. Use exists() to verify it does.
-  idx<T> get(intg i0);
+  idx<T> mget(intg i0);
   //! Get matrix at position ('i0', 'i1'). This throws an error if matrix
   //! does not exist. Use exists() to verify it does.
-  idx<T> get(intg i0, intg i1);
+  idx<T> mget(intg i0, intg i1);
 
   //! Return a narrowed version of current midx.
   midx<T> narrow(int d, intg s, intg o);

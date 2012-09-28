@@ -50,7 +50,7 @@ template <typename T2, typename T> T2 idx_sum(idx<T> &m);
                << " bytes (probably out of memory)");		\
   }
 
-template <class T> void idx<T>::growstorage_chunk(intg s_chunk){
+template <typename T> void idx<T>::growstorage_chunk(intg s_chunk){
   if (storage->growsize_chunk(spec.footprint(), s_chunk) < 0)
     eblerror("cannot grow storage to " << spec.footprint()
              << " bytes (probably out of memory)");
@@ -58,7 +58,7 @@ template <class T> void idx<T>::growstorage_chunk(intg s_chunk){
 
 // idx basic constructors/destructor ///////////////////////////////////////////
 
-template <class T> idx<T>::~idx() {
+template <typename T> idx<T>::~idx() {
   DEBUG_LOW("idx::destructor " << long(this));
   storage->unlock();
   if (this->pidxdim)
@@ -66,21 +66,21 @@ template <class T> idx<T>::~idx() {
 }
 
 // fake constructor called by idxlooper constructor
-template <class T> idx<T>::idx(dummyt *dummy) {
+template <typename T> idx<T>::idx(dummyt *dummy) {
   spec.dim = NULL;
   spec.mod = NULL;
   storage = NULL;
   pidxdim = NULL;
 }
 
-template <class T> idx<T>::idx(const idx<T>& other)
+template <typename T> idx<T>::idx(const idx<T>& other)
     : spec(other.spec), storage(other.storage), pidxdim(NULL) {
   storage->lock();
 }
 
 // constructors initialized with an array //////////////////////////////////////
 
-template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
+template <typename T> idx<T>::idx(const T *mat, intg s0, intg s1)
     : spec(0, s0, s1), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
@@ -88,7 +88,7 @@ template <class T> idx<T>::idx(const T *mat, intg s0, intg s1)
   memcpy(idx_ptr(), mat, nelements() * sizeof (T));
 }
 
-template <class T> idx<T>::idx(const T *mat, intg s0, intg s1, intg s2)
+template <typename T> idx<T>::idx(const T *mat, intg s0, intg s1, intg s2)
     : spec(0, s0, s1, s2), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
@@ -98,34 +98,34 @@ template <class T> idx<T>::idx(const T *mat, intg s0, intg s1, intg s2)
 
 // specific constructors for each number of dimensions /////////////////////////
 
-template <class T> idx<T>::idx() : spec(0), pidxdim(NULL) {
+template <typename T> idx<T>::idx() : spec(0), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
   storage->lock();
 }
 
-template <class T> idx<T>::idx(intg size0)
+template <typename T> idx<T>::idx(intg size0)
     : spec(0,size0), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
   storage->lock();
 }
 
-template <class T> idx<T>::idx(intg size0, intg size1)
+template <typename T> idx<T>::idx(intg size0, intg size1)
     : spec(0,size0,size1), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
   storage->lock();
 }
 
-template <class T> idx<T>::idx(intg size0, intg size1, intg size2)
+template <typename T> idx<T>::idx(intg size0, intg size1, intg size2)
     : spec(0,size0,size1,size2), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
             intg s6, intg s7)
     : spec(0,s0,s1,s2,s3,s4,s5,s6,s7), pidxdim(NULL) {
@@ -134,7 +134,7 @@ idx<T>::idx(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
   storage->lock();
 }
 
-template <class T> idx<T>::idx(const idxdim &d)
+template <typename T> idx<T>::idx(const idxdim &d)
     : spec(0, d), pidxdim(NULL) {
   storage = new srg<T>();
   growstorage();
@@ -143,7 +143,7 @@ template <class T> idx<T>::idx(const idxdim &d)
 
 // constructors from existing srg and offset ///////////////////////////////////
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, idxspec &s) : pidxdim(NULL) {
   spec = s;
   if (sg) // use passed srg if not null
@@ -154,7 +154,7 @@ idx<T>::idx(srg<T> *sg, idxspec &s) : pidxdim(NULL) {
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, intg n, intg *dims, intg *mods)
     : spec(sg ? o : 0, n, dims, mods), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -165,7 +165,7 @@ idx<T>::idx(srg<T> *sg, intg o, intg n, intg *dims, intg *mods)
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o)
     : spec(sg ? o : 0), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -176,7 +176,7 @@ idx<T>::idx(srg<T> *sg, intg o)
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, intg size0)
     : spec(sg ? o : 0, size0), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -187,7 +187,7 @@ idx<T>::idx(srg<T> *sg, intg o, intg size0)
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1)
     : spec(sg ? o : 0, size0, size1), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -198,7 +198,7 @@ idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1)
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1, intg size2)
     : spec(sg ? o : 0, size0, size1, size2), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -209,7 +209,7 @@ idx<T>::idx(srg<T> *sg, intg o, intg size0, intg size1, intg size2)
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, intg s0, intg s1, intg s2, intg s3,
             intg s4, intg s5, intg s6, intg s7)
     : spec(sg ? o : 0, s0, s1, s2, s3, s4, s5, s6, s7), pidxdim(NULL) {
@@ -221,7 +221,7 @@ idx<T>::idx(srg<T> *sg, intg o, intg s0, intg s1, intg s2, intg s3,
   storage->lock();
 }
 
-template <class T>
+template <typename T>
 idx<T>::idx(srg<T> *sg, intg o, const idxdim &d)
     : spec(sg ? o : 0, d), pidxdim(NULL) {
   if (sg) // use passed srg if not null
@@ -234,13 +234,13 @@ idx<T>::idx(srg<T> *sg, intg o, const idxdim &d)
 
 // operators ///////////////////////////////////////////////////////////////////
 
-template <class T>
+template <typename T>
 idx<T>& idx<T>::operator=(T other){
   eblerror("Forbidden idx assignment: it can only be assigned another idx");
   return *this;
 }
 
-template <class T>
+template <typename T>
 idx<T>& idx<T>::operator=(const idx<T>& other) {
   if (this != &other) { // protect against invalid self-assignment
     srg<T> *tmp = NULL;
@@ -257,14 +257,14 @@ idx<T>& idx<T>::operator=(const idx<T>& other) {
   return *this;
 }
 
-template <class T>
+template <typename T>
 idx<T> idx<T>::operator[](const intg i) {
   return this->select(0,i);
 }
 
 // resize methods //////////////////////////////////////////////////////////////
 
-template <class T>
+template <typename T>
 intg idx<T>::setoffset(intg o) {
   if (o<0) { eblerror("idx::setoffset: offset must be positive"); }
   if (o > spec.offset) {
@@ -277,12 +277,12 @@ intg idx<T>::setoffset(intg o) {
   }
 }
 
-template <class T>
+template <typename T>
 void idx<T>::add_offset(intg o) {
   spec.add_offset(o);
 }
 
-template <class T>
+template <typename T>
 void idx<T>::resize(intg s0, intg s1, intg s2, intg s3,
                     intg s4, intg s5, intg s6, intg s7) {
   if (!same_dim(s0,s1,s2,s3,s4,s5,s6,s7)) { // save some time
@@ -291,7 +291,7 @@ void idx<T>::resize(intg s0, intg s1, intg s2, intg s3,
   }
 }
 
-template <class T>
+template <typename T>
 void idx<T>::resize(const idxdim &d) {
   if (d.order() > spec.ndim)
     eblerror("cannot change order of idx in resize while trying to resize "
@@ -302,7 +302,7 @@ void idx<T>::resize(const idxdim &d) {
   }
 }
 
-template <class T>
+template <typename T>
 void idx<T>::resize1(intg dimn, intg size) {
   if (dimn > spec.ndim) eblerror("cannot change order of idx in resize");
   if (spec.dim[dimn] != size) {
@@ -311,7 +311,7 @@ void idx<T>::resize1(intg dimn, intg size) {
   }
 }
 
-template <class T>
+template <typename T>
 void idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3,
                           intg s4, intg s5, intg s6, intg s7) {
   spec.resize(s0,s1,s2,s3,s4,s5,s6,s7);
@@ -320,7 +320,7 @@ void idx<T>::resize_chunk(intg s_chunk, intg s0, intg s1, intg s2, intg s3,
 
 // return true if this idx has same order and dimensions as idxdim d.
 // i.e. if all their dimensions are equal (regardless of strides).
-template <class T>
+template <typename T>
 bool idx<T>::same_dim(const idxdim &d) {
   if (spec.ndim != d.order())
     return false;
@@ -332,37 +332,37 @@ bool idx<T>::same_dim(const idxdim &d) {
 
 // idx manipulation methods ////////////////////////////////////////////////////
 
-template <class T> idx<T> idx<T>::select(int d, intg i) {
+template <typename T> idx<T> idx<T>::select(int d, intg i) {
   idx<T> r(storage,spec.getoffset());
   spec.select_into(&r.spec, d, i);
   return r;
 }
 
-template <class T> idx<T> idx<T>::narrow(int d, intg s, intg o) {
+template <typename T> idx<T> idx<T>::narrow(int d, intg s, intg o) {
   idx<T> r(storage,spec.getoffset());
   spec.narrow_into(&r.spec, d, s, o);
   return r;
 }
 
-template <class T> idx<T> idx<T>::transpose(int d1, int d2) {
+template <typename T> idx<T> idx<T>::transpose(int d1, int d2) {
   idx<T> r(storage,spec.getoffset());
   spec.transpose_into(&r.spec, d1, d2);
   return r;
 }
 
-template <class T> idx<T> idx<T>::transpose(int *p) {
+template <typename T> idx<T> idx<T>::transpose(int *p) {
   idx<T> r(storage,spec.getoffset());
   spec.transpose_into(&r.spec, p);
   return r;
 }
 
-template <class T> idx<T> idx<T>::unfold(int d, intg k, intg s) {
+template <typename T> idx<T> idx<T>::unfold(int d, intg k, intg s) {
   idx<T> r(storage,spec.getoffset());
   spec.unfold_into(&r.spec, d, k, s);
   return r;
 }
 
-template <class T> idx<T> idx<T>::view_as_order(int n) {
+template <typename T> idx<T> idx<T>::view_as_order(int n) {
   if (n < 0) {
     eblerror("view_as_order: input dimension must be positive");
     return *this;
@@ -402,7 +402,7 @@ template <class T> idx<T> idx<T>::view_as_order(int n) {
   }
 }
 
-template <class T> idx<T> idx<T>::shift_dim(int d, int pos) {
+template <typename T> idx<T> idx<T>::shift_dim(int d, int pos) {
   int tr[MAXDIMS];
   for (int i = 0, j = 0; i < spec.ndim; ++i) {
     if (i == pos)
@@ -418,7 +418,7 @@ template <class T> idx<T> idx<T>::shift_dim(int d, int pos) {
 
 // return true if this idx has same order and dimensions s0 .. s7
 // i.e. if all their dimensions are equal (regardless of strides).
-template <class T>
+template <typename T>
 bool idx<T>::same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
                       intg s6, intg s7) {
   if ((s7 >= 0) && (spec.ndim < 8)) return false;
@@ -440,7 +440,7 @@ bool idx<T>::same_dim(intg s0, intg s1, intg s2, intg s3, intg s4, intg s5,
   return true;
 }
 
-template <class T> idxdim& idx<T>::get_idxdim() {
+template <typename T> idxdim& idx<T>::get_idxdim() {
   // allocating idxdim on the fly creates a memory leak somehow
   // we temporarly keep an idxdim around in all idxs (more expensive in mem)
   // TODO: change idxdim to be contained in spec, replacing the dims of spec
@@ -456,7 +456,7 @@ template <class T> idxdim& idx<T>::get_idxdim() {
   return idd;
 }
 
-template <class T> idxdim idx<T>::get_idxdim() const {
+template <typename T> idxdim idx<T>::get_idxdim() const {
   idxdim d;
   d.setdims(spec);
   return d;
@@ -464,34 +464,34 @@ template <class T> idxdim idx<T>::get_idxdim() const {
 
 // data access methods ///////////////////////////////////////////////////////
 
-template <class T> T* idx<T>::idx_ptr() {
+template <typename T> T* idx<T>::idx_ptr() {
   return storage->data + spec.offset;
 }
 
-template <class T> const T* idx<T>::idx_ptr() const {
+template <typename T> const T* idx<T>::idx_ptr() const {
   return storage->data + spec.offset;
 }
 
-template <class T> intg* idx<T>::mod_ptr() {
+template <typename T> intg* idx<T>::mod_ptr() {
   return spec.mod;
 }
 
 // pointer access methods ////////////////////////////////////////////////////
 
-template <class T> T* idx<T>::ptr() {
+template <typename T> T* idx<T>::ptr() {
   if (spec.ndim != 0) eblerror("not an idx0");
   return storage->data + spec.offset;
 }
 
 // get element of idx1
-template <class T> T *idx<T>::ptr(intg i0) {
+template <typename T> T *idx<T>::ptr(intg i0) {
   idx_checkorder1(*this, 1);
   if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
   return storage->data + spec.offset + i0*spec.mod[0];
 }
 
 // get element of idx2
-template <class T> T *idx<T>::ptr(intg i0, intg i1) {
+template <typename T> T *idx<T>::ptr(intg i0, intg i1) {
   idx_checkorder1(*this, 2);
   if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
   if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
@@ -499,7 +499,7 @@ template <class T> T *idx<T>::ptr(intg i0, intg i1) {
 }
 
 // get element of idx3
-template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2) {
+template <typename T> T *idx<T>::ptr(intg i0, intg i1, intg i2) {
   idx_checkorder1(*this, 3);
   if ((i0 < 0) || (i0 >= spec.dim[0])) eblerror("index 0 out of bound");
   if ((i1 < 0) || (i1 >= spec.dim[1])) eblerror("index 1 out of bound");
@@ -516,7 +516,7 @@ template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2) {
 
 // return a pointer to an element of an idx
 // generic function for order>3
-template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2, intg i3,
+template <typename T> T *idx<T>::ptr(intg i0, intg i1, intg i2, intg i3,
                                   intg i4, intg i5, intg i6, intg i7) {
   // check that we passed the right number of indices
   // and that they are all positive
@@ -548,7 +548,7 @@ template <class T> T *idx<T>::ptr(intg i0, intg i1, intg i2, intg i3,
 // get methods ///////////////////////////////////////////////////////////////
 
 // get element of idx0
-template <class T> T idx<T>::get() const {
+template <typename T> T idx<T>::get() const {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 0);
 #endif
@@ -556,7 +556,7 @@ template <class T> T idx<T>::get() const {
 }
 
 // get element of idx1
-template <class T> T& idx<T>::get(intg i0) const {
+template <typename T> T& idx<T>::get(intg i0) const {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 1);
   if ((i0 < 0) || (i0 >= spec.dim[0])) {
@@ -568,7 +568,7 @@ template <class T> T& idx<T>::get(intg i0) const {
 }
 
 // get element of idx2
-template <class T> T idx<T>::get(intg i0, intg i1) const {
+template <typename T> T idx<T>::get(intg i0, intg i1) const {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 2);
   if (((i0 < 0) || (i0 >= spec.dim[0])) ||
@@ -581,7 +581,7 @@ template <class T> T idx<T>::get(intg i0, intg i1) const {
 }
 
 // get element of idx3
-template <class T> T idx<T>::get(intg i0, intg i1, intg i2) const {
+template <typename T> T idx<T>::get(intg i0, intg i1, intg i2) const {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 3);
   if (((i0 < 0) || (i0 >= spec.dim[0])) ||
@@ -597,13 +597,13 @@ template <class T> T idx<T>::get(intg i0, intg i1, intg i2) const {
 }
 
 // get element of an idx of any order
-template <class T> T idx<T>::get(intg i0, intg i1, intg i2, intg i3,
+template <typename T> T idx<T>::get(intg i0, intg i1, intg i2, intg i3,
                                  intg i4, intg i5, intg i6, intg i7) {
   return *ptr(i0,i1,i2,i3,i4,i5,i6,i7);
 }
 
 // get element of an idx of any order
-template <class T> T idx<T>::gget(intg i0, intg i1, intg i2, intg i3,
+template <typename T> T idx<T>::gget(intg i0, intg i1, intg i2, intg i3,
                                   intg i4, intg i5, intg i6, intg i7) {
   switch (spec.ndim) {
     case 7: i7 = -1; break ;
@@ -622,7 +622,7 @@ template <class T> T idx<T>::gget(intg i0, intg i1, intg i2, intg i3,
 // set methods /////////////////////////////////////////////////////////////////
 
 // set the element of idx0
-template <class T> T idx<T>::set(T val) {
+template <typename T> T idx<T>::set(T val) {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 0);
 #endif
@@ -630,7 +630,7 @@ template <class T> T idx<T>::set(T val) {
 }
 
 // set the element of idx1
-template <class T> T idx<T>::set(T val, intg i0) {
+template <typename T> T idx<T>::set(T val, intg i0) {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 1);
   if ((i0 < 0) || (i0 >= spec.dim[0]))
@@ -640,7 +640,7 @@ template <class T> T idx<T>::set(T val, intg i0) {
 }
 
 // set the element of idx2
-template <class T> T idx<T>::set(T val, intg i0, intg i1) {
+template <typename T> T idx<T>::set(T val, intg i0, intg i1) {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 2);
   if ((i0 < 0) || (i0 >= spec.dim[0]))
@@ -652,7 +652,7 @@ template <class T> T idx<T>::set(T val, intg i0, intg i1) {
 }
 
 // set the element of idx3
-template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
+template <typename T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
 #ifdef __DEBUG__
   idx_checkorder1(*this, 3);
   if ((i0 < 0) || (i0 >= spec.dim[0]))
@@ -667,13 +667,13 @@ template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2) {
 }
 
 // set an element of an idx of any order.
-template <class T> T idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3,
+template <typename T> T idx<T>::set(T val, intg i0, intg i1, intg i2, intg i3,
                                  intg i4, intg i5, intg i6, intg i7) {
   return *ptr(i0,i1,i2,i3,i4,i5,i6,i7) = val;
 }
 
 // get element of an idx of any order
-template <class T> T idx<T>::sset(T val, intg i0, intg i1, intg i2, intg i3,
+template <typename T> T idx<T>::sset(T val, intg i0, intg i1, intg i2, intg i3,
                                   intg i4, intg i5, intg i6, intg i7) {
   switch (spec.ndim) {
     case 7: i7 = -1; break ;
@@ -730,7 +730,7 @@ std::string idx<T>::info() {
   return s;
 }
 
-template<class T> inline T printElems_impl_cast(T val) {
+template<typename T> inline T printElems_impl_cast(T val) {
   return val;
 }
 
@@ -776,24 +776,24 @@ void idx<T>::printElems_impl(int indent, stream& out, bool newline) const {
   }
 }
 
-template <class T> void idx<T>::pretty(FILE *f) const {
+template <typename T> void idx<T>::pretty(FILE *f) const {
   fprintf(f,"idx: at address %ld\n",(intg)this);
   fprintf(f,"  storage=%ld (size=%ld)\n",(intg)storage,storage->size());
   spec.pretty(f);
 }
 
-template <class T> void idx<T>::pretty() const {
+template <typename T> void idx<T>::pretty() const {
   pretty(std::cout);
 }
 
-template <class T> void idx<T>::pretty(std::ostream& out) const {
+template <typename T> void idx<T>::pretty(std::ostream& out) const {
   out << "idx: at address " << (intg)this << "\n";
   out << "  storage=" <<  (intg)storage << "(size=" << storage->size();
   out << "\n";
   spec.pretty(out);
 }
 
-template <class T> int idx<T>::fdump(std::ostream &f) {
+template <typename T> int idx<T>::fdump(std::ostream &f) {
   if (spec.ndim == 0)
     f << "[@ " << this->get() << "]" << std::endl;
   else if (spec.ndim == 1) {
@@ -1038,8 +1038,10 @@ void midx<T>::clear() {
   }
 }
 
+// legal accessors ///////////////////////////////////////////////////////
+
 template <typename T>
-void midx<T>::set(idx<T> &e, intg pos) {
+void midx<T>::mset(idx<T> &e, intg pos) {
   idx<T> *pe = idx<idx<T>*>::get(pos);
   if (pe) pe->unlock();
   pe = new idx<T>(e);
@@ -1048,7 +1050,7 @@ void midx<T>::set(idx<T> &e, intg pos) {
 }
 
 template <typename T>
-void midx<T>::set(idx<T> &e, intg i0, intg i1) {
+void midx<T>::mset(idx<T> &e, intg i0, intg i1) {
   idx<T> *pe = idx<idx<T>*>::get(i0, i1);
   if (pe) pe->unlock();
   pe = new idx<T>(e);
@@ -1060,7 +1062,7 @@ void midx<T>::set(idx<T> &e, intg i0, intg i1) {
 template <typename T> idx<T> load_matrix(FILE *fp, idx<T> *out = NULL);
 
 template <typename T>
-idx<T> midx<T>::get(intg i0) {
+idx<T> midx<T>::mget(intg i0) {
   if (fp) { // on-demand loading
     if (fseek(fp->get_fp(), offsets.get(i0), SEEK_SET)) {
       fseek(fp->get_fp(), 0, SEEK_END);
@@ -1084,7 +1086,7 @@ idx<T> midx<T>::get(intg i0) {
 }
 
 template <typename T>
-idx<T> midx<T>::get(intg i0, intg i1) {
+idx<T> midx<T>::mget(intg i0, intg i1) {
   if (fp) { // on-demand loading
     if (fseek(fp->get_fp(), offsets.get(i0, i1), SEEK_SET)) {
       fseek(fp->get_fp(), 0, SEEK_END);
@@ -1159,7 +1161,7 @@ idxdim midx<T>::get_maxdim() {
   idxdim dmax;
   for (intg i = 0; i < this->dim(0); ++i) {
     if (exists(i)) {
-      idx<T> p = this->get(i);
+      idx<T> p = this->mget(i);
       idxdim d(p);
       if (d.nelements() > dmax.nelements()) dmax = d;
     }
@@ -1206,8 +1208,8 @@ idx<T> midx<T>::pack() {
   // determine size of sub-tensor
   idx<T> sub;
   intg o = this->order();
-  if (o == 1) sub = this->get(0);
-  else if (o == 2) sub = this->get(0, 0);
+  if (o == 1) sub = this->mget(0);
+  else if (o == 2) sub = this->mget(0, 0);
   else eblerror("not implemented");
   idxdim d = this->get_idxdim();
   idxdim dsub = sub;
@@ -1220,7 +1222,7 @@ idx<T> midx<T>::pack() {
   // loop on all sub-tensors and copy them
   if (o == 1) {
     for (intg i = 0; i < this->dim(0); ++i) {
-      idx<T> tmp = this->get(i);
+      idx<T> tmp = this->mget(i);
       if (tmp.get_idxdim() != dsub)
         eblerror("can't pack midx containing variable sub-tensor dimensions");
       idx<T> tgt = all.select(0, i);
@@ -1230,7 +1232,7 @@ idx<T> midx<T>::pack() {
     for (intg i = 0; i < this->dim(0); ++i) {
       idx<T> suball = all.select(0, i);
       for (intg j = 0; j < this->dim(1); ++j) {
-        idx<T> tmp = this->get(i, j);
+        idx<T> tmp = this->mget(i, j);
         if (tmp.get_idxdim() != dsub)
           eblerror("can't pack midx containing variable "
                    << "sub-tensor dimensions");

@@ -84,7 +84,8 @@ template <typename T> class flat_merge_module : public module_1_1<T> {
   //! Returns the scales for each input.
   virtual mfidxdim get_scales();
   //! Returns a deep copy of current module.
-  virtual flat_merge_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Set offsets to be applied to each input scale.
   virtual void set_offsets(std::vector<std::vector<int> > &off);
   //! Set strides.
@@ -151,9 +152,8 @@ template <typename T> class linear_merge_module : public flat_merge_module<T> {
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a deep copy of current module.
-  //! \param p If NULL, reuse current parameter space, otherwise allocate new
-  //!   weights on parameter 'p'.
-  virtual linear_merge_module<T>* copy(parameter<T> *p = NULL);
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
   // class variables /////////////////////////////////////////////////////////
  private:
@@ -227,7 +227,8 @@ template <typename T> class merge_module : public module_1_1<T> {
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a deep copy of current module.
-  virtual merge_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
   virtual mfidxdim fprop_size(mfidxdim &isize);
@@ -269,7 +270,8 @@ template <typename T> class interlace_module : public module_1_1<T> {
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
   //! Returns a deep copy of current module.
-  virtual interlace_module<T>* copy();
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
  private:
   uint stride; //! The interlacing stride.
 };

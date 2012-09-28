@@ -98,14 +98,14 @@ uint pairtree::get_var_id(const char *var) {
   return get_var_id(s);
 }
 
-string& pairtree::get_var(uint id) {
+std::string& pairtree::get_var(uint id) {
   if (id >= vars_vector.size())
     eblerror("trying to access elements " << id << " of vector of size "
              << vars_vector.size() << ": " << vars_vector);
   return vars_vector[id];
 }
 
-string& pairtree::get_val(uint id) {
+std::string& pairtree::get_val(uint id) {
   if (id >= vals_vector.size())
     eblerror("trying to access elements " << id << " of vector of size "
              << vals_vector.size() << ": " << vals_vector);
@@ -133,21 +133,21 @@ std::list<uint> pairtree::to_varid_list(std::list<std::string> &l) {
   return ret;
 }
 
-list<string> pairtree::to_vars(list<uint> &ids) {
-  list<string> ret;
+list<std::string> pairtree::to_vars(list<uint> &ids) {
+  list<std::string> ret;
   for (list<uint>::iterator i = ids.begin(); i != ids.end(); ++i)
     ret.push_back(get_var(*i));
   return ret;
 }
 
-map<string,string> pairtree::to_pairs(map<uint,uint> &p) {
-  map<string,string> ret;
+map<std::string,std::string> pairtree::to_pairs(map<uint,uint> &p) {
+  map<std::string,std::string> ret;
   for (map<uint,uint>::iterator i = p.begin(); i != p.end(); ++i)
     ret[get_var(i->first)] = get_val(i->second);
   return ret;
 }
 
-void pairtree::add(const string &var, string &val) {
+void pairtree::add(const std::string &var, std::string &val) {
   vars[get_var_id(var)] = get_val_id(val);
 }
 

@@ -169,11 +169,11 @@ void ms_module<T>::forget(forget_param_linear& fp) {
 //////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-fidxdim ms_module<T>::fprop_size(fidxdim &isize) {
+fidxdim ms_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim d = isize;
   // use 1st pipe as base size
   module_1_1<T> *p0 = pipes[0];
-  d = p0->fprop_size(d);
+  d = p0->fprop1_size(d);
   return d;
 }
 
@@ -201,7 +201,7 @@ mfidxdim ms_module<T>::fprop_size(mfidxdim &isize) {
 }
 
 template <typename T>
-fidxdim ms_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim ms_module<T>::bprop1_size(const fidxdim &osize) {
   fidxdim d = osize;
   std::vector<fidxdim> os;
   os.assign(pipes.size(), d);
@@ -212,7 +212,7 @@ fidxdim ms_module<T>::bprop_size(const fidxdim &osize) {
   for (uint i = 0; i < pipes.size(); ++i) {
     module_1_1<T> *p = pipes[i];
     fidxdim &pi = os[i];
-    if (p) pi = p->bprop_size(pi);
+    if (p) pi = p->bprop1_size(pi);
   }
   return d;
 }
@@ -276,7 +276,7 @@ std::string ms_module<T>::pretty(idxdim &isize) {
   idxdim is(isize);
   fidxdim fis(isize);
   s << pipes[0]->pretty(is);
-  fis = pipes[0]->fprop_size(fis);
+  fis = pipes[0]->fprop1_size(fis);
   return s;
 }
 
@@ -449,16 +449,16 @@ msc_module<T>::~msc_module() {
 }
 
 template <typename T>
-fidxdim msc_module<T>::fprop_size(fidxdim &isize) {
+fidxdim msc_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim d = isize;
   // use 1st pipe as base size
   module_1_1<T> *p0 = pipes[0];
-  d = p0->fprop_size(d);
+  d = p0->fprop1_size(d);
   return d;
 }
 
 template <typename T>
-fidxdim msc_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim msc_module<T>::bprop1_size(const fidxdim &osize) {
   fidxdim d = osize;
   std::vector<fidxdim> os;
   os.assign(pipes.size(), d);
@@ -469,7 +469,7 @@ fidxdim msc_module<T>::bprop_size(const fidxdim &osize) {
   for (uint i = 0; i < pipes.size(); ++i) {
     module_1_1<T> *p = pipes[i];
     fidxdim &pi = os[i];
-    pi = p->bprop_size(pi);
+    pi = p->bprop1_size(pi);
   }
   return d;
 }

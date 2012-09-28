@@ -194,7 +194,7 @@ void ebl_preprocessing_test::test_resizing() {
   s = "laplacian (glob norm) ";
   for (uint i = 0; i < outs1.dim(0); ++i) {
     if (outs1.exists(i)) {
-      idx<float> layer = outs1.get(i);
+      idx<float> layer = outs1.mget(i);
       // idx<float> layer2 = outs2.get(i);
       // cout << "************** idx_sqrdist outs1 outs2 " << idx_sqrdist(layer, layer2) << endl;
       s << layer;
@@ -216,7 +216,7 @@ void ebl_preprocessing_test::test_resizing() {
   s << "pyramid (" << kd5 << ") ";
   for (uint i = 0; i < outs2.dim(0); ++i) {
     if (outs2.exists(i)) {
-      idx<float> layer = outs2.get(i);
+      idx<float> layer = outs2.mget(i);
       s << layer;
       gui << at(h - 15, w) << s;
       draw_matrix(layer, NULL, h, w, 1, 1, (float)-1, (float)1);
@@ -232,7 +232,7 @@ void ebl_preprocessing_test::test_resizing() {
   s << "pyramid (" << kd << ") ";
   for (uint i = 0; i < outs3.dim(0); ++i) {
     if (outs3.exists(i)) {
-      idx<float> layer = outs3.get(i);
+      idx<float> layer = outs3.mget(i);
       s << layer;
       gui << at(h - 15, w) << s;
       draw_matrix(layer, NULL, h, w, 1, 1, (float)-1, (float)1);
@@ -443,7 +443,7 @@ void ebl_preprocessing_test::test_preprocessing_modules() {
       // loop on layers
       for (uint k = 0; k < out.dim(0); ++k) {
 	if (!out.exists(k)) continue ;
-	idx<T> o = out.get(k);
+	idx<T> o = out.mget(k);
 	o = o.shift_dim(0, 2);
 	gui << at(h, w) << o;
 	gui << at(h + 15, w) << "sum:" << idx_sum(o);

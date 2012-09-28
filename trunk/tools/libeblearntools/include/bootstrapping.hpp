@@ -242,8 +242,8 @@ void bootstrapping<T>::save_dataset(svector<midx<T> > &samples,
     bbox &b = bb[i];
     // loop on sample's submatrix
     for (intg j = 0; j < sample.dim(0); ++j) {
-      idx<T> layer = sample.get(j);
-      all.set(layer, i, j);
+      idx<T> layer = sample.mget(j);
+      all.mset(layer, i, j);
     }
     // set scale & label
     scales.set(b.oscale_index, i);

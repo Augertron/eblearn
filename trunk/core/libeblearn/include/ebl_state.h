@@ -130,7 +130,7 @@ template <typename T> class state : public idx<T> {
   // resize methods ////////////////////////////////////////////////////////////
 
   //! Resize f[0], b[0] and bb[0] (if they exist). Order cannot be changed.
-  virtual void resize(intg s0 = -1, intg s1 = -1, intg s2 = -1, intg s3 = -1,
+  virtual void resize(intg s0, intg s1 = -1, intg s2 = -1, intg s3 = -1,
                       intg s4 = -1, intg s5 = -1, intg s6 = -1, intg s7 = -1);
   //! Resizes with dimensions contained in an idxdim. order cannot be changed.
   //! \param n Set the number of tensors of out to n if > 0.
@@ -225,10 +225,6 @@ template <typename T> class state : public idx<T> {
   //! Returns a matrix pointing to internal forward tensors.
   virtual midx<T> shallow_copy_midx();
 
-  //! Assignment operator, involves assignment of internal idx
-  //! (avoid using this in critical loops).
-  virtual state<T>& operator=(const state<T>& other);
-
   //! Narrows this multi-state's x buffer given multiple input 'regions'
   //! and puts result in multi-idx 'all'.
   virtual void get_midx(mfidxdim &regions, midx<T> &all);
@@ -283,7 +279,8 @@ template <typename T> class state : public idx<T> {
 
   // friends ///////////////////////////////////////////////////////////////////
 
-  template <typename T2> friend void state_copy(state<T2> &in, state<T2> &out);
+  template <typename T2, typename T3>
+  friend void state_copy(state<T2> &in, state<T3> &out);
 
   // member variables //////////////////////////////////////////////////////////
  public:
@@ -297,7 +294,8 @@ template <typename T> class state : public idx<T> {
 // state operations //////////////////////////////////////////////////////////
 
 //! Performs a deep copy of in's tensor to out's tensors.
-template <typename T> void state_copy(state<T> &in, state<T> &out);
+template <typename T, typename T2>
+void state_copy(state<T> &in, state<T2> &out);
 
 // stream operators ////////////////////////////////////////////////////////////
 

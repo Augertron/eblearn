@@ -146,7 +146,7 @@ void rgb_to_ynuv_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_ynuv_module<T>* rgb_to_ynuv_module<T>::copy() {
+module_1_1<T>* rgb_to_ynuv_module<T>::copy(parameter<T> *p) {
   return new rgb_to_ynuv_module<T>(this->normker, this->mirror,
                                    this->norm_mode, this->globnorm);
 }
@@ -193,7 +193,7 @@ void rgb_to_ynuvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_ynuvn_module<T>* rgb_to_ynuvn_module<T>::copy() {
+module_1_1<T>* rgb_to_ynuvn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_ynuvn_module<T>(this->normker, this->mirror,
                                            this->norm_mode, this->globnorm);
 }
@@ -244,7 +244,7 @@ void rgb_to_ynunvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_ynunvn_module<T>* rgb_to_ynunvn_module<T>::copy() {
+module_1_1<T>* rgb_to_ynunvn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_ynunvn_module<T>(this->normker, this->mirror,
                                             this->norm_mode, this->globnorm);
 }
@@ -288,7 +288,7 @@ void rgb_to_yuv_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_yuv_module<T>* rgb_to_yuv_module<T>::copy() {
+module_1_1<T>* rgb_to_yuv_module<T>::copy(parameter<T> *p) {
   return new rgb_to_yuv_module<T>(this->globnorm);
 }
 
@@ -331,7 +331,7 @@ void rgb_to_yuvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_yuvn_module<T>* rgb_to_yuvn_module<T>::copy() {
+module_1_1<T>* rgb_to_yuvn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_yuvn_module<T>(this->normker, this->mirror,
                                           this->norm_mode, this->globnorm);
 }
@@ -359,7 +359,7 @@ void rgb_to_rgb_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_rgb_module<T>* rgb_to_rgb_module<T>::copy() {
+module_1_1<T>* rgb_to_rgb_module<T>::copy(parameter<T> *p) {
   return new rgb_to_rgb_module<T>(this->globnorm);
 }
 
@@ -387,7 +387,7 @@ void rgb_to_rgbn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_rgbn_module<T>* rgb_to_rgbn_module<T>::copy() {
+module_1_1<T>* rgb_to_rgbn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_rgbn_module<T>(this->normker, this->mirror,
                                           this->norm_mode, this->globnorm);
 }
@@ -421,7 +421,7 @@ void rgb_to_y_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_y_module<T>* rgb_to_y_module<T>::copy() {
+module_1_1<T>* rgb_to_y_module<T>::copy(parameter<T> *p) {
   return new rgb_to_y_module<T>(this->globnorm);
 }
 
@@ -462,7 +462,7 @@ void rgb_to_yn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_yn_module<T>* rgb_to_yn_module<T>::copy() {
+module_1_1<T>* rgb_to_yn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_yn_module<T>(this->normker, this->mirror,
                                         this->norm_mode, this->globnorm);
 }
@@ -490,7 +490,7 @@ void y_to_yp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-y_to_yp_module<T>* y_to_yp_module<T>::copy() {
+module_1_1<T>* y_to_yp_module<T>::copy(parameter<T> *p) {
   return new y_to_yp_module<T>(this->normker, this->mirror,
                                       this->norm_mode, this->globnorm);
 }
@@ -532,7 +532,7 @@ void bgr_to_ypuv_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-bgr_to_ypuv_module<T>* bgr_to_ypuv_module<T>::copy() {
+module_1_1<T>* bgr_to_ypuv_module<T>::copy(parameter<T> *p) {
   return new bgr_to_ypuv_module<T>(this->normker, this->mirror,
                                           this->norm_mode, this->globnorm);
 }
@@ -568,7 +568,7 @@ void bgr_to_yp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-bgr_to_yp_module<T>* bgr_to_yp_module<T>::copy() {
+module_1_1<T>* bgr_to_yp_module<T>::copy(parameter<T> *p) {
   return new bgr_to_yp_module<T>(this->normker, this->mirror,
                                         this->norm_mode, this->globnorm);
 }
@@ -604,7 +604,7 @@ void rgb_to_hp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-rgb_to_hp_module<T>* rgb_to_hp_module<T>::copy() {
+module_1_1<T>* rgb_to_hp_module<T>::copy(parameter<T> *p) {
   return new rgb_to_hp_module<T>(this->normker, this->mirror,
                                         this->norm_mode, this->globnorm);
 }
@@ -977,7 +977,7 @@ void resize_module<T>::fprop(state<T> &in, midx<T> &out) {
   idx<T> tmp(d);
   // fprop
   this->fprop1(in, tmp);
-  out.set(tmp, 0);
+  out.mset(tmp, 0);
 }
 
 template <typename T>
@@ -989,7 +989,7 @@ void resize_module<T>::bbprop(state<T> &in, state<T> &out){
 }
 
 template <typename T>
-resize_module<T>* resize_module<T>::copy() {
+module_1_1<T>* resize_module<T>::copy(parameter<T> *p) {
   return new resize_module(size, mode, dzpad);
 }
 
@@ -1040,7 +1040,7 @@ mfidxdim resize_module<T>::fprop_size(mfidxdim &isize) {
 }
 
 template <typename T>
-fidxdim resize_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim resize_module<T>::bprop1_size(const fidxdim &osize) {
   msize.clear();
   msize.push_back(osize);
   return osize;
@@ -1210,7 +1210,7 @@ void resizepp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   lout.f.clear();
   lout.add_f_new(out);
   lastout = &lout;
-  copy_outputs(lout);
+  this->copy_outputs(lout);
 }
 
 template <typename T>
@@ -1227,13 +1227,13 @@ void resizepp_module<T>::fprop(state<T> &in, midx<T> &out) {
   idx<T> tmp(d);
   // fprop
   this->fprop1(in, tmp);
-  out.set(tmp, 0);
+  out.mset(tmp, 0);
 }
 
 template <typename T>
-resizepp_module<T>* resizepp_module<T>::copy() {
+module_1_1<T>* resizepp_module<T>::copy(parameter<T> *p) {
   module_1_1<T> *newpp = NULL;
-  if (pp) newpp = (module_1_1<T>*) pp->copy();
+  if (pp) newpp = pp->copy(p);
   return new resizepp_module(size, mode, newpp, true, dzpad);
 }
 
@@ -1334,7 +1334,7 @@ void fovea_module<T>::fprop(state<T> &in, midx<T> &out) {
   this->fprop1(in, mout);
   // convert mout (which is a vector) into out (midx)
   for (uint i = 0; i < mout.f.size(); ++i)
-    out.set(mout.f[i], i);
+    out.mset(mout.f[i], i);
 }
 
 template <typename T>
@@ -1556,7 +1556,7 @@ void laplacian_pyramid_module<T>::fprop(state<T> &in, state<T> &out) {
   fprop(in, outs);
   out.f.clear();
   for (uint i = 0; i < outs.dim(0); ++i)
-    out.f.push_back(new idx<T>(outs.get(i)));
+    out.f.push_back(new idx<T>(outs.mget(i)));
   // adding zero borders if defined
   if (zpad) {
     zpad->fprop(out, zpad_out);
@@ -1716,7 +1716,7 @@ void laplacian_pyramid_module<T>::fprop(state<T> &in, midx<T> &out) {
       idx<T> high = highpass(im, blurred_high, tgt, inr, scale == 0);
       LOCAL_TIMING2_REPORT("highpass");
       // assign high pass to output
-      out.set(high, scale + nscales * pyr);
+      out.mset(high, scale + nscales * pyr);
       // subsample only if more scales to come
       if (scale + 1 != nscales)
         subsample(blurred, im, inr);
@@ -2027,7 +2027,7 @@ std::string jitter_module<T>::describe() {
 }
 
 template <typename T>
-jitter_module<T>* jitter_module<T>::copy() {
+module_1_1<T>* jitter_module<T>::copy(parameter<T> *p) {
   jitter_module<T> *l2 = new jitter_module<T>(this->name());
   l2->th0 = th0; l2->th1 = th1; l2->tw0 = tw0; l2->tw1 = tw1;
   l2->deg0 = deg0; l2->deg1 = deg1;

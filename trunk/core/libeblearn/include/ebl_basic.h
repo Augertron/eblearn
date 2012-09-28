@@ -71,14 +71,14 @@ template <typename T> class linear_module: public module_1_1<T> {
   virtual void normalize();
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual linear_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Copy passed weights into x component of internal weights.
   virtual void load_x(idx<T> &weights);
   //! Returns a string describing this module and its parameters.
@@ -143,14 +143,14 @@ template <typename T> class convolution_module : public module_1_1<T> {
   virtual bool resize_output(idx<T> &in, idx<T> &out, idxdim *ignore = NULL);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual convolution_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Copy passed weights into x component of internal weights.
   virtual void load_x(idx<T> &weights);
   //! Returns a string describing this module and its parameters.
@@ -222,7 +222,7 @@ class addc_module: public module_1_1<T> {
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual addc_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Copy passed weights into x component of internal weights.
   virtual void load_x(idx<T> &weights);
   //! Returns a string describing this module and its parameters.
@@ -421,10 +421,10 @@ template <typename T> class zpad_module : public module_1_1<T> {
   virtual void set_kernels(midxdim &kernels);
   //! Return dimensions that are compatible with this module.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim fprop_size(fidxdim &i_size);
+  virtual fidxdim fprop1_size(fidxdim &i_size);
   //! Return dimensions compatible with this module given output dimensions.
   //! See module_1_1_gen's documentation for more details.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Returns multiple input dimensions corresponding to output dims 'osize'.
   virtual mfidxdim fprop_size(mfidxdim &isize);
   //! Returns multiple input dimensions corresponding to output dims 'osize'.
@@ -434,7 +434,7 @@ template <typename T> class zpad_module : public module_1_1<T> {
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual zpad_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 
  protected:
   idxdim pad; //!< Current padding (top,left,bottom,right).
@@ -464,7 +464,7 @@ template <typename T> class mirrorpad_module : public zpad_module<T> {
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual mirrorpad_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
  protected:
   using zpad_module<T>::pad;
 };
@@ -560,7 +560,7 @@ template <typename T> class diag_module : public module_1_1<T> {
   virtual void fprop1_dump(idx<T> &in, idx<T> &out);
   //! resize the output based on input dimensions
   //! This returns true if output was resized/reallocated, false otherwise.
-  virtual bool resize_output(idx<T> &in, idx<T> &out);
+  virtual bool resize_output(idx<T> &in, idx<T> &out, idxdim *ignore = NULL);
   //! Copy passed weights into x component of internal weights.
   virtual void load_x(idx<T> &weights);
   //! Returns a string describing this module and its parameters.
@@ -568,7 +568,7 @@ template <typename T> class diag_module : public module_1_1<T> {
   //! Returns a deep copy of this module.
   //! \param p If NULL, reuse current parameter space, otherwise allocate new
   //!   weights on parameter 'p'.
-  virtual diag_module<T>* copy(parameter<T> *p = NULL);
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
  protected:
   state<T>	coeff;
 };
@@ -612,7 +612,7 @@ template <typename T> class back_module : public module_1_1<T> {
   //! See module_1_1_gen's documentation for more details.
   //! This module doesn't actually change the size, but we use it to know
   //! the corresponding size of 1 output pixel at this point.
-  virtual fidxdim bprop_size(const fidxdim &o_size);
+  virtual fidxdim bprop1_size(const fidxdim &o_size);
   //! Apply boxes.
   void bb(std::vector<bbox*> &boxes);
 

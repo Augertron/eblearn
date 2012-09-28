@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *   Copyright (C) 2010 by Pierre Sermanet *
  *   pierre.sermanet@gmail.com *

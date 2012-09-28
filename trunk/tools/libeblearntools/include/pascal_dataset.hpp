@@ -163,9 +163,9 @@ void pascal_dataset<Tdata>::set_max_jitter_match(float match) {
 #ifdef __BOOST__
 
 template <class Tdata>
-bool pascal_dataset<Tdata>::included(const std::string &class_name,
-                                     uint difficult, uint truncated,
-                                     uint occluded) {
+bool pascal_dataset<Tdata>::included_pascal(const std::string &class_name,
+                                            uint difficult, uint truncated,
+                                            uint occluded) {
   return dataset<Tdata>::included(class_name)
       && !(ignore_difficult && difficult)
       && !(ignore_truncated && truncated)
@@ -252,12 +252,12 @@ void pascal_dataset<Tdata>::count_sample(Node::NodeList &olist) {
   // object
   if (!usepartsonly) {
     // add object's class to dataset
-    if (included(obj_classname, difficult, truncated, occluded)) {
+    if (included_pascal(obj_classname, difficult, truncated, occluded)) {
       if (usepose && pose_found) { // append pose to class name
         obj_classname += "_";
         obj_classname += pose;
       }
-      if (included(obj_classname, difficult, truncated, occluded))
+      if (included_pascal(obj_classname, difficult, truncated, occluded))
         this->add_class(obj_classname);
     }
   }
@@ -286,7 +286,8 @@ void pascal_dataset<Tdata>::count_sample(Node::NodeList &olist) {
           if (!strcmp((*piter)->get_name().c_str(), "name")) {
             xml_get_string(*piter, part_classname);
             // found a part and its name, add it
-            if (included(part_classname, difficult, truncated, occluded)) {
+            if (included_pascal(part_classname, difficult, truncated, occluded))
+            {
               if (usepose && pose_found) { // append pose to class name
                 part_classname += "_";
                 part_classname += pose;
@@ -423,12 +424,12 @@ process_objects(const std::vector<object*> &objs, int height, int width,
           }
         }
         // process image
-        if (included(o.name, o.difficult, o.truncated, o.occluded)) {
+        if (included_pascal(o.name, o.difficult, o.truncated, o.occluded)) {
           // load image if not already loaded
           if (!img) {
             // check that image exists
             if (!file_exists(image_fullname)) {
-              std::cerr << "Error: image not found " << image_fullname << std::endl;
+              eblwarn("Error: image not found " << image_fullname);
               return false;
             }
             input_height = height;
@@ -440,7 +441,7 @@ process_objects(const std::vector<object*> &objs, int height, int width,
           if (max_jitter_match > 0)
             remove_jitter_matches(objs, iobj, max_jitter_match);
           // extract object from image
-          process_image(load_img, o, o.name, o.difficult,
+          process_mimage(load_img, o, o.name, o.difficult,
                         image_fullname, o.centroid, o.visible, cropr);
           load_img.clear();
         }
@@ -456,8 +457,8 @@ void pascal_dataset<Tdata>::load_data(const std::string &fname) {
   // load image
   dataset<Tdata>::load_data(fname);
   // check that image matches expected sizes
-  if (load_img.get(0).dim(0) != input_height
-      || load_img.get(0).dim(1) != input_width) {
+  if (load_img.mget(0).dim(0) != input_height
+      || load_img.mget(0).dim(1) != input_width) {
     eblerror( "Error: expected image of size is different \
                  from loaded image size");
   }
@@ -468,7 +469,7 @@ void pascal_dataset<Tdata>::load_data(const std::string &fname) {
 
 template <class Tdata>
 void pascal_dataset<Tdata>::
-process_image(midx<Tdata> &imgs, const rect<int> &r,
+process_mimage(midx<Tdata> &imgs, const rect<int> &r,
               std::string &obj_class, uint difficult,
               const std::string &image_filename,
               std::pair<int,int> *center, const rect<int> *visr,
@@ -476,8 +477,8 @@ process_image(midx<Tdata> &imgs, const rect<int> &r,
   t_label label = this->get_label_from_class(obj_class);
   rect<int> rr = r;
   if (ignore_bbox)
-    rr = rect<int>(0, 0, imgs.get(0).dim(0), imgs.get(0).dim(1));
-  add_data(imgs, label, &obj_class, image_filename.c_str(), &rr, center,
+    rr = rect<int>(0, 0, imgs.mget(0).dim(0), imgs.mget(0).dim(1));
+  add_mdata(imgs, label, &obj_class, image_filename.c_str(), &rr, center,
            visr, cropr, &objects);
   imgs.clear();
 }

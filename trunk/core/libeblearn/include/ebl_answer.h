@@ -82,24 +82,24 @@ class answer_module : public module_1_1<T> {
   // datasource interface for flow 1 /////////////////////////////////////////
 
   //! Produce target matrix into 'out' for training, given a datasource 'ds'.
-  virtual void fprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void fprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Back-propagates gradients. This might be useful if answer module has
   //! learnable internal parameters.
-  virtual void bprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void bprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Back-propagates 2nd derivatives. This might be useful if answer module
   //! has learnable internal parameters.
-  virtual void bbprop1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void bbprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
 
   // datasource interface for flow 2 /////////////////////////////////////////
 
   //! Produce target matrix into 'out' for training, given a datasource 'ds'.
-  virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Back-propagates gradients. This might be useful if answer module has
   //! learnable internal parameters.
-  virtual void bprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void bprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Back-propagates 2nd derivatives. This might be useful if answer module
   //! has learnable internal parameters.
-  virtual void bbprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void bbprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
 
   ////////////////////////////////////////////////////////////////////////////
   //! Returns true if 'answer' matches with 'label'.
@@ -148,8 +148,7 @@ class class_answer : public answer_module<T,Tds1,Tds2> {
   virtual void fprop1(idx<T> &in, idx<T> &out);
   //! Custom transformation of flow 2: datasource's labels are converted
   //! to target vectors and placed in 'out'.
-  virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
-                      state<T> &out);
+  virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Returns true if 'answer' matches with 'label'.
   virtual bool correct(state<T> &answer, state<T> &label);
   //! Update the 'log' according to this type of answer module.
@@ -217,8 +216,7 @@ class scalerclass_answer : public class_answer<T,Tds1,Tds2> {
   //! in this order: class id and confidence.
   virtual void fprop1(idx<T> &in, idx<T> &out);
 
-  virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
-                      state<T> &out);
+  virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Update the 'log' according to this type of answer module.
   virtual void update_log(classifier_meter &log, intg age, idx<T> &energy,
                           idx<T> &answer, idx<T> &label, idx<T> &target,
@@ -271,8 +269,7 @@ class scaler_answer : public answer_module<T,Tds1,Tds2> {
 
   //! Copy a single target value into 'out' given datasource 'ds'.
   //! If negative class, target value is 0, the scale otherwise.
-  virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds,
-                      state<T> &out);
+  virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 
@@ -310,7 +307,7 @@ class regression_answer : public answer_module<T,Tds1,Tds2> {
   virtual void fprop1(idx<T> &in, idx<T> &out);
   //! This method simply takes the current label in 'ds' and copies it to
   //! the output without transformation.
-  virtual void fprop2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
+  virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);
   //! Returns true if the L1 distance between 'answer' and 'label' is less
   //! than internal threshold.
   virtual bool correct(state<T> &answer, state<T> &label);

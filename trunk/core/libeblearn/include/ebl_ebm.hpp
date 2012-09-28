@@ -72,7 +72,7 @@ void ebm_1<T>::bbprop(state<T> &in, state<T> &energy) {
 }
 
 template <typename T>
-void ebm_1<T>::forget(forget_param &fp) {
+void ebm_1<T>::forget(forget_param_linear &fp) {
   err_not_implemented(); }
 
 template <typename T>
@@ -86,6 +86,8 @@ ebm_module_1_1<T>::ebm_module_1_1(module_1_1<T> *m, ebm_1<T> *e,
     : module_1_1<T>(name_), module(m), ebm(e) {
   if (!m) eblerror("expected non-null module");
   if (!e) eblerror("expected non-null ebm");
+  energy.resize_b();
+  energy.resize_bb();
   energy.b[0].set((T)1.0); // d(E)/dE is always 1
   energy.bb[0].set((T)0.0); // dd(E)/dE is always 0
 }
@@ -127,13 +129,13 @@ state<T>& ebm_module_1_1<T>::get_energy() {
 }
 
 template <typename T>
-fidxdim ebm_module_1_1<T>::fprop_size(fidxdim &isize) {
-  return module->fprop_size(isize);
+fidxdim ebm_module_1_1<T>::fprop1_size(fidxdim &isize) {
+  return module->fprop1_size(isize);
 }
 
 template <typename T>
-fidxdim ebm_module_1_1<T>::bprop_size(const fidxdim &osize) {
-  return module->bprop_size(osize);
+fidxdim ebm_module_1_1<T>::bprop1_size(const fidxdim &osize) {
+  return module->bprop1_size(osize);
 }
 
 template <typename T>
@@ -147,7 +149,7 @@ std::string ebm_module_1_1<T>::describe() {
 // ebm_2 ///////////////////////////////////////////////////////////////////////
 
 template <typename T>
-ebm_2<T>::ebm_2(const char *name_) : module_1_1<T>(name_) {
+ebm_2<T>::ebm_2(const char *name_) : module_2_1<T>(name_) {
 }
 
 template <typename T>
@@ -213,9 +215,9 @@ double ebm_2<T>::infer1(state<T> &i1, state<T> &i2, state<T> &energy,
   err_not_implemented(); return 0; }
 
 template <typename T>
-double ebm_2<T>::infer2(state<T> &i1, state<T> &i2, infer_param &ip,
-                        state<T> *label, state<T> *energy) {
-  err_not_implemented(); return 0; }
+void ebm_2<T>::infer2(state<T> &i1, state<T> &i2, infer_param &ip,
+                      state<T> *energy) {
+  err_not_implemented(); }
 
 template <typename T>
 void ebm_2<T>::infer2_copy(state<T> &i1, state<T> &i2, state<T> &energy) {
@@ -252,7 +254,7 @@ void fc_ebm1<T>::bbprop1(state<T> &in, state<T> &energy) {
 }
 
 template <typename T>
-void fc_ebm1<T>::forget(forget_param &fp) {
+void fc_ebm1<T>::forget(forget_param_linear &fp) {
   fmod.forget(fp);
   fcost.forget(fp);
 }
@@ -300,10 +302,10 @@ void fc_ebm2<T>::forget(forget_param_linear &fp) {
 }
 
 template <typename T>
-double fc_ebm2<T>::infer2(state<T> &i1, state<T> &i2, infer_param &ip,
-                          state<T> *label, state<T> *energy) {
+void fc_ebm2<T>::infer2(state<T> &i1, state<T> &i2, infer_param &ip,
+                        state<T> *energy) {
   fmod.fprop(i1, fout); // first propagate all the way up
-  return fcost.infer2(fout, i2, ip, label, energy); //then infer from energies
+  fcost.infer2(fout, i2, ip, energy); //then infer from energies
 }
 
 } // end namespace ebl

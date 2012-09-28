@@ -215,19 +215,19 @@ void divisive_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-void divisive_norm_module<T>::fprop1_dump(state<T> &in, state<T> &out) {
+void divisive_norm_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
   fprop1(in, out);
   convvar.fprop1_dump(insq, invar);
 }
 
 template <typename T>
-divisive_norm_module<T>* divisive_norm_module<T>::copy(parameter<T> *p) {
+module_1_1<T>* divisive_norm_module<T>::copy(parameter<T> *p) {
   divisive_norm_module<T> *d = new divisive_norm_module<T>
       (kerdim, nfeatures, mirror, threshold, p, this->name(), across_features,
        cgauss, fsum_div, fsum_split, epsilon, epsilon2);
   if (!p) // assign same parameter state if no parameters were specified
     d->divconv->kernel = divconv->kernel;
-  return d;
+  return (module_1_1<T>*) d;
 }
 
 template <typename T>
@@ -397,19 +397,19 @@ void subtractive_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-void subtractive_norm_module<T>::fprop1_dump(state<T> &in, state<T> &out) {
+void subtractive_norm_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
   fprop1(in, out);
   convmean.fprop1_dump(in, inmean);
 }
 
 template <typename T>
-subtractive_norm_module<T>* subtractive_norm_module<T>::copy(parameter<T> *p) {
+module_1_1<T>* subtractive_norm_module<T>::copy(parameter<T> *p) {
   subtractive_norm_module<T> *d = new subtractive_norm_module<T>
       (kerdim, nfeatures, mirror, global_norm, p, this->name(),
        across_features, cgauss, fsum_div, fsum_split, valid);
   if (!p) // assign same parameter state if no parameters were specified
     d->meanconv->kernel = meanconv->kernel;
-  return d;
+  return (module_1_1<T>*) d;
 }
 
 template <typename T>
@@ -509,14 +509,13 @@ void contrast_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-void contrast_norm_module<T>::fprop1_dump(state<T> &in, state<T> &out) {
+void contrast_norm_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
   subnorm->fprop1_dump(in, tmp);
   divnorm->fprop1_dump(tmp, out);
 }
 
 template <typename T>
-contrast_norm_module<T>* contrast_norm_module<T>::
-copy(parameter<T> *p) {
+module_1_1<T>* contrast_norm_module<T>::copy(parameter<T> *p) {
   contrast_norm_module<T> *d = new contrast_norm_module<T>
       (divnorm->kerdim, divnorm->nfeatures, divnorm->mirror, divnorm->threshold,
        global_norm, p, this->name(), divnorm->across_features, learn_mean,
@@ -526,7 +525,7 @@ copy(parameter<T> *p) {
     d->divnorm->divconv->kernel = divnorm->divconv->kernel;
     d->subnorm->meanconv->kernel = subnorm->meanconv->kernel;
   }
-  return d;
+  return (module_1_1<T>*) d;
 }
 
 template <typename T>
@@ -598,9 +597,9 @@ void laplacian_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 }
 
 template <typename T>
-laplacian_module<T>* laplacian_module<T>::copy() {
-  return new laplacian_module<T>(nfeatures, mirror, global_norm,
-                                 this->name());
+module_1_1<T>* laplacian_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*)
+      new laplacian_module<T>(nfeatures, mirror, global_norm, this->name());
 }
 
 template <typename T>

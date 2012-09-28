@@ -634,7 +634,7 @@ class class_datasource : public labeled_datasource<T, Tdata, Tlabel> {
   virtual void normalize_all_probas();
   //! Normalize picking probabilities by maximum probability of classid if
   //! perclass_norm is true, or globally otherwise.
-  virtual void normalize_probas(int classid = -1);
+  virtual void normalize_probas_by_class(int classid = -1);
 
   // accessors ///////////////////////////////////////////////////////////////
 
@@ -1162,7 +1162,7 @@ class mnist_datasource : public class_datasource<T, Tdata, Tlabel> {
   virtual ~mnist_datasource();
 
   //! Copy current sample's data into s.
-  virtual void fprop_data(state<T> &s);
+  virtual void fprop1_data(idx<T> &s);
 
  protected:
   //! Initialize with 'data' and 'labels', and an optional 'name'.

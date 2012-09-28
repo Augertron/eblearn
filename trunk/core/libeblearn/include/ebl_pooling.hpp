@@ -227,7 +227,7 @@ bool subsampling_module<T>::resize_forward(Tstate &in, Tstate &out) {
 }
 
 template <typename T>
-fidxdim subsampling_module<T>::fprop_size(fidxdim &isize) {
+fidxdim subsampling_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim osize = isize;
   // update spatial dimensions
   for (uint i = 1; i < isize.order(); ++i)
@@ -235,12 +235,12 @@ fidxdim subsampling_module<T>::fprop_size(fidxdim &isize) {
                              (intg) floor(isize.dim(i) /
                                           (float) stride.dim(i - 1))));
   //! Recompute the input size to be compliant with the output
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim subsampling_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim subsampling_module<T>::bprop1_size(const fidxdim &osize) {
   //! Just multiply each dimension by its stride
   fidxdim d = stride;
   d.insert_dim(0, 1);
@@ -249,14 +249,14 @@ fidxdim subsampling_module<T>::bprop_size(const fidxdim &osize) {
 }
 
 template <typename T>
-subsampling_module<T>* subsampling_module<T>::copy() {
+module_1_1<T>* subsampling_module<T>::copy(parameter<T> *p) {
   // new module
   subsampling_module<T> *l2 =
       new subsampling_module<T>(NULL, thickness, kernel, stride, this->name());
   // assign same parameter state
   l2->coeff = coeff;
   l2->sub = sub;
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 template <typename T>
@@ -379,7 +379,7 @@ void lppooling_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-fidxdim lppooling_module<T>::fprop_size(fidxdim &isize) {
+fidxdim lppooling_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim osize = isize;
   // update spatial dimensions
   for (uint i = 1; i < isize.order(); ++i) {
@@ -388,12 +388,12 @@ fidxdim lppooling_module<T>::fprop_size(fidxdim &isize) {
                                                / (float) stride.dim(i - 1))));
   }
   // recompute the input size to be compliant with the output
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim lppooling_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim lppooling_module<T>::bprop1_size(const fidxdim &osize) {
   fidxdim isize;
   if (osize.empty()) return isize;
   // multiply by stride
@@ -407,10 +407,9 @@ fidxdim lppooling_module<T>::bprop_size(const fidxdim &osize) {
 }
 
 template <typename T>
-lppooling_module<T>* lppooling_module<T>::copy() {
-  lppooling_module<T> *l2 =
+module_1_1<T>* lppooling_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*)
       new lppooling_module<T>(thickness, kernel, stride, lp_pow, this->name());
-  return l2;
 }
 
 template <typename T>
@@ -467,7 +466,7 @@ void wavg_pooling_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-fidxdim wavg_pooling_module<T>::fprop_size(fidxdim &isize) {
+fidxdim wavg_pooling_module<T>::fprop1_size(fidxdim &isize) {
   fidxdim osize = isize;
   // update spatial dimensions
   for (uint i = 1; i < isize.order(); ++i) {
@@ -476,12 +475,12 @@ fidxdim wavg_pooling_module<T>::fprop_size(fidxdim &isize) {
                                                / (float) stride.dim(i - 1))));
   }
   // recompute the input size to be compliant with the output
-  isize = bprop_size(osize);
+  isize = bprop1_size(osize);
   return osize;
 }
 
 template <typename T>
-fidxdim wavg_pooling_module<T>::bprop_size(const fidxdim &osize) {
+fidxdim wavg_pooling_module<T>::bprop1_size(const fidxdim &osize) {
   // just multiply each dimension by its stride
   fidxdim d = stride;
   d.insert_dim(0, 1);
@@ -493,8 +492,9 @@ fidxdim wavg_pooling_module<T>::bprop_size(const fidxdim &osize) {
 }
 
 template <typename T>
-wavg_pooling_module<T>* wavg_pooling_module<T>::copy() {
-  return new wavg_pooling_module<T>(thickness, kernel, stride, this->name());
+module_1_1<T>* wavg_pooling_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*)
+      new wavg_pooling_module<T>(thickness, kernel, stride, this->name());
 }
 
 template <typename T>
@@ -554,7 +554,7 @@ void pyramid_module<T>::fprop(state<T> &in, midx<T> &out) {
     idx<T> tmp(d);
     this->set_dimensions(tgt.dim(0), tgt.dim(1));
     resizepp_module<T>::fprop1(in, tmp);
-    out.set(tmp, i);
+    out.mset(tmp, i);
     tgt.setdim(0, (intg) (tgt.dim(0) * scaling_ratio));
     tgt.setdim(1, (intg) (tgt.dim(1) * scaling_ratio));
   }
@@ -814,9 +814,10 @@ void maxss_module<T>::bbprop1(state<T> &in, state<T> &out) {
 }
 
 template <typename T>
-maxss_module<T>* maxss_module<T>::copy(parameter<T> *p) {
+module_1_1<T>* maxss_module<T>::copy(parameter<T> *p) {
   // new module (with its own local parameter buffers)
-  return new maxss_module<T>(thickness, kernel, stride, this->name());
+  return (module_1_1<T>*)
+      new maxss_module<T>(thickness, kernel, stride, this->name());
 }
 
 template <typename T>

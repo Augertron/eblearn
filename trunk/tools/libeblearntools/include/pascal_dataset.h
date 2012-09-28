@@ -94,8 +94,8 @@ template <class Tdata> class pascal_dataset : public dataset<Tdata> {
 
   //! return true if class_name is authorized (based on excluded and included
   //! variables, and difficult, truncated, occluded flags).
-  virtual bool included(const std::string &class_name, uint difficult,
-                        uint truncated, uint occluded);
+  virtual bool included_pascal(const std::string &class_name, uint difficult,
+                               uint truncated, uint occluded);
 
   ////////////////////////////////////////////////////////////////
   // data
@@ -122,7 +122,7 @@ template <class Tdata> class pascal_dataset : public dataset<Tdata> {
   //! \param visr An optional bounding box for the visible area of the object
   //! \param cropr An optional bounding box of ROI of the image to crop.
   //!    Image should already be cropped, use only for display.
-  virtual void process_image(midx<Tdata> &img, const rect<int> &r,
+  virtual void process_mimage(midx<Tdata> &img, const rect<int> &r,
                              std::string &obj_class, uint difficult,
                              const std::string &image_filename,
                              std::pair<int,int> *center,
@@ -179,7 +179,7 @@ template <class Tdata> class pascal_dataset : public dataset<Tdata> {
   using dataset<Tdata>::display_result;
   using dataset<Tdata>::outdims;
   using dataset<Tdata>::full;
-  using dataset<Tdata>::add_data;
+  using dataset<Tdata>::add_mdata;
   using dataset<Tdata>::print_stats;
   using dataset<Tdata>::data_cnt;
   using dataset<Tdata>::extension;

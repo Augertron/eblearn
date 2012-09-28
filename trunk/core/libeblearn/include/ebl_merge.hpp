@@ -324,8 +324,9 @@ mfidxdim flat_merge_module<T>::get_scales() {
 }
 
 template <typename T>
-flat_merge_module<T>* flat_merge_module<T>::copy() {
-  return new flat_merge_module<T>(dins, strides, this->name(), &scales);
+module_1_1<T>* flat_merge_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*)
+      new flat_merge_module<T>(dins, strides, this->name(), &scales);
 }
 
 template <typename T>
@@ -477,8 +478,7 @@ std::string linear_merge_module<T>::describe() {
 }
 
 template <typename T>
-linear_merge_module<T>* linear_merge_module<T>::
-copy(parameter<T> *p) {
+module_1_1<T>* linear_merge_module<T>::copy(parameter<T> *p) {
   linear_merge_module<T> *l2 =
       new linear_merge_module<T>(p, nout, dins_original, strides,
                                  this->name(), &scales);
@@ -487,7 +487,7 @@ copy(parameter<T> *p) {
     for (uint i = 0; i < convs.size(); ++i)
       l2->convs[i]->kernel = convs[i]->kernel;
   }
-  return l2;
+  return (module_1_1<T>*) l2;
 }
 
 // mstate_merge_module /////////////////////////////////////////////////////////
@@ -756,8 +756,9 @@ std::string merge_module<T>::describe() {
 }
 
 template <typename T>
-merge_module<T>* merge_module<T>::copy() {
-  return new merge_module<T>(states_list, concat_dim, this->name());
+module_1_1<T>* merge_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*)
+      new merge_module<T>(states_list, concat_dim, this->name());
 }
 
 template <typename T>
@@ -923,8 +924,8 @@ std::string interlace_module<T>::describe() {
 }
 
 template <typename T>
-interlace_module<T>* interlace_module<T>::copy() {
-  return new interlace_module<T>(stride, this->name());
+module_1_1<T>* interlace_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new interlace_module<T>(stride, this->name());
 }
 
 } // end namespace ebl

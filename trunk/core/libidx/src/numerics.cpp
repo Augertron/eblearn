@@ -214,7 +214,7 @@ static int ma[56];		/* Should not be modified */
 bool drand_ini = false;
 
 void init_drand(int x){
-  // cout<<"CALLED SRAND. IF THIS APPEARS TWICE, SOMETHING's WRONG"<<endl;
+  EDEBUG("init_drand with seed " << x);
   drand_ini = true;
   dseed(x);
   srand(x);
