@@ -119,6 +119,8 @@ template <typename T> class linear_tanh_module: public module_1_1<T> {
   //! Returns a deep copy of this module.
   //! \param p If NULL, the copy points to the same weights as this module.
   virtual module_1_1<T>* copy(parameter<T> *p = NULL);
+  //! Returns a string describing this module and its parameters.
+  virtual std::string describe();
 
  protected:
   idx<T> tmp;   //!< Temporary buffer.

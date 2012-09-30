@@ -164,6 +164,14 @@ module_1_1<T>* linear_tanh_module<T>::copy(parameter<T> *p) {
   return (module_1_1<T>*) new linear_tanh_module<T>(alpha, this->name());
 }
 
+template <typename T>
+std::string linear_tanh_module<T>::describe() {
+	std::string s;
+	s << "linear_tanh module " << this->name() << " with linear coefficient "
+		<< alpha;
+	return s;
+}
+
 // softmax /////////////////////////////////////////////////////////////////////
 
 template <typename T>
@@ -263,9 +271,9 @@ void abs_module<T>::bprop1(state<T> &in, state<T> &out) {
   // backprop
   idx_aloopf3(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T, {
       if (*inx > threshold)
-        *indx = *indx + *outdx;
+	*indx = *indx + *outdx;
       else if (*inx < -threshold)
-        *indx = *indx - *outdx;
+	*indx = *indx - *outdx;
     });
 }
 
@@ -305,9 +313,9 @@ void linear_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   idx_bloop3(inx, in, T, outx, out, T, biasx, bias, T) {
     T b = biasx.get();
     idx_aloopf2(i, inx, T, o, outx, T, {
-        if (*i > b) *o = *i - b;
-        else if (*i < -b) *o = *i + b;
-        else *o = 0; });
+	if (*i > b) *o = *i - b;
+	else if (*i < -b) *o = *i + b;
+	else *o = 0; });
   }
 }
 
@@ -316,16 +324,16 @@ void linear_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
   DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
   // backprop
   idx_bloop5(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T,
-             biasx, bias, T, biasdx, bias.b[0], T) {
+	     biasx, bias, T, biasdx, bias.b[0], T) {
     T b = biasx.get();
     idx_aloopf3(i, inx, T, id, indx, T, od, outdx, T, {
-        if (*i > b) {
-          *id += *od;
-          biasdx.set(biasdx.get() - *od);
-        } else if (*i < -b) {
-          *id += *od;
-          biasdx.set(biasdx.get() - *od);
-        }});
+	if (*i > b) {
+	  *id += *od;
+	  biasdx.set(biasdx.get() - *od);
+	} else if (*i < -b) {
+	  *id += *od;
+	  biasdx.set(biasdx.get() - *od);
+	}});
   }
 }
 
@@ -334,16 +342,16 @@ void linear_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
   DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
   // backprop
   idx_bloop5(inx, in, T, inddx, in.bb[0], T, outddx, out.bb[0], T,
-             biasx, bias, T, biasddx, bias.bb[0], T) {
+	     biasx, bias, T, biasddx, bias.bb[0], T) {
     T b = biasx.get();
     idx_aloopf3(i, inx, T, idd, inddx, T, odd, outddx, T, {
-        if (*i > b) {
-          *idd += *odd;
-          biasddx.set(biasddx.get() - *odd);
-        } else if (*i < -b) {
-          *idd += *odd;
-          biasddx.set(biasddx.get() - *odd);
-        }});
+	if (*i > b) {
+	  *idd += *odd;
+	  biasddx.set(biasddx.get() - *odd);
+	} else if (*i < -b) {
+	  *idd += *odd;
+	  biasddx.set(biasddx.get() - *odd);
+	}});
   }
 }
 
@@ -369,7 +377,7 @@ std::string linear_shrink_module<T>::describe() {
 
 template <typename T>
 smooth_shrink_module<T>::smooth_shrink_module(parameter<T> *p, intg nf, T bt,
-                                              T bs)
+					      T bs)
     : module_1_1<T>("smooth_shrink"), beta(nf, p), bias(nf, p),
       ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
       default_beta(bt), default_bias(bs) {
@@ -394,7 +402,7 @@ void smooth_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   // failsafe
   idx_aloopf1(x, in, T, {
       if (*x > 20)
-        *x = 20;
+	*x = 20;
     });
   ebb.resize(bias.dim(0));
   ebx.resize(in.get_idxdim());
@@ -403,7 +411,7 @@ void smooth_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   idx_exp(ebb);
 
   idx_bloop5(inx, tin, T, outx, out, T, ebbx, ebb, T,
-             betax, beta, T, biasx, bias, T) {
+	     betax, beta, T, biasx, bias, T) {
     idx_dotc(inx, betax.get(), outx);
     idx_exp(outx);
     idx_addc(outx, ebbx.get()-1, outx);
@@ -413,9 +421,9 @@ void smooth_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   }
   idx_aloopf2(x, in, T, y, out, T, {
       if (std::abs((int)*x) > 20)
-        *y = *x;
+	*y = *x;
       if(*x < 0.0) {
-        *y = -(*y);
+	*y = -(*y);
       }
     });
 }
@@ -432,7 +440,7 @@ void smooth_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
   // failsafe
   idx_aloopf1(x, in, T, {
       if (*x > 20)
-        *x = 20;
+	*x = 20;
     });
 
   // bb = exp (beta .* bias)
@@ -497,7 +505,7 @@ void smooth_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
   // failsafe
   idx_aloopf1(x, in, T, {
       if (*x > 20)
-        *x = 20;
+	*x = 20;
     });
 
   // bb = exp (beta .* bias)
@@ -557,7 +565,7 @@ template <typename T>
 module_1_1<T>* smooth_shrink_module<T>::copy(parameter<T> *p) {
   smooth_shrink_module<T>* s2 =
       new smooth_shrink_module<T>(NULL, beta.dim(0), default_beta,
-                                  default_bias);
+				  default_bias);
   // assign same parameter state
   s2->beta = beta;
   s2->bias = bias;
