@@ -47,13 +47,13 @@ idxspec::~idxspec() {
 }
 
 // copy constructor
-idxspec::idxspec( const idxspec& src) : ndim(0), dim(NULL), mod(NULL)
+idxspec::idxspec(const idxspec& src) : ndim(-1), dim(NULL), mod(NULL)
 { copy(src); }
 
 // constructor for idx0 with offset 0.
 // Can be used to build an empty/blank idx.
 idxspec::idxspec() {
-  ndim = 0;
+  ndim = -1;
   offset = 0;
   dim = NULL; mod = NULL;
 }
@@ -71,7 +71,7 @@ idxspec::idxspec(intg o, intg size0) {
     eblerror("trying to construct idx1 with negative dimension " << size0);
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   setndim(1);
   dim[0] = size0;
   mod[0] = 1;
@@ -84,7 +84,7 @@ idxspec::idxspec(intg o, intg size0, intg size1) {
              << size0 << "x" << size1 << " offset: " << o);
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   setndim(2);
   dim[0] = size0;
   mod[0] = size1;
@@ -99,7 +99,7 @@ idxspec::idxspec(intg o, intg size0, intg size1, intg size2) {
              << size0 << "x" << size1 << "x" << size2 << " offset: " << o);
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   setndim(3);
   dim[0] = size0;
   mod[0] = size1 * size2;
@@ -110,8 +110,7 @@ idxspec::idxspec(intg o, intg size0, intg size1, intg size2) {
 }
 
 // generic constructor for any dimension.
-idxspec::idxspec(intg o,
-                 intg s0, intg s1, intg s2, intg s3,
+idxspec::idxspec(intg o, intg s0, intg s1, intg s2, intg s3,
                  intg s4, intg s5, intg s6, intg s7) {
   init_spec(o, s0, s1, s2, s3, s4, s5, s6, s7);
 }
@@ -129,7 +128,7 @@ void idxspec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3,
   intg md = 1;
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   if (s7>=0) {
     if (!ndimset) { setndim(8); ndimset = true; }
     dim[7] = s7; mod[7] = md; md *= s7;
@@ -171,7 +170,7 @@ void idxspec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3,
   intg md = 1;
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   setndim(n);
   switch (n) {
     case 8: dim[7] = s7; mod[7] = md; md *= s7; if (s7 < 0) DIMS_ERROR(-8);
@@ -196,7 +195,7 @@ idxspec::idxspec(intg o, int n, intg *ldim, intg *lmod) {
   DEBUG_LOW("idxspec::idxspec: " << (intg)this);
   dim = NULL; mod = NULL;
   offset = o;
-  ndim = 0; // required in constructors to avoid side effects in setndim
+  ndim = -1; // required in constructors to avoid side effects in setndim
   setndim(n);
   for (int i = 0; i < n; i++) {
     if (ldim[i] < 0) eblerror("negative dimension");
@@ -450,7 +449,8 @@ void idxspec::pretty(std::ostream& out) const {
 
 intg idxspec::select_into(idxspec *dst, int d, intg n) const {
   if (ndim <= 0)
-    eblerror("cannot select a idx that is a scalar (" << *this << ")");
+    eblerror("cannot select an empty idx idx that is a scalar ("
+             << *this << ")");
   if ((n < 0) || (n >= dim[d]))
     eblerror("trying to select layer " << n
              << " of dimension " << d << " which is of size "
@@ -640,8 +640,8 @@ bool same_dim(idxspec &s1, idxspec &s2) {
 }
 
 std::ostream& operator<<(std::ostream& out, const idxspec& d) {
-  if (d.getndim() <= 0)
-    out << "<empty>";
+  if (d.getndim() < 0) out << "<empty>";
+  else if (d.getndim() == 0) out << "<scalar>";
   else {
     out << d.dim[0];
     for (int i = 1; i < d.getndim(); ++i)
@@ -651,8 +651,8 @@ std::ostream& operator<<(std::ostream& out, const idxspec& d) {
 }
 
 std::ostream& operator<<(std::ostream& out, idxspec& d) {
-  if (d.getndim() <= 0)
-    out << "<empty>";
+  if (d.getndim() < 0) out << "<empty>";
+  else if (d.getndim() == 0) out << "<scalar>";
   else {
     out << d.dim[0];
     for (int i = 1; i < d.getndim(); ++i)
@@ -662,8 +662,8 @@ std::ostream& operator<<(std::ostream& out, idxspec& d) {
 }
 
 std::string& operator<<(std::string& out, const idxspec& d) {
-  if (d.getndim() <= 0)
-    out << "<empty>";
+  if (d.getndim() < 0) out << "<empty>";
+  else if (d.getndim() == 0) out << "<scalar>";
   else {
     out << d.dim[0];
     for (int i = 1; i < d.getndim(); ++i)
@@ -673,8 +673,8 @@ std::string& operator<<(std::string& out, const idxspec& d) {
 }
 
 std::string& operator<<(std::string& out, idxspec& d) {
-  if (d.getndim() <= 0)
-    out << "<empty>";
+  if (d.getndim() < 0) out << "<empty>";
+  else if (d.getndim() == 0) out << "<scalar>";
   else {
     out << d.dim[0];
     for (int i = 1; i < d.getndim(); ++i)

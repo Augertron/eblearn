@@ -221,6 +221,8 @@ template <typename T> class state : public idx<T> {
   //! Copy all data from 'other' into this state.
   virtual void deep_copy(state<T> &other);
   //! Copy matrices 'other' into internal forward tensors.
+  template <typename T2> void deep_copy(midx<T2> &other);
+  //! Copy matrices 'other' into internal forward tensors.
   virtual void shallow_copy(midx<T> &other);
   //! Returns a matrix pointing to internal forward tensors.
   virtual midx<T> shallow_copy_midx();

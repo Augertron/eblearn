@@ -115,6 +115,55 @@ module_1_1<T>* tanh_module<T>::copy(parameter<T> *p) {
   return (module_1_1<T>*) new tanh_module<T>();
 }
 
+// tanh ////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+linear_tanh_module<T>::linear_tanh_module(double alpha_, const char *name_)
+    : module_1_1<T>(name_), alpha(alpha_) {
+}
+
+template <typename T>
+linear_tanh_module<T>::~linear_tanh_module() {
+}
+
+template <typename T>
+void linear_tanh_module<T>::fprop1(idx<T> &in, idx<T> &out) {
+  this->resize_output(in, out); // resize iff necessary
+  this->resize_output(in, tmp); // resize iff necessary
+  idx_tanh(in, out);
+  if (alpha != 0) idx_dotcacc(out, (T) alpha, out);
+}
+
+template <typename T>
+void linear_tanh_module<T>::bprop1(state<T> &in, state<T> &out) {
+  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  // backprop
+  idx_dtanh(in, tmp);
+  if (alpha != 0) idx_addc(tmp, (T) alpha);
+  idx_mulacc(tmp, out.b[0], in.b[0]);
+}
+
+template <typename T>
+void linear_tanh_module<T>::bbprop1(state<T> &in, state<T> &out) {
+  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  // backprop
+  idx_dtanh(in, tmp);
+  idx_mul(tmp, tmp, tmp);
+  idx_mulacc(tmp, out.bb[0], in.bb[0]);
+}
+
+template <typename T>
+void linear_tanh_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
+  DUMP(in, this->name() << "_linear_tanh_module_in");
+  fprop1(in, out);
+  DUMP(out, this->name() << "_linear_tanh_module_out");
+}
+
+template <typename T>
+module_1_1<T>* linear_tanh_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new linear_tanh_module<T>(alpha, this->name());
+}
+
 // softmax /////////////////////////////////////////////////////////////////////
 
 template <typename T>

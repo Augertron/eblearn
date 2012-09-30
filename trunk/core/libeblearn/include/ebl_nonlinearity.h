@@ -68,7 +68,7 @@ template <typename T> class stdsigmoid_module: public module_1_1<T> {
 
 // tanh ////////////////////////////////////////////////////////////////////////
 
-//! a slab of tanh
+//! The hyperbolic tangent.
 template <typename T> class tanh_module: public module_1_1<T> {
  public:
   //! default constructor
@@ -93,6 +93,36 @@ template <typename T> class tanh_module: public module_1_1<T> {
 
  protected:
   idx<T> tmp; //!< Temporary buffer.
+};
+
+// linear_tanh /////////////////////////////////////////////////////////////////
+
+//! The hyperbolic tangent with a additional linear term: tanh(x) + alpha * x
+template <typename T> class linear_tanh_module: public module_1_1<T> {
+ public:
+  //! default constructor
+  linear_tanh_module(double alpha, const char *name = "tanh");
+  virtual ~linear_tanh_module();
+
+  //! Forward propagation from 'in' tensor to 'out' tensor.
+  //! Note: because a state object cast to idx is its forward tensor,
+  //!   you can also pass state objects directly here.
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! 1st order backward propagation from out to in (first state tensor only).
+  virtual void bprop1(state<T> &in, state<T> &out);
+  //! 2nd order backward propagation from out to in (first state tensor only).
+  virtual void bbprop1(state<T> &in, state<T> &out);
+
+  //! Calls fprop and then dumps internal buffers, inputs and outputs
+  //! into files. This can be useful for debugging.
+  virtual void fprop1_dump(idx<T> &in, idx<T> &out);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
+
+ protected:
+  idx<T> tmp;   //!< Temporary buffer.
+  double alpha; //!< Coefficient of the linear term.
 };
 
 // softmax /////////////////////////////////////////////////////////////////////
