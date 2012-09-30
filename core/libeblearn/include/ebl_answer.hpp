@@ -853,9 +853,6 @@ trainable_module(ebm_2<T> &energy_, module_1_1<T> &mod1_,
                  const char *name_, const char *switcher)
     : energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod(dsmod_),
       ms_switch(NULL) {
-  targets.add_f(new idx<T>);
-  in1.add_f(new idx<T>);
-  in2.add_f(new idx<T>);
   // try to find switcher module in mod1
   if (switcher) {
     std::vector<ms_module<T>*> all = arch_find_all(&mod1, ms_switch);

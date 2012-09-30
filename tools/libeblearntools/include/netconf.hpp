@@ -933,6 +933,11 @@ create_module(const std::string &name, parameter<T> &theparam,
 #endif
       module = (module_1_1<T>*)
 	  new tanh_module<T>(name.c_str());
+    // linear_tanh /////////////////////////////////////////////////////////////
+  } else if (!type.compare("linear_tanh")) {
+    double alpha = 0;
+    get_param(conf, name, "alpha", alpha);
+    module = (module_1_1<T>*) new linear_tanh_module<T>(alpha, name.c_str());
   }
   // stdsig //////////////////////////////////////////////////////////////
   else if (!type.compare("stdsig"))

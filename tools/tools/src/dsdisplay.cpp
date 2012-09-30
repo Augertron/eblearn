@@ -51,8 +51,7 @@ vector<double>	range;		//!< display range of values
 int             channel = -1;   //!< display only this channel if >= 0
 int             font_size = -1; //!< -1 does not change font.
 
-////////////////////////////////////////////////////////////////
-// interface
+// interface ///////////////////////////////////////////////////////////////////
 
 // print command line usage
 void print_usage() {
@@ -140,11 +139,11 @@ bool parse_args(int argc, char **argv, string &ds_name) {
     } catch (int err) {
       cerr << "input error: ";
       switch (err) {
-      case 0: cerr << "expecting string after " << argv[i-1]; break;
-      case 1: cerr << "expecting integer after " << argv[i-1]; break;
-      case 2: cerr << "unknown parameter " << argv[i-1]; break;
-      case 3: cerr << "unknown channel mode " << argv[i-1]; break;
-      default: cerr << "undefined error";
+        case 0: cerr << "expecting string after " << argv[i-1]; break;
+        case 1: cerr << "expecting integer after " << argv[i-1]; break;
+        case 2: cerr << "unknown parameter " << argv[i-1]; break;
+        case 3: cerr << "unknown channel mode " << argv[i-1]; break;
+        default: cerr << "undefined error";
       }
       cerr << endl << endl;
       return false;
@@ -225,9 +224,10 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
   //   data = data.select(1, channel);
   // }
 
-  class_datasource<Tdata, Tdata, Tlabel> *train_ds = 
-    new class_datasource<Tdata,Tdata,Tlabel>(data_fname.c_str(), labels_fname.c_str(), NULL,
-					     scales_fname.c_str(), classes_fname.c_str(), "Dataset");
+  class_datasource<Tdata, Tdata, Tlabel> *train_ds =
+      new class_datasource<Tdata,Tdata,Tlabel>
+      (data_fname.c_str(), labels_fname.c_str(), NULL,
+       scales_fname.c_str(), classes_fname.c_str(), "Dataset");
 
 
   // // create datasource object
@@ -251,7 +251,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
     // 		       (Tdata) range[0], (Tdata) range[1]);
     //   secsleep(1);
     // }
-    
+
     // if (bdefpairs) {
     //   labeled_pair_datasource<Tdata, Tdata, Tlabel>
     // 	train_dp_ds(data, labels, classes, defpairs,
@@ -262,7 +262,7 @@ void load_dataset2(string &ds_name, string &data_fname, string &labels_fname) {
     // 		       (Tdata) range[0], (Tdata) range[1]);
     //   secsleep(1);
     // }
-  
+
     labeled_datasource_gui<Tdata, Tdata, Tlabel> dsgui(true);
     dsgui.display(*train_ds, dims.dim(0), dims.dim(1), 0, 0, 1, -1, NULL, false,
 		  (Tdata) range[0], (Tdata) range[1]);
@@ -283,103 +283,103 @@ void load_dataset1(string &ds_name, string &data_fname) {
   build_fname(ds_name, LABELS_NAME, labels_fname);
   // determine label type
   switch (get_matrix_type(labels_fname.c_str())) {
-  case MAGIC_BYTE_MATRIX:
-  case MAGIC_UBYTE_VINCENT:
-    load_dataset2<Tdata, ubyte>(ds_name, data_fname, labels_fname);
-    break ;
-  case MAGIC_INTEGER_MATRIX:
-  case MAGIC_INT_VINCENT:
-    load_dataset2<Tdata, int>(ds_name, data_fname, labels_fname);
-    break ;
-  case MAGIC_FLOAT_MATRIX:
-  case MAGIC_FLOAT_VINCENT:
-    load_dataset2<Tdata, float>(ds_name, data_fname, labels_fname);
-    break ;
-  case MAGIC_DOUBLE_MATRIX:
-  case MAGIC_DOUBLE_VINCENT:
-    load_dataset2<Tdata, double>(ds_name, data_fname, labels_fname);
-    break ;
-  case MAGIC_LONG_MATRIX:
-    load_dataset2<Tdata, long>(ds_name, data_fname, labels_fname);
-    break ;
-  case MAGIC_UINT_MATRIX:
-    load_dataset2<Tdata, uint>(ds_name, data_fname, labels_fname);
-    break ;
-  default:
-    eblerror("unknown magic number");
+    case MAGIC_BYTE_MATRIX:
+    case MAGIC_UBYTE_VINCENT:
+      load_dataset2<Tdata, ubyte>(ds_name, data_fname, labels_fname);
+      break ;
+    case MAGIC_INTEGER_MATRIX:
+    case MAGIC_INT_VINCENT:
+      load_dataset2<Tdata, int>(ds_name, data_fname, labels_fname);
+      break ;
+    case MAGIC_FLOAT_MATRIX:
+    case MAGIC_FLOAT_VINCENT:
+      load_dataset2<Tdata, float>(ds_name, data_fname, labels_fname);
+      break ;
+    case MAGIC_DOUBLE_MATRIX:
+    case MAGIC_DOUBLE_VINCENT:
+      load_dataset2<Tdata, double>(ds_name, data_fname, labels_fname);
+      break ;
+    case MAGIC_LONG_MATRIX:
+      load_dataset2<Tdata, long>(ds_name, data_fname, labels_fname);
+      break ;
+    case MAGIC_UINT_MATRIX:
+      load_dataset2<Tdata, uint>(ds_name, data_fname, labels_fname);
+      break ;
+    default:
+      eblerror("unknown magic number");
   }
 }
 
 #ifdef __GUI__
-MAIN_QTHREAD(int, argc, char**, argv) { 
+MAIN_QTHREAD(int, argc, char**, argv) {
 #else
-int main(int argc, char **argv) {
+  int main(int argc, char **argv) {
 #endif
-  // names of dataset and files to load
-  string ds_name;
-  string data_fname;
- 
-  // parse arguments
-  if (!parse_args(argc, argv, ds_name)) {
-    print_usage();
-    return -1;
-  }
-  
-  if (!size) {
-    cout <<
-      "___________________________________________________________________";
-    cout << endl << endl;
-    cout << "             Dataset display for libeblearn library " << endl;
-    cout <<
-      "___________________________________________________________________";
-    cout << endl;
-    // print info
-    cout << "input parameters:" << endl;
-    cout << "  dataset name: " << ds_name << endl;
-    cout << "  info only: " << (info ? "yes" : "no") << endl;
-    cout << "  size only: " << (size ? "yes" : "no") << endl;
-    cout << "  values range: ";
-    for (vector<double>::iterator i = range.begin(); i != range.end(); ++i)
-      cout << *i << " ";
-    cout << endl;
-    cout << "  display dimensions: " << dims << endl;  
-    cout << "  font size: " << font_size << endl;
-    cout <<
-      "___________________________________________________________________";
-    cout << endl;
-  }
+    // names of dataset and files to load
+    string ds_name;
+    string data_fname;
 
-  // build file names
-  build_fname(ds_name, DATA_NAME, data_fname);
-  // select data type
-  try {
-    switch (get_matrix_type(data_fname.c_str())) {
-    case MAGIC_BYTE_MATRIX:
-    case MAGIC_UBYTE_VINCENT:
-      load_dataset1<ubyte>(ds_name, data_fname);
-      break ;
-    case MAGIC_INTEGER_MATRIX:
-    case MAGIC_INT_VINCENT:
-      load_dataset1<int>(ds_name, data_fname);
-      break ;
-    case MAGIC_FLOAT_MATRIX:
-    case MAGIC_FLOAT_VINCENT:
-      load_dataset1<float>(ds_name, data_fname);
-      break ;
-    case MAGIC_DOUBLE_MATRIX:
-    case MAGIC_DOUBLE_VINCENT:
-      load_dataset1<double>(ds_name, data_fname);
-      break ;
-    case MAGIC_LONG_MATRIX:
-    load_dataset1<long>(ds_name, data_fname);
-    break ;
-    case MAGIC_UINT_MATRIX:
-      load_dataset1<uint>(ds_name, data_fname);
-      break ;
-    default:
-      eblerror("unknown magic number");
+    // parse arguments
+    if (!parse_args(argc, argv, ds_name)) {
+      print_usage();
+      return -1;
     }
-  } eblcatcherror();
-  secsleep(20);
-  return 0;
-}
+
+    if (!size) {
+      cout <<
+          "___________________________________________________________________";
+      cout << endl << endl;
+      cout << "             Dataset display for libeblearn library " << endl;
+      cout <<
+          "___________________________________________________________________";
+      cout << endl;
+      // print info
+      cout << "input parameters:" << endl;
+      cout << "  dataset name: " << ds_name << endl;
+      cout << "  info only: " << (info ? "yes" : "no") << endl;
+      cout << "  size only: " << (size ? "yes" : "no") << endl;
+      cout << "  values range: ";
+      for (vector<double>::iterator i = range.begin(); i != range.end(); ++i)
+        cout << *i << " ";
+      cout << endl;
+      cout << "  display dimensions: " << dims << endl;
+      cout << "  font size: " << font_size << endl;
+      cout <<
+          "___________________________________________________________________";
+      cout << endl;
+    }
+
+    // build file names
+    build_fname(ds_name, DATA_NAME, data_fname);
+    // select data type
+    try {
+      switch (get_matrix_type(data_fname.c_str())) {
+        case MAGIC_BYTE_MATRIX:
+        case MAGIC_UBYTE_VINCENT:
+          load_dataset1<ubyte>(ds_name, data_fname);
+          break ;
+        case MAGIC_INTEGER_MATRIX:
+        case MAGIC_INT_VINCENT:
+          load_dataset1<int>(ds_name, data_fname);
+          break ;
+        case MAGIC_FLOAT_MATRIX:
+        case MAGIC_FLOAT_VINCENT:
+          load_dataset1<float>(ds_name, data_fname);
+          break ;
+        case MAGIC_DOUBLE_MATRIX:
+        case MAGIC_DOUBLE_VINCENT:
+          load_dataset1<double>(ds_name, data_fname);
+          break ;
+        case MAGIC_LONG_MATRIX:
+          load_dataset1<long>(ds_name, data_fname);
+          break ;
+        case MAGIC_UINT_MATRIX:
+          load_dataset1<uint>(ds_name, data_fname);
+          break ;
+        default:
+          eblerror("unknown magic number");
+      }
+    } eblcatcherror();
+    secsleep(20);
+    return 0;
+  }

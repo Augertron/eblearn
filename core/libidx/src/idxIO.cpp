@@ -53,7 +53,7 @@ namespace ebl {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp)
-      eblthrow("get_matrix_type failed to open " << filename);
+      eblthrow("failed to open " << filename);
     int magic = 0;
     if (has_multiple_matrices(filename)) {
       // first read offsets matrix
@@ -105,7 +105,7 @@ namespace ebl {
       // open file
       FILE *fp = fopen(filename, "rb");
       if (!fp)
-	eblthrow("get_matrix_type failed to open " << filename);
+	eblthrow("failed to open " << filename);
       int magic = 0;
       read_matrix_header(fp, magic);
     } catch (eblexception &e) { return false; }
@@ -116,7 +116,7 @@ namespace ebl {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp)
-      eblthrow("load_matrix failed to open " << filename);
+      eblthrow("failed to open " << filename);
     // read it
     int magic;
     idxdim d = read_matrix_header(fp, magic);

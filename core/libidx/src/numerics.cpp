@@ -50,15 +50,14 @@ namespace ebl {
 #include <time.h>
 //#endif
 
-////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 // derivative of tanh
 double dtanh(double x) {
   double e = exp(-2*(double)(x));
   double e1 = 1+e;
   e1 = e1*e1;
-  if (isinf_local(e1))
-    return 0.0;
+  if (isinf_local(e1)) return 0.0;
   return ((4*e)/e1);
 }
 
@@ -70,8 +69,7 @@ double arccot(double x) {
   return PI + atan(1/x);
 }
 
-////////////////////////////////////////////////////////////////
-// "standard" sigmoid
+// standard sigmoid ////////////////////////////////////////////////////////////
 
 // stdsigmoid(x)
 // stdsigmoid(x)

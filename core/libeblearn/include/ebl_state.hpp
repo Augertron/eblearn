@@ -451,6 +451,28 @@ void state<T>::deep_copy(state<T> &s) {
   state_copy(s, *this);
 }
 
+template <typename T> template <typename T2>
+void state<T>::deep_copy(midx<T2> &s) {
+  f.clear();
+  idx<T2> tmp;
+  int i;
+  switch (s.order()) {
+    case 0:
+      tmp = s.mget();
+      add_f(new idx<T>(tmp.get_idxdim()));
+      idx_copy(tmp, f[0]);
+      break ;
+    case 1:
+      for (i = 0; i < s.dim(0); ++i) {
+        tmp = s.mget(i);
+        add_f(new idx<T>(tmp.get_idxdim()));
+        idx_copy(tmp, f[i]);
+      }
+      break ;
+    default: eblerror("not implemented");
+  }
+}
+
 template <typename T>
 void state<T>::shallow_copy(midx<T> &s) {
   f.clear();
