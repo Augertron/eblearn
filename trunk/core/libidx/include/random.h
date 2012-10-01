@@ -34,10 +34,11 @@
 #define RANDOM_H
 
 #include "defines.h"
+#include <string>
 
 namespace ebl {
 
-// random ////////////////////////////////////////////////////////////////////
+// random //////////////////////////////////////////////////////////////////////
 
 class EXPORT random {
 public:
@@ -46,13 +47,19 @@ public:
   //! Constructs a random number generator with seed 'x'.
   //! Use x == 0 to construct a fixed-seed generator.
   random(int x);
-  //! Constructs a random number generator with a random seed taken
-  //! from current time and the sum of all arguments characters,
-  //! if present. This can be useful if several programs are called at the
-  //! same time with different input arguments.
-  random(int argc, char **argv);
   //! Destructor.
   virtual ~random();
+
+  //! Initialize random seed from current time.
+  void time_seed();
+  //! Initialize seed from current time and the sum of all characters of s.
+  //! This can be useful if several programs are called at the
+  //! same time with different input arguments.
+  void time_string_seed(std::string &s);
+  //! Initialize seed from current time and the sum of all arguments characters,
+  //! if present. This can be useful if several programs are called at the
+  //! same time with different input arguments.
+  void time_args_seed(int argc, char **argv);
 
   //! random number generator. Return a random number
   //! drawn from a uniform distribution over [0,1].

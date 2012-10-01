@@ -40,8 +40,7 @@ namespace ebl {
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T,Tdata,Tlabel>*
 create_trainable_network(bbparameter<T> &theparam, configuration &conf,
-                         uint noutputs, module_1_1<T> **network,
-                         uint &iter) {
+												 uint noutputs, module_1_1<T> **network, uint &iter) {
   answer_module<T,Tdata,Tlabel> *answer =
       create_answer<T,Tdata,Tlabel>(conf, noutputs);
   if (!answer) eblerror("no answer module found");
@@ -51,7 +50,7 @@ create_trainable_network(bbparameter<T> &theparam, configuration &conf,
   intg inthick = conf.try_get_int("input_thickness", -1);
   //! create the network weights, network and trainer
   module_1_1<T> *net = create_network<T>(theparam, conf, inthick, noutputs,
-                                         "arch");
+					 "arch");
   *network = net;
   if (!net) eblerror("failed to create network");
   if (((layers<T>*)net)->size() == 0) eblerror("0 modules in network");
@@ -61,7 +60,9 @@ create_trainable_network(bbparameter<T> &theparam, configuration &conf,
       new supervised_trainer<T,Tdata,Tlabel>(*train, theparam);
   thetrainer->set_progress_file(job::get_progress_filename());
   // initialize the network weights
-  forget_param_linear fgp(1, 0.5, /* random seed */ 0, NULL);
+	bool fixed_random = conf.try_get_bool("fixed_randomization", false);
+  forget_param_linear fgp(1, 0.5, !fixed_random);
+	if (!fixed_random) fgp.seed(conf.str());
   iter = 0;
   if (conf.exists_true("retrain")) {
     if (!conf.exists("retrain_weights"))
@@ -87,14 +88,14 @@ create_trainable_network(bbparameter<T> &theparam, configuration &conf,
 
 template <typename T, typename Tdata, typename Tlabel>
 void test_and_save(uint iter, configuration &conf, std::string &conffname,
-                   parameter<T> &theparam,
-                   supervised_trainer<T,Tdata,Tlabel> &thetrainer,
-                   labeled_datasource<T,Tdata,Tlabel> &train_ds,
-                   labeled_datasource<T,Tdata,Tlabel> &test_ds,
-                   classifier_meter &trainmeter,
-                   classifier_meter &testmeter,
-                   infer_param &infp, gd_param &gdp, std::string &shortname,
-                   long iteration_seconds) {
+		   parameter<T> &theparam,
+		   supervised_trainer<T,Tdata,Tlabel> &thetrainer,
+		   labeled_datasource<T,Tdata,Tlabel> &train_ds,
+		   labeled_datasource<T,Tdata,Tlabel> &test_ds,
+		   classifier_meter &trainmeter,
+		   classifier_meter &testmeter,
+		   infer_param &infp, gd_param &gdp, std::string &shortname,
+		   long iteration_seconds) {
   std::ostringstream wname, wfname;
   // save samples picking statistics
   if (conf.exists_true("save_pickings")) {
@@ -121,12 +122,12 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
   // set retrain to next iteration with current saved weights
   std::ostringstream progress;
   progress << "retrain_iteration = " << iter + 1 << std::endl
-           << "retrain_weights = " << wfname.str() << std::endl;
+	   << "retrain_weights = " << wfname.str() << std::endl;
   if (iteration_seconds > 0)
     progress << "meta_timeout = " << iteration_seconds * 1.2 << std::endl;
   // save progress
   job::write_progress(iter + 1, conf.get_uint("iterations"),
-                      progress.str().c_str());
+		      progress.str().c_str());
   // save confusion
   if (conf.exists_true("save_confusion")) {
     std::string fname; fname << wname.str() << "_confusion_test.mat";
@@ -137,13 +138,13 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
 
 template <typename T, typename Tdata, typename Tlabel>
 void test(uint iter, configuration &conf, std::string &conffname,
-          parameter<T> &theparam,
-          supervised_trainer<T,Tdata,Tlabel> &thetrainer,
-          labeled_datasource<T,Tdata,Tlabel> &train_ds,
-          labeled_datasource<T,Tdata,Tlabel> &test_ds,
-          classifier_meter &trainmeter,
-          classifier_meter &testmeter,
-          infer_param &infp, gd_param &gdp, std::string &shortname) {
+	  parameter<T> &theparam,
+	  supervised_trainer<T,Tdata,Tlabel> &thetrainer,
+	  labeled_datasource<T,Tdata,Tlabel> &train_ds,
+	  labeled_datasource<T,Tdata,Tlabel> &test_ds,
+	  classifier_meter &trainmeter,
+	  classifier_meter &testmeter,
+	  infer_param &infp, gd_param &gdp, std::string &shortname) {
   timer ttest;
   std::ostringstream wname, wfname;
 
@@ -192,9 +193,9 @@ void test(uint iter, configuration &conf, std::string &conffname,
       params = string_replaceall(params, "\\n", "\n");
     }
     cmd << "cp " << conffname << " tmp.conf && echo \"silent=1\n"
-        << "nthreads=" << dt_nthreads << "\nevaluate=1\nweights_file="
-        << wfname.str() << "\n" << params
-        << "\" >> tmp.conf && detect tmp.conf";
+	<< "nthreads=" << dt_nthreads << "\nevaluate=1\nweights_file="
+	<< wfname.str() << "\n" << params
+	<< "\" >> tmp.conf && detect tmp.conf";
     if (std::system(cmd.c_str()))
       std::cerr << "warning: failed to execute: " << cmd << std::endl;
     std::cout << "detection_test_time="; dtest.pretty_elapsed();
@@ -219,35 +220,35 @@ void test(uint iter, configuration &conf, std::string &conffname,
     std::cout << "Displaying training..." << std::endl;
     if (show_train_errors) {
       stgui2.display_correctness(true, true, thetrainer, train_ds, infp,
-                                 hsample, wsample, show_raw_outputs,
-                                 show_all_jitter, show_only_images);
+				 hsample, wsample, show_raw_outputs,
+				 show_all_jitter, show_only_images);
       stgui2.display_correctness(true, false, thetrainer, train_ds, infp,
-                                 hsample, wsample, show_raw_outputs,
-                                 show_all_jitter, show_only_images);
+				 hsample, wsample, show_raw_outputs,
+				 show_all_jitter, show_only_images);
     }
     if (show_train_correct) {
       stgui2.display_correctness(false, true, thetrainer, train_ds, infp,
-                                 hsample, wsample, show_raw_outputs,
-                                 show_all_jitter, show_only_images);
+				 hsample, wsample, show_raw_outputs,
+				 show_all_jitter, show_only_images);
       stgui2.display_correctness(false, false, thetrainer, train_ds, infp,
-                                 hsample, wsample, show_raw_outputs,
-                                 show_all_jitter, show_only_images);
+				 hsample, wsample, show_raw_outputs,
+				 show_all_jitter, show_only_images);
     }
     if (show_val_errors) {
       stgui.display_correctness(true, true, thetrainer, test_ds, infp,
-                                hsample, wsample, show_raw_outputs,
-                                show_all_jitter, show_only_images);
+				hsample, wsample, show_raw_outputs,
+				show_all_jitter, show_only_images);
       stgui.display_correctness(true, false, thetrainer, test_ds, infp,
-                                hsample, wsample, show_raw_outputs,
-                                show_all_jitter, show_only_images);
+				hsample, wsample, show_raw_outputs,
+				show_all_jitter, show_only_images);
     }
     if (show_val_correct) {
       stgui.display_correctness(false, true, thetrainer, test_ds, infp,
-                                hsample, wsample, show_raw_outputs,
-                                show_all_jitter, show_only_images);
+				hsample, wsample, show_raw_outputs,
+				show_all_jitter, show_only_images);
       stgui.display_correctness(false, false, thetrainer, test_ds, infp,
-                                hsample, wsample, show_raw_outputs,
-                                show_all_jitter, show_only_images);
+				hsample, wsample, show_raw_outputs,
+				show_all_jitter, show_only_images);
     }
     stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
   }
@@ -257,7 +258,7 @@ void test(uint iter, configuration &conf, std::string &conffname,
 template <typename T, typename Tdata, typename Tlabel>
 labeled_datasource<T,Tdata,Tlabel>*
 create_validation_set(configuration &conf, uint &noutputs,
-                      std::string &valdata) {
+		      std::string &valdata) {
   bool classification = conf.exists_true("classification");
   valdata = conf.get_string("val");
   std::string vallabels, valclasses, valjitters, valscales;
@@ -272,16 +273,16 @@ create_validation_set(configuration &conf, uint &noutputs,
     class_datasource<T,Tdata,Tlabel> *ds =
 	new class_datasource<T,Tdata,Tlabel>;
     ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
-             valscales.c_str(), valclasses.c_str(), "val", maxval);
+	     valscales.c_str(), valclasses.c_str(), "val", maxval);
     if (conf.exists("limit_classes"))
       ds->limit_classes(conf.get_int("limit_classes"), 0,
-                        conf.exists_true("limit_classes_random"));
+			conf.exists_true("limit_classes_random"));
     noutputs = ds->get_nclasses();
     val_ds = ds;
   } else { // regression task
     val_ds = new labeled_datasource<T,Tdata,Tlabel>;
     val_ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
-                 valscales.c_str(), "val", maxval);
+		 valscales.c_str(), "val", maxval);
     idxdim d = val_ds->label_dims();
     noutputs = d.nelements();
   }
@@ -318,31 +319,31 @@ create_training_set(configuration &conf, uint &noutputs, std::string &traindata)
     class_datasource<T,Tdata,Tlabel> *ds =
 	new class_datasource<T,Tdata,Tlabel>;
     ds->init(traindata.c_str(), trainlabels.c_str(),
-             trainjitters.c_str(), trainscales.c_str(),
-             trainclasses.c_str(), "train", maxtrain);
+	     trainjitters.c_str(), trainscales.c_str(),
+	     trainclasses.c_str(), "train", maxtrain);
     if (conf.exists("balanced_training"))
       ds->set_balanced(conf.get_bool("balanced_training"));
     if (conf.exists("random_class_order"))
       ds->set_random_class_order(conf.get_bool("random_class_order"));
     if (conf.exists("limit_classes"))
       ds->limit_classes(conf.get_int("limit_classes"), 0,
-                        conf.exists_true("limit_classes_random"));
+			conf.exists_true("limit_classes_random"));
     noutputs = ds->get_nclasses();
     train_ds = ds;
   } else { // regression task
     train_ds = new labeled_datasource<T,Tdata,Tlabel>;
     train_ds->init(traindata.c_str(), trainlabels.c_str(),
-                   trainjitters.c_str(), trainscales.c_str(),
-                   "train", maxtrain);
+		   trainjitters.c_str(), trainscales.c_str(),
+		   "train", maxtrain);
     idxdim d = train_ds->label_dims();
     noutputs = d.nelements();
   }
   train_ds->ignore_correct(conf.exists_true("ignore_correct"));
   train_ds->set_weigh_samples(conf.exists_true("sample_probabilities"),
-                              conf.exists_true("hardest_focus"),
-                              conf.exists_true("per_class_norm"),
-                              conf.exists("min_sample_weight") ?
-                              conf.get_double("min_sample_weight") : 0.0);
+			      conf.exists_true("hardest_focus"),
+			      conf.exists_true("per_class_norm"),
+			      conf.exists("min_sample_weight") ?
+			      conf.get_double("min_sample_weight") : 0.0);
   train_ds->set_shuffle_passes(conf.exists_bool("shuffle_passes"));
   if (conf.exists("epoch_size"))
     train_ds->set_epoch_size(conf.get_int("epoch_size"));

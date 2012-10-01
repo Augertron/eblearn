@@ -49,7 +49,7 @@ gd_param::gd_param() {
 }
 
 gd_param::gd_param(double leta, double ln, double l1, double l2, intg dtime,
-                   double iner, double a_v, intg a_p, double g_t) {
+		   double iner, double a_v, intg a_p, double g_t) {
   eta = leta;
   n = ln;
   decay_time = dtime;
@@ -73,21 +73,18 @@ std::ostream& operator<<(std::ostream &out, const gd_param &p) {
 
 // forget_param_linear /////////////////////////////////////////////////////////
 
-forget_param_linear::forget_param_linear(double v, double e, int seed)
-    : generator(seed) {
+forget_param_linear::forget_param_linear(double v, double e, bool random_seed)
+    : generator(0) {
   value = v;
   exponent = e;
   if (e == 0)
     eblerror("Cannot use an exponent of 0 in forget param");
+	// initialize random seed
+	if (random_seed) generator.time_seed();
 }
 
-forget_param_linear::forget_param_linear(double v, double e,
-                                         int argc, char **argv)
-    : generator(argc, argv) {
-  value = v;
-  exponent = e;
-  if (e == 0)
-    eblerror("Cannot use an exponent of 0 in forget param");
+void forget_param_linear::seed(std::string &s) {
+	generator.time_string_seed(s);
 }
 
 } // end namespace ebl

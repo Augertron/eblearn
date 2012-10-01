@@ -75,7 +75,7 @@ public:
 
   //! Constructor.
   gd_param(double leta, double ln, double l1, double l2, intg dtime,
-           double iner, double a_v, intg a_p, double g_t);
+	   double iner, double a_v, intg a_p, double g_t);
 };
 
 EXPORT std::ostream& operator<<(std::ostream &out, const gd_param &p);
@@ -88,14 +88,17 @@ class forget_param {
 
 class EXPORT forget_param_linear: public forget_param {
 public:
-  //! constructor.
-  //! each random value will be drawn uniformly
-  //! from [-v/(fanin**exponent), +v/(fanin**exponent)]
-  forget_param_linear(double v, double e, int random_seed);
-  //! constructor, with random seed based on argc/argv and time.
-  //! each random value will be drawn uniformly
-  //! from [-v/(fanin**exponent), +v/(fanin**exponent)]
-  forget_param_linear(double v, double e, int argc, char **argv);
+  //! Construct a random initializer from uniform distribution
+  //! from [-v/(fanin**exponent), +v/(fanin**exponent)].
+	//! \param random_seed If true, use time as random seed, otherwise
+	//!   use a fixed seed of 0. For better randomization use seed().
+  forget_param_linear(double v, double e, bool random_seed);
+
+  //! Initialize seed from current time and the sum of all characters of s.
+  //! This can be useful if several programs are called at the
+  //! same time with different configurations with s being a print out of
+	//! all configuration variables.
+  void seed(std::string &s);
 
   // public members
 public:
