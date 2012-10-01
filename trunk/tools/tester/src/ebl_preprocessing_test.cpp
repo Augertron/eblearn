@@ -242,8 +242,8 @@ void ebl_preprocessing_test::test_resizing() {
 	htmp = layer.dim(0) + 2;
     }
   }
-  h += htmp;
-  w = 0;
+    h += htmp;
+    w = 0;
   // // bird
   // h += 15;
   // gui << at(h - 15, w) << "RGB " << im;

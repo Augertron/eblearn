@@ -14,7 +14,7 @@ cd face
 mkdir lfw
 cd lfw
 # Download lfw faces (umass)
-wget http://vis-www.cs.umass.edu/lfw/lfw.tgz
+wget -c http://vis-www.cs.umass.edu/lfw/lfw.tgz
 tar xzvf lfw.tgz
 mv -f `find . -name "*.jpg"` . 2> /dev/null
 # crop pictures to center well on the face
@@ -31,7 +31,7 @@ cd ../../
 mkdir bg
 cd bg
 # get pascal dataset
-wget http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
+wget -c http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/VOCtrainval_11-May-2009.tar
 tar xvf VOCtrainval_11-May-2009.tar
 rm VOCtrainval_11-May-2009.tar
 
