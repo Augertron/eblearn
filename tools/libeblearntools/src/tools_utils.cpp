@@ -41,7 +41,7 @@
 #define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
-#include <boost/exception.hpp>
+#include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 using namespace boost::filesystem;
 using namespace boost;
