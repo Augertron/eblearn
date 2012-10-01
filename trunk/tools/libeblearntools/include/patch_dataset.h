@@ -67,13 +67,13 @@ template <class Tdata> class patch_dataset : public dataset<Tdata> {
 
   //! Extract patches from image.
   virtual bool add_mdata(midx<Tdata> &d, const t_label label,
-                        const string *class_name,
+                         const std::string *class_name,
                         const char *filename = NULL,
                         const rect<int> *r = NULL,
-                        pair<int,int> *center = NULL,
+                         std::pair<int,int> *center = NULL,
                         const rect<int> *visr = NULL,
                         const rect<int> *cropr = NULL,
-                        const vector<object*> *objs = NULL,
+                         const std::vector<object*> *objs = NULL,
                         const jitter *jittforce = NULL);
 
  protected:
@@ -81,8 +81,8 @@ template <class Tdata> class patch_dataset : public dataset<Tdata> {
   //! save patches into directory outdir, creating 1 subdirectory per patch
   //! until reaching max_folders, then filling last folder with remaining
   //! patches, using filename as base filename for patches filenames.
-  void save_patches(vector<idx<Tdata> > &patches, const string &outdir,
-                    uint max_folders, const string &filename,
+  void save_patches(std::vector<idx<Tdata> > &patches, const std::string &outdir,
+                    uint max_folders, const std::string &filename,
                     double scale, const t_label label);
 
  protected:

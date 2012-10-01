@@ -55,9 +55,9 @@ patch_dataset<Tdata>::patch_dataset(const char *name_,
                                     uint max_folders_)
     : dataset<Tdata>(name_, inroot_) {
   outdir = outdir_;
-  cout << "Output directory: " << outdir << endl;
-  cout << "Saving " << max_folders_ << " patch per image "
-       << "for each scale at random position. " << endl;
+  std::cout << "Output directory: " << outdir << std::endl;
+  std::cout << "Saving " << max_folders_ << " patch per image "
+       << "for each scale at random position. " << std::endl;
   max_folders = max_folders_;
   data_cnt = 0;
   save_mode = "mat";
@@ -73,22 +73,22 @@ patch_dataset<Tdata>::~patch_dataset() {
 template <class Tdata>
 bool patch_dataset<Tdata>::
 add_mdata(midx<Tdata> &mimg, const t_label label,
-         const string *class_name, const char *filename, const rect<int> *r,
-         pair<int,int> *center, const rect<int> *visr,
-         const rect<int> *cropr, const vector<object*> *objs,
+         const std::string *class_name, const char *filename, const rect<int> *r,
+          std::pair<int,int> *center, const rect<int> *visr,
+         const rect<int> *cropr, const std::vector<object*> *objs,
          const jitter *jittforce) {
-  vector<rect<int> > patch_bboxes;
-  vector<rect<int> >::iterator ibb;
-  string cname = "patch";
-  ostringstream fname;
-  vector<idx<Tdata> > patches;
+  std::vector<rect<int> > patch_bboxes;
+  std::vector<rect<int> >::iterator ibb;
+  std::string cname = "patch";
+  std::ostringstream fname;
+  std::vector<idx<Tdata> > patches;
   idx<Tdata> img  = mimg.mget(0);
 
   // check for capacity
   if (this->full(label)) // reached full capacity
     return false;
   // for each scale, find patches and save them
-  for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
+  for (std::vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
     patches.clear();
     patch_bboxes.clear();
     // rescale original bboxes
@@ -102,9 +102,9 @@ add_mdata(midx<Tdata> &mimg, const t_label label,
     // and ignore sizes smaller than outdims
     if (inh > (uint) img.dim(0) || inw > (uint) img.dim(1)
         || inh < (uint) outdims.dim(0) || inw < (uint) outdims.dim(1)) {
-      cerr << "warning: ignoring scale " << *i << " (" << inh << "x"
+      std::cerr << "warning: ignoring scale " << *i << " (" << inh << "x"
            << inw << ") to avoid upsampling original (" << img
-           << ") or downsampling below target (" << outdims << ")." << endl;
+           << ") or downsampling below target (" << outdims << ")." << std::endl;
       continue ; // do nothing for this scale
     }
     // preprocess image
@@ -154,12 +154,12 @@ add_mdata(midx<Tdata> &mimg, const t_label label,
 // save patches
 
 template <class Tdata>
-void patch_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
-                                        const string &outdir,
+void patch_dataset<Tdata>::save_patches(std::vector<idx<Tdata> > &patches,
+                                        const std::string &outdir,
                                         uint max_folders,
-                                        const string &filename,
+                                        const std::string &filename,
                                         double scale, const t_label label) {
-  ostringstream folder, fname;
+  std::ostringstream folder, fname;
   try {
     mkdir_full(outdir.c_str());
     uint i;
@@ -175,7 +175,7 @@ void patch_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
       // save patch in folder
       // switch saving behavior
       fname.str("");
-      fname << folder.str() << "img_" << setw(5) << setfill('0') << data_cnt
+      fname << folder.str() << "img_" << std::setw(5) << std::setfill('0') << data_cnt
             << "_bg" << i+1 << "_scale" << scale;
       if (!strcmp(save_mode.c_str(), "mat")
           || !strcmp(save_mode.c_str(), "dataset")
@@ -194,8 +194,8 @@ void patch_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
         // }
         save_image(fname.str(), tmp, save_mode.c_str());
       }
-      cout << data_cnt << ": saved " << fname.str().c_str()
-           << "(" << patches[i] << ")" << endl;
+      std::cout << data_cnt << ": saved " << fname.str().c_str()
+           << "(" << patches[i] << ")" << std::endl;
       // increase global counter
       data_cnt++;
       // check for capacity
@@ -209,10 +209,10 @@ void patch_dataset<Tdata>::save_patches(vector<idx<Tdata> > &patches,
     // 	  fname << folder.str() << filename << ".bg" << i+1 << ".mat";
     // 	  if (!save_matrix(patches[i], fname.str()))
     // 	    throw fname.str();
-    // 	  cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+    // 	  std::cout << data_cnt++ << ": saved " << fname.str().c_str() << std::endl;
     // 	}
-  } catch (const string &err) {
-    cerr << "error: failed to save patch in " << err << endl;
+  } catch (const std::string &err) {
+    std::cerr << "error: failed to save patch in " << err << std::endl;
   }
 }
 

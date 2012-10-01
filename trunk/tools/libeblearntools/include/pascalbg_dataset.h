@@ -74,29 +74,29 @@ template <class Tdata> class pascalbg_dataset : public pascal_dataset<Tdata> {
   // internal methods
 
   //! process an xml file.
-  virtual bool process_xml(const string &xmlfile);
+  virtual bool process_xml(const std::string &xmlfile);
 
   //! return bounding box of object
   virtual rect<int> get_object(Node* onode);
 
   //! process image given all bounding boxes.
-  virtual void process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
-                             const string &image_filename);
+  virtual void process_image(idx<ubyte> &img, std::vector<rect<int> >& bboxes,
+                             const std::string &image_filename);
 
   //! save patches into directory outdir, creating 1 subdirectory per patch
   //! until reaching max_folders, then filling last folder with remaining
   //! patches, using filename as base filename for patches filenames.
-  void save_patches(idx<ubyte> &img, const string &image_filename,
-                    vector<rect<int> > &patch_bboxes,
-                    vector<rect<int> > &objs_bboxes, const string &outdir,
-                    uint max_folders, const string &filename);
+  void save_patches(idx<ubyte> &img, const std::string &image_filename,
+                    std::vector<rect<int> > &patch_bboxes,
+                    std::vector<rect<int> > &objs_bboxes, const std::string &outdir,
+                    uint max_folders, const std::string &filename);
 
   void display_patch(midx<Tdata> &patch, idx<Tdata> &img,
-                     const string &image_filename,
-                     const string &cname,
+                     const std::string &image_filename,
+                     const std::string &cname,
                      rect<int> &pbbox, rect<int> &r,
-                     vector<rect<int> > &objs_bboxes,
-                     vector<rect<int> > &patch_bboxes);
+                     std::vector<rect<int> > &objs_bboxes,
+                     std::vector<rect<int> > &patch_bboxes);
 
 #endif /* __BOOST__ */
 #endif /* __XML__ */

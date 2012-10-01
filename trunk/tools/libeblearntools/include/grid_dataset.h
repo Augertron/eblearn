@@ -65,10 +65,10 @@ template <class Tdata> class grid_dataset : public dataset<Tdata> {
   //! add sample d to the data with label class_name
   //! (and converting from Toriginal to Tdata type).
   //! r is an optional region of interest rectangle in the image d.
-  virtual bool add_data(idx<Tdata> &d, const string &class_name,
+  virtual bool add_data(idx<Tdata> &d, const std::string &class_name,
                         const char *filename = NULL,
                         const rect<int> *r = NULL,
-                        pair<uint,uint> *center = NULL);
+                        std::pair<uint,uint> *center = NULL);
 
  protected:
   // base class members to be used ///////////////////////////////
