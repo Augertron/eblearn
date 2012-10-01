@@ -44,16 +44,16 @@ namespace ebl {
   ////////////////////////////////////////////////////////////////
 
   typedef std::map<std::string, std::string,
-                   std::less<std::string> > string_map_t;
+		std::less<std::string> > string_map_t;
   typedef std::map<std::string, std::vector<std::string>,
-                   std::less<std::string> > string_list_map_t;
+		std::less<std::string> > string_list_map_t;
 
   ////////////////////////////////////////////////////////////////
   //! a class containing the original text of the configuration file in a
   //! list form. once variables have been updated, they can be inserted back
   //! to this list to recreate the original file with the new values.
   class textlist : public std::list< std::pair<std::string,std::string> > {
-   public:
+	public:
     //! constructor.
     textlist();
 
@@ -88,16 +88,16 @@ namespace ebl {
     //! load configuration found in filename.
     //! \param resolve If true, replace all referenced variables by their value.
     configuration(const char *filename, bool replquotes = false,
-		  bool silent = false, bool resolve = true);
+									bool silent = false, bool resolve = true);
     //! load configuration found in filename.
     //! \param resolve If true, replace all referenced variables by their value.
     configuration(const std::string &filename, bool replquotes = false,
-		  bool silent = false, bool resolve = true);
+									bool silent = false, bool resolve = true);
     //! Load configuration from already loaded map of variables, name and
     //! output directory.
     //! \param txt Original text lines of configuration.
     configuration(string_map_t &smap, textlist &txt, std::string &name,
-		  std::string &output_dir);
+									std::string &output_dir);
     //! destructor.
     virtual ~configuration();
 
@@ -106,7 +106,7 @@ namespace ebl {
     //! load configuration from file fname.
     //! \param resolve If true, replace all referenced variables by their value.
     bool read(const char *fname, bool resolve = true, bool replquotes = true,
-	      bool silent = false, const char *outdir = NULL);
+							bool silent = false, const char *outdir = NULL);
     //! save configuration into file fname.
     bool write(const char *fname);
     //! resolve variables names in variables
@@ -169,6 +169,9 @@ namespace ebl {
     //! this throws an exception.
     double get_double(const char *varname);
 
+    //! If variable "varname" exists, return its value in uint, otherwise
+    //! return 'default_val'. If uint conversion fails, it throws an exception.
+    bool try_get_bool(const char *varname, bool default_val);
     //! If variable "varname" exists, return its value in uint, otherwise
     //! return 'default_val'. If uint conversion fails, it throws an exception.
     uint try_get_uint(const char *varname, uint default_val);
@@ -256,6 +259,8 @@ namespace ebl {
 
     //! print loaded variables
     virtual void pretty();
+    //! Return a string of all loaded variables.
+    virtual std::string& str();
     //! Print all variables who's name is contained in string 's'.
     virtual void pretty_match(const std::string &s);
 
@@ -267,31 +272,32 @@ namespace ebl {
 
     //! Resolve double quotes blocs, or entire string if not present.
     std::string resolve0(string_map_t &m, const std::string &variable,
-		    const std::string &v, bool firstonly = false);
+												 const std::string &v, bool firstonly = false);
 
     //! Resolve back quotes blocs only.
     std::string resolve_backquotes(string_map_t &m,
-			     const std::string &variable, const std::string &v,
-			     bool firstonly = false);
+																	 const std::string &variable, const std::string &v,
+																	 bool firstonly = false);
 
     //! Resolve an unquoted string (just variables).
     std::string resolve_string(string_map_t &m, const std::string &variable,
-			  const std::string &v, bool firstonly = false);
+															 const std::string &v, bool firstonly = false);
 
     // open file fname and put variables assignments in smap.
     // e.g. " i = 42 # comment " will yield a entry in smap
     // with "i" as first value and "42" as second value.
     bool extract_variables(const char *fname, string_map_t &smap, textlist &txt,
-			   string_map_t *meta_smap = NULL, bool bresolve = true,
-			   bool replquotes = false, bool silent = false);
+													 string_map_t *meta_smap = NULL, bool bresolve = true,
+													 bool replquotes = false, bool silent = false);
 
   protected:
-    string_map_t	smap; 	//!< map between variables and values
-    string_map_t	tmp_smap; //!< map between variables and values
-    std::string 		name; 	//!< name of configuration
-    std::string 		output_dir;	//!< output directory
-    textlist 		otxt; 	//!< original text
+    string_map_t				smap; 	//!< map between variables and values
+    string_map_t				tmp_smap;				//!< map between variables and values
+    std::string					name; 	//!< name of configuration
+    std::string					output_dir;			//!< output directory
+    textlist						otxt; 	//!< original text
     bool                silent;
+		std::string					desc_;	//!< Description string.
   };
 
   ////////////////////////////////////////////////////////////////
@@ -310,10 +316,10 @@ namespace ebl {
     //! Read a meta configuration.
     //! \param resume_name Name of experiment to be resumed.
     bool read(const char *fname, bool bresolve = true,
-	      const std::string *tstamp = NULL,
-	      bool replace_quotes = false,
-	      const char *resume_name = NULL,
-	      bool silent = false);
+							const std::string *tstamp = NULL,
+							bool replace_quotes = false,
+							const char *resume_name = NULL,
+							bool silent = false);
 
     // accessors
 
