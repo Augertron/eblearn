@@ -44,8 +44,8 @@ template <class Tdata>
 grid_dataset<Tdata>::grid_dataset(const char *name_,
                                   const char *inroot_, uint cellh, uint cellw)
     : dataset<Tdata>(name_, inroot_), cell_height(cellh), cell_width(cellw) {
-  cout << "Grid dataset: using each " << cellh << "x" << cellw
-       << " patch as new sample." << endl;
+  std::cout << "Grid dataset: using each " << cellh << "x" << cellw
+       << " patch as new sample." << std::endl;
 }
 
 template <class Tdata>
@@ -66,15 +66,15 @@ intg grid_dataset<Tdata>::count_samples() {
 
 template <class Tdata>
 bool grid_dataset<Tdata>::
-add_data(idx<Tdata> &d, const string &class_name,
+add_data(idx<Tdata> &d, const std::string &class_name,
          const char *filename, const rect<int> *r,
-         pair<uint,uint> *center) {
+         std::pair<uint,uint> *center) {
   bool ret;
 
   for (uint i = 0; i <= d.dim(0) - cell_height; i += cell_height) {
     for (uint j = 0; j <= d.dim(1) - cell_width; j += cell_width) {
       rect<int> roi(i, j, cell_height, cell_width);
-      cout << "roi: " << roi << endl;
+      std::cout << "roi: " << roi << std::endl;
       t_label label = this->get_label_from_class(class_name);
       midx<Tdata> dd(1);
       dd.mset(d, 0);

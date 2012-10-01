@@ -70,14 +70,14 @@ namespace ebl {
   bool pascalclear_dataset<Tdata>::extract() {
 #ifdef __BOOST__
 #ifdef __XML__
-    cout << "Clearing objects from original pascal images..." << endl;
+    std::cout << "Clearing objects from original pascal images..." << std::endl;
     mkdir_full(outdir);
     // adding data to dataset using all xml files in annroot
     regex eExt(XML_PATTERN);
     cmatch what;
     path p(annroot);
     if (!exists(p)) {
-      cerr << "path " << annroot << " does not exist." << endl;
+      std::cerr << "path " << annroot << " does not exist." << std::endl;
       return false;
     }
     directory_iterator end_itr; // default construction yields past-the-end
@@ -89,8 +89,8 @@ namespace ebl {
 	  break ;
       }
     }
-    cout << "Cleared and saved " << data_cnt;
-    cout << " images." << endl;
+    std::cout << "Cleared and saved " << data_cnt;
+    std::cout << " images." << std::endl;
 #endif /* __XML__ */
 #endif /* __BOOSt__ */
     return true;
@@ -104,10 +104,10 @@ namespace ebl {
 
   template <class Tdata>
   void pascalclear_dataset<Tdata>::
-  process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
-		const string &image_filename) {
-    vector<rect<int> >::iterator ibb;
-    ostringstream fname;
+  process_image(idx<ubyte> &img, std::vector<rect<int> >& bboxes,
+		const std::string &image_filename) {
+    std::vector<rect<int> >::iterator ibb;
+    std::ostringstream fname;
 
 #ifdef __GUI__
     uint h = 63, w = 0;
@@ -136,7 +136,7 @@ namespace ebl {
     fname.str("");
     fname << outdir << "/" << image_filename << "_" << data_cnt << ".mat";
     save_matrix(img, fname.str());
-    cout << data_cnt++ << ": saved " << fname.str() << endl;
+    std::cout << data_cnt++ << ": saved " << fname.str() << std::endl;
   }
 
 #endif /* __XML__ */

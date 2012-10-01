@@ -69,7 +69,7 @@ namespace ebl {
     // internal methods
 
     //! process an xml file.
-    virtual bool process_xml(const string &xmlfile);
+    virtual bool process_xml(const std::string &xmlfile);
 
 #endif /* __XML__ */
     

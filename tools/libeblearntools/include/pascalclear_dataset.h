@@ -72,8 +72,8 @@ namespace ebl {
     // internal methods
 
     //! process image given all bounding boxes.
-    virtual void process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
-			       const string &image_filename);
+    virtual void process_image(idx<ubyte> &img, std::vector<rect<int> >& bboxes,
+			       const std::string &image_filename);
 
 #endif /* __BOOST__ */
 #endif /* __XML__ */

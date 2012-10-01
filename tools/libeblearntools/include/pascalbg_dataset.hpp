@@ -78,7 +78,7 @@ template <class Tdata>
 bool pascalbg_dataset<Tdata>::extract() {
 #ifdef __BOOST__
 #ifdef __XML__
-  cout << "Extracting samples from files into dataset..." << endl;
+  std::cout << "Extracting samples from files into dataset..." << std::endl;
   // adding data to dataset using all xml files in annroot
   path p(annroot);
   if (!exists(p))
@@ -86,21 +86,21 @@ bool pascalbg_dataset<Tdata>::extract() {
   xtimer.start();
   processed_cnt = 0;
   // find all xml files recursively (and randomize list)
-  list<string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false,
+  std::list<std::string> *files = find_fullfiles(annroot, XML_PATTERN, NULL, false,
                                        true, true);
   if (!files || files->size() == 0)
     eblerror("no xml files found in " << annroot << " using file pattern "
              << XML_PATTERN);
-  cout << "Found " << files->size() << " xml files." << endl;
-  for (list<string>::iterator i = files->begin(); i != files->end(); ++i) {
+  std::cout << "Found " << files->size() << " xml files." << std::endl;
+  for (std::list<std::string>::iterator i = files->begin(); i != files->end(); ++i) {
     this->process_xml(*i);
     processed_cnt++;
     if (this->full())
       break;
   }
-  cout << "Extracted and saved " << data_cnt;
-  cout << " background patches from dataset." << endl;
-  cout << "Extraction time: " << xtimer.elapsed() << endl;
+  std::cout << "Extracted and saved " << data_cnt;
+  std::cout << " background patches from dataset." << std::endl;
+  std::cout << "Extraction time: " << xtimer.elapsed() << std::endl;
   if (files) delete files;
 #endif /* __XML__ */
 #endif /* __BOOSt__ */
@@ -116,10 +116,10 @@ bool pascalbg_dataset<Tdata>::extract() {
 // Note: the difficult flag is ignored, so that we don't take
 // background patches even in difficult bounding boxes.
 template <class Tdata>
-bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
-  string image_filename, image_fullname, folder;
-  vector<rect<int> > bboxes;
-  string obj_classname, pose;
+bool pascalbg_dataset<Tdata>::process_xml(const std::string &xmlfile) {
+  std::string image_filename, image_fullname, folder;
+  std::vector<rect<int> > bboxes;
+  std::string obj_classname, pose;
   bool pose_found = false;
   Node::NodeList::iterator oiter;
 
@@ -135,9 +135,9 @@ bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
       // get image filename
       for(Node::NodeList::iterator iter = list.begin();
           iter != list.end(); ++iter) {
-        if (!strcmp((*iter)->get_name().c_str(), "filename")) {
+        if (!std::strcmp((*iter)->get_name().c_str(), "filename")) {
           xml_get_string(*iter, image_filename);
-        } else if (!strcmp((*iter)->get_name().c_str(), "folder")) {
+        } else if (!std::strcmp((*iter)->get_name().c_str(), "folder")) {
           xml_get_string(*iter, folder);
         }
       }
@@ -147,21 +147,21 @@ bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
       image_fullname += image_filename;
       // include folder into filename to avoid conflicts
       if (!folder.empty()) {
-        string tmp;
+        std::string tmp;
         tmp << folder << "_" << image_filename;
-        tmp = string_replace(tmp, "/", "_");
+        tmp = std::string_replace(tmp, "/", "_");
         image_filename = tmp;
       }
       // parse all objects in image
       for(Node::NodeList::iterator iter = list.begin();
           iter != list.end(); ++iter) {
-        if (!strcmp((*iter)->get_name().c_str(), "object")) {
+        if (!std::strcmp((*iter)->get_name().c_str(), "object")) {
           // get object's properties
           Node::NodeList olist = (*iter)->get_children();
           for(oiter = olist.begin(); oiter != olist.end(); ++oiter) {
-            if (!strcmp((*oiter)->get_name().c_str(), "name"))
+            if (!std::strcmp((*oiter)->get_name().c_str(), "name"))
               xml_get_string(*oiter, obj_classname);
-            else if (!strcmp((*oiter)->get_name().c_str(), "pose")) {
+            else if (!std::strcmp((*oiter)->get_name().c_str(), "pose")) {
               xml_get_string(*oiter, pose);
               pose_found = true;
             }
@@ -180,16 +180,16 @@ bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
           ////////////////////////////////////////////////////////////////
           // parts
           if (useparts || usepartsonly) {
-            string part_classname;
+            std::string part_classname;
 
             // add part's class to dataset
             for(oiter = olist.begin();oiter != olist.end(); ++oiter) {
-              if (!strcmp((*oiter)->get_name().c_str(), "part")) {
+              if (!std::strcmp((*oiter)->get_name().c_str(), "part")) {
                 // get part's name
                 Node::NodeList plist = (*oiter)->get_children();
                 for(Node::NodeList::iterator piter = plist.begin();
                     piter != plist.end(); ++piter) {
-                  if (!strcmp((*piter)->get_name().c_str(), "name")) {
+                  if (!std::strcmp((*piter)->get_name().c_str(), "name")) {
                     xml_get_string(*piter, part_classname);
                     // found a part and its name, add it
                     if (usepose && pose_found) {
@@ -208,10 +208,10 @@ bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
       }
     }
   } catch (const std::exception& ex) {
-    cerr << "error: Xml exception caught: " << ex.what() << endl;
+    std::cerr << "error: Xml exception caught: " << ex.what() << std::endl;
     return false;
   } catch (const char *err) {
-    cerr << "error: " << err << endl;
+    std::cerr << "error: " << err << std::endl;
     return false;
   }
   try {
@@ -219,9 +219,9 @@ bool pascalbg_dataset<Tdata>::process_xml(const string &xmlfile) {
     idx<ubyte> img = load_image<ubyte>(image_fullname);
     // extract patches given image and bounding boxes
     process_image(img, bboxes, image_filename);
-  } catch(string &err) {
-    cerr << "error: failed to add " << image_fullname;
-    cerr << ": " << endl << err << endl;
+  } catch(std::string &err) {
+    std::cerr << "error: failed to add " << image_fullname;
+    std::cerr << ": " << std::endl << err << std::endl;
     add_errors++;
   }
   return true;
@@ -239,18 +239,18 @@ rect<int> pascalbg_dataset<Tdata>::get_object(Node* onode) {
   for(Node::NodeList::iterator iter = list.begin();
       iter != list.end(); ++iter) {
     // parse bounding box
-    if (!strcmp((*iter)->get_name().c_str(), "bndbox")) {
+    if (!std::strcmp((*iter)->get_name().c_str(), "bndbox")) {
       Node::NodeList blist = (*iter)->get_children();
       for(Node::NodeList::iterator biter = blist.begin();
           biter != blist.end(); ++biter) {
         // save xmin, ymin, xmax and ymax
-        if (!strcmp((*biter)->get_name().c_str(), "xmin"))
+        if (!std::strcmp((*biter)->get_name().c_str(), "xmin"))
           xmin = xml_get_uint(*biter);
-        else if (!strcmp((*biter)->get_name().c_str(), "ymin"))
+        else if (!std::strcmp((*biter)->get_name().c_str(), "ymin"))
           ymin = xml_get_uint(*biter);
-        else if (!strcmp((*biter)->get_name().c_str(), "xmax"))
+        else if (!std::strcmp((*biter)->get_name().c_str(), "xmax"))
           xmax = xml_get_uint(*biter);
-        else if (!strcmp((*biter)->get_name().c_str(), "ymax"))
+        else if (!std::strcmp((*biter)->get_name().c_str(), "ymax"))
           ymax = xml_get_uint(*biter);
       }
     } // else get object class name
@@ -264,16 +264,16 @@ rect<int> pascalbg_dataset<Tdata>::get_object(Node* onode) {
 
 template <class Tdata>
 void pascalbg_dataset<Tdata>::
-process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
-              const string &image_filename) {
-  vector<rect<int> > patch_bboxes;
-  vector<rect<int> >::iterator ibb;
+process_image(idx<ubyte> &img, std::vector<rect<int> >& bboxes,
+              const std::string &image_filename) {
+  std::vector<rect<int> > patch_bboxes;
+  std::vector<rect<int> >::iterator ibb;
   idxdim d(img);
-  ostringstream fname;
+  std::ostringstream fname;
   bool overlap;
 
   // for each scale, find patches and save them
-  for (vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
+  for (std::vector<double>::iterator i = scales.begin(); i != scales.end(); ++i) {
     patch_bboxes.clear();
     // rescale original bboxes
     //       double ratio = std::max(outdims.dim(0) / (double) img.dim(0),
@@ -304,8 +304,8 @@ process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
     fname.str("");
     fname << image_filename << "_scale" << *i;
     if (patch_bboxes.size() == 0)
-      cout << "No background patches could be extracted at scale "
-           << *i << endl;
+      std::cout << "No background patches could be extracted at scale "
+           << *i << std::endl;
     else {
       save_patches(img, image_filename, patch_bboxes, bboxes,
                    outtmp, max_folders, fname.str());
@@ -317,14 +317,14 @@ process_image(idx<ubyte> &img, vector<rect<int> >& bboxes,
 // save patches
 
 template <class Tdata>
-void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_filename,
-                                           vector<rect<int> > &patch_bboxes,
-                                           vector<rect<int> > &objs_bboxes,
-                                           const string &outd,
+void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const std::string &image_filename,
+                                           std::vector<rect<int> > &patch_bboxes,
+                                           std::vector<rect<int> > &objs_bboxes,
+                                           const std::string &outd,
                                            uint max_folders,
-                                           const string &filename) {
-  ostringstream folder, fname;
-  string cname = "background";
+                                           const std::string &filename) {
+  std::ostringstream folder, fname;
+  std::string cname = "background";
   rect<int> inr;
   // change image type from ubyte to Tdata
   idx<Tdata> img(im.get_idxdim());
@@ -332,7 +332,7 @@ void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_f
   try {
     mkdir_full(outd.c_str());
     uint i;
-    // shuffle randomly vector of patches to avoid taking top left corner
+    // shuffle randomly std::vector of patches to avoid taking top left corner
     // as first patch every time
     random_shuffle(patch_bboxes.begin(), patch_bboxes.end());
     // loop on patches
@@ -357,8 +357,8 @@ void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_f
       // switch saving behavior
       fname.str("");
       fname << folder.str() << filename << ".bg" << i+1;
-      if (!strcmp(save_mode.c_str(), "mat")
-          || !strcmp(save_mode.c_str(), "dynset")) { // lush matrix mode
+      if (!std::strcmp(save_mode.c_str(), "mat")
+          || !std::strcmp(save_mode.c_str(), "dynset")) { // lush matrix mode
         fname << MATRIX_EXTENSION;
         //	  idx<Tdata> patch2 = patch.shift_dim(2, 0);
         patch2.shift_dim_internal(2, 0);
@@ -371,16 +371,16 @@ void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_f
         // fname << "." << save_mode;
         // idx<Tdata> tmp = patch;
         // // scale image to 0 255 if preprocessed
-        // if (strcmp(ppconv_type.c_str(), "RGB")) {
+        // if (std::strcmp(ppconv_type.c_str(), "RGB")) {
         //   idx_addc(tmp, (Tdata) 1.0, tmp);
         //   idx_dotc(tmp, (Tdata) 127.5, tmp);
         // }
         // save_image(fname.str(), tmp, save_mode.c_str());
       }
       images_list.push_back(fname.str()); // add image to files list
-      cout << data_cnt++ << ": saved " << fname.str().c_str()
+      std::cout << data_cnt++ << ": saved " << fname.str().c_str()
            << " " << patch2 << ", eta: " << xtimer.eta(data_cnt, max_data)
-           << ", elapsed: " << xtimer.elapsed() << endl;
+           << ", elapsed: " << xtimer.elapsed() << std::endl;
       display_patch(patch2, img, image_filename, cname, p, inr,
                     objs_bboxes, patch_bboxes);
       // TEMPORARY MEMORY LEAK FIX (use smart srg pointer to clear
@@ -394,19 +394,19 @@ void pascalbg_dataset<Tdata>::save_patches(idx<ubyte> &im, const string &image_f
     // 	  fname << folder.str() << filename << ".bg" << i+1 << ".mat";
     // 	  if (!save_matrix(patches[i], fname.str()))
     // 	    throw fname.str();
-    // 	  cout << data_cnt++ << ": saved " << fname.str().c_str() << endl;
+    // 	  std::cout << data_cnt++ << ": saved " << fname.str().c_str() << std::endl;
     // 	}
-  } catch (const string &err) {
-    cerr << "error: failed to save patch in " << err << endl;
+  } catch (const std::string &err) {
+    std::cerr << "error: failed to save patch in " << err << std::endl;
   }
 }
 
 template <class Tdata>
 void pascalbg_dataset<Tdata>::
 display_patch(midx<Tdata> &patch, idx<Tdata> &img,
-              const string &image_filename, const string &cname,
-              rect<int> &pbbox, rect<int> &r, vector<rect<int> > &objs_bboxes,
-              vector<rect<int> > &patch_bboxes) {
+              const std::string &image_filename, const std::string &cname,
+              rect<int> &pbbox, rect<int> &r, std::vector<rect<int> > &objs_bboxes,
+              std::vector<rect<int> > &patch_bboxes) {
 #ifdef __GUI__
   if (display_extraction) {
     disable_window_updates();
@@ -416,7 +416,7 @@ display_patch(midx<Tdata> &patch, idx<Tdata> &img,
     display_added(patch, img, &cname, image_filename.c_str(), NULL,
                   &r, false, NULL, NULL, NULL, NULL, NULL, NULL, &w);
     // draw patch bboxes
-    vector<rect<int> >::iterator ibb;
+    std::vector<rect<int> >::iterator ibb;
     for (ibb = patch_bboxes.begin(); ibb != patch_bboxes.end(); ++ibb)
       draw_box(h + ibb->h0, w + ibb->w0,
                ibb->height, ibb->width, 0, 255, 0);

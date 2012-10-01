@@ -66,10 +66,10 @@ namespace ebl {
   // process xml
 
   template <class Tdata>
-  bool pascalfull_dataset<Tdata>::process_xml(const string &xmlfile) {
-    string image_filename;
-    string image_fullname;
-    string obj_classname;
+  bool pascalfull_dataset<Tdata>::process_xml(const std::string &xmlfile) {
+    std::string image_filename;
+    std::string image_fullname;
+    std::string obj_classname;
 
     // parse xml file
     try {
@@ -109,21 +109,21 @@ namespace ebl {
 	}
       }
     } catch (const std::exception& ex) {
-      cerr << "error: Xml exception caught: " << ex.what() << endl;
+      std::cerr << "error: Xml exception caught: " << ex.what() << std::endl;
       return false;
     } catch (const char *err) {
-      cerr << "error: " << err << endl;
+      std::cerr << "error: " << err << std::endl;
       return false;
     }
     // copy image into output directory
-    ostringstream cmd;
-    ostringstream tgt;
+    std::ostringstream cmd;
+    std::ostringstream tgt;
     tgt << outdir << "/" << image_filename;
     cmd << "cp " << image_fullname << " " << tgt.str();
     if (std::system(cmd.str().c_str()))
-      cerr << "warning: failed to execute: " << cmd.str() << endl;
+      std::cerr << "warning: failed to execute: " << cmd.str() << std::endl;
     else {
-      cout << data_cnt << ": copied " << tgt.str() << endl;
+      std::cout << data_cnt << ": copied " << tgt.str() << std::endl;
       data_cnt++;
     }
     return true;
