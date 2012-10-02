@@ -34,7 +34,8 @@ namespace ebl {
 // stdsigmoid //////////////////////////////////////////////////////////////////
 
 template <typename T>
-stdsigmoid_module<T>::stdsigmoid_module() : module_1_1<T>("stdsigmoid") {
+stdsigmoid_module<T>::stdsigmoid_module(double alpha_, const char *name_)
+	: module_1_1<T>(name_), alpha(alpha_) {
 }
 
 template <typename T>
@@ -43,37 +44,49 @@ stdsigmoid_module<T>::~stdsigmoid_module() {
 
 template <typename T>
 void stdsigmoid_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  this->resize_output(in, out); // resize iff necessary
-  this->resize_output(in, tmp); // resize iff necessary
-  idx_stdsigmoid(in, out);
+	this->resize_output(in, out); // resize iff necessary
+	this->resize_output(in, tmp); // resize iff necessary
+	idx_stdsigmoid(in, out);
+	if (alpha != 0) idx_dotcacc(out, (T) alpha, out);
 }
 
 template <typename T>
 void stdsigmoid_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dstdsigmoid(in, tmp);
-  idx_mulacc(tmp, out.b[0], in.b[0]);
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_dstdsigmoid(in, tmp);
+	if (alpha != 0) idx_addc(tmp, (T) alpha);
+	idx_mulacc(tmp, out.b[0], in.b[0]);
 }
 
 template <typename T>
 void stdsigmoid_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dstdsigmoid(in, tmp);
-  idx_mul(tmp, tmp, tmp);
-  idx_mulacc(tmp, out.bb[0], in.bb[0]);
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_dstdsigmoid(in, tmp);
+	idx_mul(tmp, tmp, tmp);
+	idx_mulacc(tmp, out.bb[0], in.bb[0]);
 }
 
 template <typename T>
 module_1_1<T>* stdsigmoid_module<T>::copy(parameter<T> *p) {
-  return (module_1_1<T>*) new stdsigmoid_module<T>();
+	return (module_1_1<T>*) new stdsigmoid_module<T>(alpha);
+}
+
+template <typename T>
+std::string stdsigmoid_module<T>::describe() {
+	std::string s;
+	s << "stdsigmoid module " << this->name() << " with linear coefficient "
+		<< alpha;
+	return s;
 }
 
 // tanh ////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-tanh_module<T>::tanh_module(const char *name_) : module_1_1<T>(name_) {}
+tanh_module<T>::tanh_module(double alpha_, const char *name_)
+	: module_1_1<T>(name_), alpha(alpha_) {
+}
 
 template <typename T>
 tanh_module<T>::~tanh_module() {
@@ -81,94 +94,46 @@ tanh_module<T>::~tanh_module() {
 
 template <typename T>
 void tanh_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  this->resize_output(in, out); // resize iff necessary
-  this->resize_output(in, tmp); // resize iff necessary
-  idx_tanh(in, out);
+	this->resize_output(in, out); // resize iff necessary
+	this->resize_output(in, tmp); // resize iff necessary
+	idx_tanh(in, out);
+	if (alpha != 0) idx_dotcacc(out, (T) alpha, out);
 }
 
 template <typename T>
 void tanh_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dtanh(in, tmp);
-  idx_mulacc(tmp, out.b[0], in.b[0]);
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_dtanh(in, tmp);
+	if (alpha != 0) idx_addc(tmp, (T) alpha);
+	idx_mulacc(tmp, out.b[0], in.b[0]);
 }
 
 template <typename T>
 void tanh_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dtanh(in, tmp);
-  idx_mul(tmp, tmp, tmp);
-  idx_mulacc(tmp, out.bb[0], in.bb[0]);
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_dtanh(in, tmp);
+	idx_mul(tmp, tmp, tmp);
+	idx_mulacc(tmp, out.bb[0], in.bb[0]);
 }
 
 template <typename T>
 void tanh_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
-  DUMP(in, this->name() << "_tanh_module_in");
-  fprop1(in, out);
-  DUMP(out, this->name() << "_tanh_module_out");
+	DUMP(in, this->name() << "_tanh_module_in");
+	fprop1(in, out);
+	DUMP(out, this->name() << "_tanh_module_out");
 }
 
 template <typename T>
 module_1_1<T>* tanh_module<T>::copy(parameter<T> *p) {
-  return (module_1_1<T>*) new tanh_module<T>();
-}
-
-// tanh ////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-linear_tanh_module<T>::linear_tanh_module(double alpha_, const char *name_)
-    : module_1_1<T>(name_), alpha(alpha_) {
+	return (module_1_1<T>*) new tanh_module<T>(alpha);
 }
 
 template <typename T>
-linear_tanh_module<T>::~linear_tanh_module() {
-}
-
-template <typename T>
-void linear_tanh_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  this->resize_output(in, out); // resize iff necessary
-  this->resize_output(in, tmp); // resize iff necessary
-  idx_tanh(in, out);
-  if (alpha != 0) idx_dotcacc(out, (T) alpha, out);
-}
-
-template <typename T>
-void linear_tanh_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dtanh(in, tmp);
-  if (alpha != 0) idx_addc(tmp, (T) alpha);
-  idx_mulacc(tmp, out.b[0], in.b[0]);
-}
-
-template <typename T>
-void linear_tanh_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_dtanh(in, tmp);
-  idx_mul(tmp, tmp, tmp);
-  idx_mulacc(tmp, out.bb[0], in.bb[0]);
-}
-
-template <typename T>
-void linear_tanh_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
-  DUMP(in, this->name() << "_linear_tanh_module_in");
-  fprop1(in, out);
-  DUMP(out, this->name() << "_linear_tanh_module_out");
-}
-
-template <typename T>
-module_1_1<T>* linear_tanh_module<T>::copy(parameter<T> *p) {
-  return (module_1_1<T>*) new linear_tanh_module<T>(alpha, this->name());
-}
-
-template <typename T>
-std::string linear_tanh_module<T>::describe() {
+std::string tanh_module<T>::describe() {
 	std::string s;
-	s << "linear_tanh module " << this->name() << " with linear coefficient "
-		<< alpha;
+	s << "tanh module " << this->name() << " with linear coefficient " << alpha;
 	return s;
 }
 
@@ -176,7 +141,7 @@ std::string linear_tanh_module<T>::describe() {
 
 template <typename T>
 softmax<T>::softmax(double b) : module_1_1<T>("softmax") {
-  beta = b;
+	beta = b;
 }
 
 template <typename T>
@@ -185,63 +150,63 @@ softmax<T>::~softmax() {
 
 template <typename T>
 void softmax<T>::fprop1(idx<T> &in, idx<T> &out){
-  if (in.order() == 0) {
-    idx<double> ib;
-    ib.set(1);
-    idx_copy(ib, out);
-  } else {
-    this->resize_output(in, out);
-    idx<double> pp(new srg<double>(), in.spec);
-    idx<double> dot(new srg<double>(), in.spec);
-    double mm = idx_max(in);
-    idx_addc(in, -mm, pp);
-    idx_dotc(pp, beta, dot);
-    double out_sum = 0.0;
-    double d = idx_sum(dot, &out_sum);
-    idx_dotc(dot, (double)(1/d), out);
-  }
+	if (in.order() == 0) {
+		idx<double> ib;
+		ib.set(1);
+		idx_copy(ib, out);
+	} else {
+		this->resize_output(in, out);
+		idx<double> pp(new srg<double>(), in.spec);
+		idx<double> dot(new srg<double>(), in.spec);
+		double mm = idx_max(in);
+		idx_addc(in, -mm, pp);
+		idx_dotc(pp, beta, dot);
+		double out_sum = 0.0;
+		double d = idx_sum(dot, &out_sum);
+		idx_dotc(dot, (double)(1/d), out);
+	}
 }
 
 template <typename T>
 void softmax<T>::bprop1(state<T> &in, state<T> &out){
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  int n = in.order();
-  if( n == 0) return;
-  if( n > 6 ) { eblerror("illegal type")}
-  else{
-    idx<double> pp(new srg<double>(), out.b[0].spec);
-    idx<double> mul(new srg<double>(), out.b[0].spec);
-    double dot = idx_dot(out.b[0], out);
-    idx_addc(out.b[0], -dot, pp);
-    idx_mul(out, pp, mul);
-    idx_dotcacc(mul, beta, in);
-  }
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	int n = in.order();
+	if( n == 0) return;
+	if( n > 6 ) { eblerror("illegal type")}
+	else{
+		idx<double> pp(new srg<double>(), out.b[0].spec);
+		idx<double> mul(new srg<double>(), out.b[0].spec);
+		double dot = idx_dot(out.b[0], out);
+		idx_addc(out.b[0], -dot, pp);
+		idx_mul(out, pp, mul);
+		idx_dotcacc(mul, beta, in);
+	}
 }
 
 template <typename T>
 void softmax<T>::bbprop1(state<T> &in, state<T> &out){
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  int n = in.order();
-  if( n == 0) return;
-  if( n > 6 ) { eblerror("illegal type")}
-  else{
-    idx<double> mul(new srg<double>(), out.spec);
-    idx<double> dot(new srg<double>(), out.spec);
-    idx<double> pp(new srg<double>(), out.spec);
-    idx<double> mul2(new srg<double>(), out.spec);
-    idx<double> pp2(new srg<double>(), out.spec);
-    idx<double> mul3(new srg<double>(), out.spec);
-    idx_mul(out, out, mul);
-    idx_dotc(out, (double)-2, dot);
-    idx_addc(dot, (double)1, pp);
-    idx_mul(pp, out.bb[0], mul2);
-    idx_addc(mul2, idx_dot(out.bb[0], mul), pp2);
-    idx_mul(mul, pp2, mul3);
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	int n = in.order();
+	if( n == 0) return;
+	if( n > 6 ) { eblerror("illegal type")}
+	else{
+		idx<double> mul(new srg<double>(), out.spec);
+		idx<double> dot(new srg<double>(), out.spec);
+		idx<double> pp(new srg<double>(), out.spec);
+		idx<double> mul2(new srg<double>(), out.spec);
+		idx<double> pp2(new srg<double>(), out.spec);
+		idx<double> mul3(new srg<double>(), out.spec);
+		idx_mul(out, out, mul);
+		idx_dotc(out, (double)-2, dot);
+		idx_addc(dot, (double)1, pp);
+		idx_mul(pp, out.bb[0], mul2);
+		idx_addc(mul2, idx_dot(out.bb[0], mul), pp2);
+		idx_mul(mul, pp2, mul3);
 
-    idx_dotcacc(mul3, beta*beta, in.bb[0]);
-  }
+		idx_dotcacc(mul3, beta*beta, in.bb[0]);
+	}
 }
 
 ////////////////////////////////////////////////////////////////
@@ -249,7 +214,7 @@ void softmax<T>::bbprop1(state<T> &in, state<T> &out){
 
 template <typename T>
 abs_module<T>::abs_module(double thres) : module_1_1<T>("abs") {
-  threshold = thres;
+	threshold = thres;
 }
 
 template <typename T>
@@ -258,46 +223,46 @@ abs_module<T>::~abs_module() {
 
 template <typename T>
 void abs_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  this->resize_output(in, out); // resize iff necessary
-  idx_abs(in, out);
+	this->resize_output(in, out); // resize iff necessary
+	idx_abs(in, out);
 }
 
 template <typename T>
 void abs_module<T>::bprop1(state<T> &in, state<T> &out) {
-  // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  state_idx_check_different(in, out); // forbid same in and out
-  idx_checknelems2_all(in.b[0], out.b[0]); // must have same dimensions
-  // backprop
-  idx_aloopf3(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T, {
-      if (*inx > threshold)
+	// checks
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	state_idx_check_different(in, out); // forbid same in and out
+	idx_checknelems2_all(in.b[0], out.b[0]); // must have same dimensions
+	// backprop
+	idx_aloopf3(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T, {
+			if (*inx > threshold)
 	*indx = *indx + *outdx;
-      else if (*inx < -threshold)
+			else if (*inx < -threshold)
 	*indx = *indx - *outdx;
-    });
+		});
 }
 
 template <typename T>
 void abs_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  state_idx_check_different(in, out); // forbid same in and out
-  idx_checknelems2_all(in.bb[0], out.bb[0]); // must have same dimensions
-  // backprop
-  idx_add(in.bb[0], out.bb[0], in.bb[0]);
+	// checks
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	state_idx_check_different(in, out); // forbid same in and out
+	idx_checknelems2_all(in.bb[0], out.bb[0]); // must have same dimensions
+	// backprop
+	idx_add(in.bb[0], out.bb[0], in.bb[0]);
 }
 
 template <typename T>
 module_1_1<T>* abs_module<T>::copy(parameter<T> *p) {
-  return (module_1_1<T>*) new abs_module<T>();
+	return (module_1_1<T>*) new abs_module<T>();
 }
 
 // linear_shrink_module ////////////////////////////////////////////////////////
 
 template <typename T>
 linear_shrink_module<T>::linear_shrink_module(parameter<T> *p, intg nf, T bs)
-    : module_1_1<T>("linear_shrink"), bias(nf, p), default_bias(bs) {
-  idx_fill(bias, bs);
+		: module_1_1<T>("linear_shrink"), bias(nf, p), default_bias(bs) {
+	idx_fill(bias, bs);
 }
 
 template <typename T>
@@ -306,83 +271,83 @@ linear_shrink_module<T>::~linear_shrink_module(){
 
 template <typename T>
 void linear_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  // checks
-  if (&in != &out) eblerror("in and out should be different buffers");
-  this->resize_output(in, out); // resize iff necessary
-  // fprop
-  idx_bloop3(inx, in, T, outx, out, T, biasx, bias, T) {
-    T b = biasx.get();
-    idx_aloopf2(i, inx, T, o, outx, T, {
+	// checks
+	if (&in != &out) eblerror("in and out should be different buffers");
+	this->resize_output(in, out); // resize iff necessary
+	// fprop
+	idx_bloop3(inx, in, T, outx, out, T, biasx, bias, T) {
+		T b = biasx.get();
+		idx_aloopf2(i, inx, T, o, outx, T, {
 	if (*i > b) *o = *i - b;
 	else if (*i < -b) *o = *i + b;
 	else *o = 0; });
-  }
+	}
 }
 
 template <typename T>
 void linear_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_bloop5(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T,
-	     biasx, bias, T, biasdx, bias.b[0], T) {
-    T b = biasx.get();
-    idx_aloopf3(i, inx, T, id, indx, T, od, outdx, T, {
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_bloop5(inx, in, T, indx, in.b[0], T, outdx, out.b[0], T,
+			 biasx, bias, T, biasdx, bias.b[0], T) {
+		T b = biasx.get();
+		idx_aloopf3(i, inx, T, id, indx, T, od, outdx, T, {
 	if (*i > b) {
-	  *id += *od;
-	  biasdx.set(biasdx.get() - *od);
+		*id += *od;
+		biasdx.set(biasdx.get() - *od);
 	} else if (*i < -b) {
-	  *id += *od;
-	  biasdx.set(biasdx.get() - *od);
+		*id += *od;
+		biasdx.set(biasdx.get() - *od);
 	}});
-  }
+	}
 }
 
 template <typename T>
 void linear_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // backprop
-  idx_bloop5(inx, in, T, inddx, in.bb[0], T, outddx, out.bb[0], T,
-	     biasx, bias, T, biasddx, bias.bb[0], T) {
-    T b = biasx.get();
-    idx_aloopf3(i, inx, T, idd, inddx, T, odd, outddx, T, {
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	// backprop
+	idx_bloop5(inx, in, T, inddx, in.bb[0], T, outddx, out.bb[0], T,
+			 biasx, bias, T, biasddx, bias.bb[0], T) {
+		T b = biasx.get();
+		idx_aloopf3(i, inx, T, idd, inddx, T, odd, outddx, T, {
 	if (*i > b) {
-	  *idd += *odd;
-	  biasddx.set(biasddx.get() - *odd);
+		*idd += *odd;
+		biasddx.set(biasddx.get() - *odd);
 	} else if (*i < -b) {
-	  *idd += *odd;
-	  biasddx.set(biasddx.get() - *odd);
+		*idd += *odd;
+		biasddx.set(biasddx.get() - *odd);
 	}});
-  }
+	}
 }
 
 template <typename T>
 module_1_1<T>* linear_shrink_module<T>::copy(parameter<T> *p) {
-  linear_shrink_module<T>* s2 =
-      new linear_shrink_module<T>(NULL, bias.dim(0), default_bias);
-  // assign same parameter state
-  s2->bias = bias;
-  return (module_1_1<T>*) s2;
+	linear_shrink_module<T>* s2 =
+			new linear_shrink_module<T>(NULL, bias.dim(0), default_bias);
+	// assign same parameter state
+	s2->bias = bias;
+	return (module_1_1<T>*) s2;
 }
 
 template <typename T>
 std::string linear_shrink_module<T>::describe() {
-  std::string desc;
-  desc << "linear_shrink module " << this->name()
-       << " with biases: " << to_string(bias.f)
-       << " min: " << idx_min(bias) << " max: " << idx_max(bias);
-  return desc;
+	std::string desc;
+	desc << "linear_shrink module " << this->name()
+			 << " with biases: " << to_string(bias.f)
+			 << " min: " << idx_min(bias) << " max: " << idx_max(bias);
+	return desc;
 }
 
 // smooth_shrink_module ////////////////////////////////////////////////////////
 
 template <typename T>
 smooth_shrink_module<T>::smooth_shrink_module(parameter<T> *p, intg nf, T bt,
-					      T bs)
-    : module_1_1<T>("smooth_shrink"), beta(nf, p), bias(nf, p),
-      ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
-      default_beta(bt), default_bias(bs) {
-  idx_fill(beta, bt);
-  idx_fill(bias, bs);
+								T bs)
+		: module_1_1<T>("smooth_shrink"), beta(nf, p), bias(nf, p),
+			ebb(1), ebx(1,1,1), tin(1,1,1), absmod(0.0),
+			default_beta(bt), default_bias(bs) {
+	idx_fill(beta, bt);
+	idx_fill(bias, bs);
 }
 
 template <typename T>
@@ -391,294 +356,294 @@ smooth_shrink_module<T>::~smooth_shrink_module(){
 
 template <typename T>
 void smooth_shrink_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  // checks
-  if (&in != &out) { // resize only when input and output are different
-    idxdim d(in.spec); // use same dimensions as in
-    out.resize(d);
-  } else
-    eblerror("in and out should be different buffers");
-  // fprop
-  absmod.fprop1(in,tin);
-  // failsafe
-  idx_aloopf1(x, in, T, {
-      if (*x > 20)
+	// checks
+	if (&in != &out) { // resize only when input and output are different
+		idxdim d(in.spec); // use same dimensions as in
+		out.resize(d);
+	} else
+		eblerror("in and out should be different buffers");
+	// fprop
+	absmod.fprop1(in,tin);
+	// failsafe
+	idx_aloopf1(x, in, T, {
+			if (*x > 20)
 	*x = 20;
-    });
-  ebb.resize(bias.dim(0));
-  ebx.resize(in.get_idxdim());
+		});
+	ebb.resize(bias.dim(0));
+	ebx.resize(in.get_idxdim());
 
-  idx_mul(beta, bias, ebb);
-  idx_exp(ebb);
+	idx_mul(beta, bias, ebb);
+	idx_exp(ebb);
 
-  idx_bloop5(inx, tin, T, outx, out, T, ebbx, ebb, T,
-	     betax, beta, T, biasx, bias, T) {
-    idx_dotc(inx, betax.get(), outx);
-    idx_exp(outx);
-    idx_addc(outx, ebbx.get()-1, outx);
-    idx_log(outx);
-    idx_dotc(outx, 1/betax.get(), outx);
-    idx_addc(outx, -biasx.get(), outx);
-  }
-  idx_aloopf2(x, in, T, y, out, T, {
-      if (std::abs((int)*x) > 20)
+	idx_bloop5(inx, tin, T, outx, out, T, ebbx, ebb, T,
+			 betax, beta, T, biasx, bias, T) {
+		idx_dotc(inx, betax.get(), outx);
+		idx_exp(outx);
+		idx_addc(outx, ebbx.get()-1, outx);
+		idx_log(outx);
+		idx_dotc(outx, 1/betax.get(), outx);
+		idx_addc(outx, -biasx.get(), outx);
+	}
+	idx_aloopf2(x, in, T, y, out, T, {
+			if (std::abs((int)*x) > 20)
 	*y = *x;
-      if(*x < 0.0) {
+			if(*x < 0.0) {
 	*y = -(*y);
-      }
-    });
+			}
+		});
 }
 
 template <typename T>
 void smooth_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  // zeroing
-  tin.zero_b();
-  beta.zero_b();
-  bias.zero_b();
-  // backprop
-  absmod.fprop1(in,tin);
-  // failsafe
-  idx_aloopf1(x, in, T, {
-      if (*x > 20)
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	// zeroing
+	tin.zero_b();
+	beta.zero_b();
+	bias.zero_b();
+	// backprop
+	absmod.fprop1(in,tin);
+	// failsafe
+	idx_aloopf1(x, in, T, {
+			if (*x > 20)
 	*x = 20;
-    });
+		});
 
-  // bb = exp (beta .* bias)
-  idx_mul(beta, bias, ebb);
-  idx_exp(ebb);
-  intg nf = bias.dim(0);
+	// bb = exp (beta .* bias)
+	idx_mul(beta, bias, ebb);
+	idx_exp(ebb);
+	intg nf = bias.dim(0);
 
-  idx<T> ttx(ebx[0].spec);
-  idx<T> tty(ebx[0].spec);
-  for (intg i=0; i< nf; i++) {
-    // ebx = exp(beta * x)
-    idx<T> ebxxi = ebx[i];
-    idx<T> ebxdxi = ebx.b[0][i];
-    idx<T> ebxddxi = ebx.bb[0][i];
-    idx<T> tinxi = tin[i];
-    idx<T> tindxi = tin.b[0][i];
-    idx<T> outdxi = out.b[0][i];
+	idx<T> ttx(ebx[0].spec);
+	idx<T> tty(ebx[0].spec);
+	for (intg i=0; i< nf; i++) {
+		// ebx = exp(beta * x)
+		idx<T> ebxxi = ebx[i];
+		idx<T> ebxdxi = ebx.b[0][i];
+		idx<T> ebxddxi = ebx.bb[0][i];
+		idx<T> tinxi = tin[i];
+		idx<T> tindxi = tin.b[0][i];
+		idx<T> outdxi = out.b[0][i];
 
-    idx_dotc(tinxi,beta[i].get(),ebxxi);
-    idx_exp(ebxxi);
+		idx_dotc(tinxi,beta[i].get(),ebxxi);
+		idx_exp(ebxxi);
 
-    // ebdx = exp(beta*x) + exp(beta*bias) -1
-    idx_addc(ebxxi,ebb[i].get()-1,ebxdxi);
-    // ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
-    idx_div(ebxxi,ebxdxi,ebxddxi);
+		// ebdx = exp(beta*x) + exp(beta*bias) -1
+		idx_addc(ebxxi,ebb[i].get()-1,ebxdxi);
+		// ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
+		idx_div(ebxxi,ebxdxi,ebxddxi);
 
-    // df/dx
-    idx_mul(ebxddxi,outdxi,tindxi);
+		// df/dx
+		idx_mul(ebxddxi,outdxi,tindxi);
 
-    //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+		//cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
 
-    // ebddx = 1/ebdx
-    idx_inv(ebxdxi,ebxddxi);
+		// ebddx = 1/ebdx
+		idx_inv(ebxdxi,ebxddxi);
 
-    // df/dbias
-    idx_dotc(ebxddxi,ebb[i].get(),ttx);
-    idx_addc(ttx,(T)-1.0,ttx);
-    bias.b[0][i].set(idx_dot(outdxi,ttx));
+		// df/dbias
+		idx_dotc(ebxddxi,ebb[i].get(),ttx);
+		idx_addc(ttx,(T)-1.0,ttx);
+		bias.b[0][i].set(idx_dot(outdxi,ttx));
 
-    // df/dbeta
-    idx_mul(tinxi,ebxxi,ttx);
-    idx_addc(ttx, bias[i].get() * ebb[i].get(),ttx);
-    idx_mul(ttx,ebxddxi,ttx);
-    idx_dotc(ttx, 1/beta[i].get(),ttx);
-    idx_log(ebxdxi);
-    idx_dotc(ebxdxi,-1/(beta[i].get()*beta[i].get()),tty);
-    idx_add(ttx,tty,ttx);
-    beta.b[0][i].set((T)idx_dot(outdxi,ttx));
-  }
-  idx_add(in.b[0],tin.b[0],in.b[0]);
+		// df/dbeta
+		idx_mul(tinxi,ebxxi,ttx);
+		idx_addc(ttx, bias[i].get() * ebb[i].get(),ttx);
+		idx_mul(ttx,ebxddxi,ttx);
+		idx_dotc(ttx, 1/beta[i].get(),ttx);
+		idx_log(ebxdxi);
+		idx_dotc(ebxdxi,-1/(beta[i].get()*beta[i].get()),tty);
+		idx_add(ttx,tty,ttx);
+		beta.b[0][i].set((T)idx_dot(outdxi,ttx));
+	}
+	idx_add(in.b[0],tin.b[0],in.b[0]);
 }
 
 template <typename T>
 void smooth_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  // clearing
-  tin.zero_bb();
-  beta.zero_bb();
-  bias.zero_bb();
-  // backprop
-  absmod.fprop1(in,tin);
-  // failsafe
-  idx_aloopf1(x, in, T, {
-      if (*x > 20)
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	// clearing
+	tin.zero_bb();
+	beta.zero_bb();
+	bias.zero_bb();
+	// backprop
+	absmod.fprop1(in,tin);
+	// failsafe
+	idx_aloopf1(x, in, T, {
+			if (*x > 20)
 	*x = 20;
-    });
+		});
 
-  // bb = exp (beta .* bias)
-  idx_mul(beta, bias, ebb);
-  idx_exp(ebb);
-  intg nf = bias.dim(0);
+	// bb = exp (beta .* bias)
+	idx_mul(beta, bias, ebb);
+	idx_exp(ebb);
+	intg nf = bias.dim(0);
 
-  idx<T> ttx(ebx[0].spec);
-  idx<T> tty(ebx[0].spec);
-  for (intg i=0; i< nf; i++) {
-    // ebx = exp(beta * x)
-    idx<T> ebxxi = ebx[i];
-    idx<T> ebxdxi = ebx.b[0][i];
-    idx<T> ebxddxi = ebx.bb[0][i];
-    idx<T> tinxi = tin[i];
-    idx<T> tindxi = tin.bb[0][i];
-    idx<T> outdxi = out.bb[0][i];
+	idx<T> ttx(ebx[0].spec);
+	idx<T> tty(ebx[0].spec);
+	for (intg i=0; i< nf; i++) {
+		// ebx = exp(beta * x)
+		idx<T> ebxxi = ebx[i];
+		idx<T> ebxdxi = ebx.b[0][i];
+		idx<T> ebxddxi = ebx.bb[0][i];
+		idx<T> tinxi = tin[i];
+		idx<T> tindxi = tin.bb[0][i];
+		idx<T> outdxi = out.bb[0][i];
 
-    idx_dotc(tinxi,beta[i].get(),ebxxi);
-    idx_exp(ebxxi);
+		idx_dotc(tinxi,beta[i].get(),ebxxi);
+		idx_exp(ebxxi);
 
-    // ebdx = exp(beta*x) + exp(beta*bias) -1
-    idx_addc(ebxxi,ebb[i].get()-1,ebxdxi);
-    // ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
-    idx_div(ebxxi,ebxdxi,ebxddxi);
+		// ebdx = exp(beta*x) + exp(beta*bias) -1
+		idx_addc(ebxxi,ebb[i].get()-1,ebxdxi);
+		// ebddx = exp (beta*x)/ (exp(beta*x) + exp(beta*bias)-1)
+		idx_div(ebxxi,ebxdxi,ebxddxi);
 
-    // df/dx
-    idx_mul(ebxddxi,ebxddxi,ebxddxi);
-    idx_mul(ebxddxi,outdxi,tindxi);
+		// df/dx
+		idx_mul(ebxddxi,ebxddxi,ebxddxi);
+		idx_mul(ebxddxi,outdxi,tindxi);
 
-    //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+		//cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
 
-    // ebddx = 1/ebdx
-    idx_inv(ebxdxi,ebxddxi);
+		// ebddx = 1/ebdx
+		idx_inv(ebxdxi,ebxddxi);
 
-    // df/dbias
-    idx_dotc(ebxddxi,ebb[i].get(),ttx);
-    idx_addc(ttx,(T)-1.0,ttx);
-    idx_mul(ttx,ttx,ttx);
-    bias.bb[0][i].set((T)idx_dot(outdxi,ttx));
+		// df/dbias
+		idx_dotc(ebxddxi,ebb[i].get(),ttx);
+		idx_addc(ttx,(T)-1.0,ttx);
+		idx_mul(ttx,ttx,ttx);
+		bias.bb[0][i].set((T)idx_dot(outdxi,ttx));
 
-    // df/dbeta
-    idx_mul(tinxi,ebxxi,ttx);
-    idx_addc(ttx, bias[i].get() * ebb[i].get(),ttx);
-    idx_mul(ttx,ebxddxi,ttx);
-    idx_dotc(ttx, 1/beta[i].get(),ttx);
-    idx_log(ebxdxi);
-    idx_dotc(ebxdxi,-1/(beta[i].get()*beta[i].get()),tty);
-    idx_add(ttx,tty,ttx);
-    idx_mul(ttx,ttx,ttx);
-    beta.bb[0][i].set((T)idx_dot(outdxi,ttx));
-  }
-  idx_add(in.bb[0],tin.bb[0],in.bb[0]);
+		// df/dbeta
+		idx_mul(tinxi,ebxxi,ttx);
+		idx_addc(ttx, bias[i].get() * ebb[i].get(),ttx);
+		idx_mul(ttx,ebxddxi,ttx);
+		idx_dotc(ttx, 1/beta[i].get(),ttx);
+		idx_log(ebxdxi);
+		idx_dotc(ebxdxi,-1/(beta[i].get()*beta[i].get()),tty);
+		idx_add(ttx,tty,ttx);
+		idx_mul(ttx,ttx,ttx);
+		beta.bb[0][i].set((T)idx_dot(outdxi,ttx));
+	}
+	idx_add(in.bb[0],tin.bb[0],in.bb[0]);
 }
 
 template <typename T>
 module_1_1<T>* smooth_shrink_module<T>::copy(parameter<T> *p) {
-  smooth_shrink_module<T>* s2 =
-      new smooth_shrink_module<T>(NULL, beta.dim(0), default_beta,
-				  default_bias);
-  // assign same parameter state
-  s2->beta = beta;
-  s2->bias = bias;
-  return (module_1_1<T>*) s2;
+	smooth_shrink_module<T>* s2 =
+			new smooth_shrink_module<T>(NULL, beta.dim(0), default_beta,
+					default_bias);
+	// assign same parameter state
+	s2->beta = beta;
+	s2->bias = bias;
+	return (module_1_1<T>*) s2;
 }
 
 // tanh_shrink_module //////////////////////////////////////////////////////////
 
 template <typename T>
 tanh_shrink_module<T>::tanh_shrink_module(parameter<T> *p, intg nf, bool diags_)
-    : module_1_1<T>("tanh_shrink"),
-      nfeatures(nf), alpha(NULL), beta(NULL), diags(diags_) {
-  if (diags) {
-    alpha = new diag_module<T>(p, nf);
-    beta = new diag_module<T>(p, nf);
-  }
+		: module_1_1<T>("tanh_shrink"),
+			nfeatures(nf), alpha(NULL), beta(NULL), diags(diags_) {
+	if (diags) {
+		alpha = new diag_module<T>(p, nf);
+		beta = new diag_module<T>(p, nf);
+	}
 }
 
 template <typename T>
 tanh_shrink_module<T>::~tanh_shrink_module() {
-  if (alpha) delete alpha;
-  if (beta) delete beta;
+	if (alpha) delete alpha;
+	if (beta) delete beta;
 }
 
 template <typename T>
 void tanh_shrink_module<T>::fprop1(idx<T>& in, idx<T>& out) {
-  // checks
-  if (&in != &out) { // resize only when input and output are different
-    this->resize_output(in, out); // resize iff necessary
-  } else eblerror("in and out should be different buffers");
-  // fprop
-  if (diags) { // use coefficients
-    // x * alpha
-    alpha->fprop1(in, abuf);
-    // tanh(x * alpha)
-    mtanh.fprop1(abuf, tbuf);
-    // (x * alpha) - tanh(x * alpha)
-    difmod.fprop1(in, tbuf, bbuf);
-    // beta * ((x * alpha) - tanh(x * alpha))
-    beta->fprop1(bbuf, out);
-  } else { // no coefficients
-    // tanh(x)
-    mtanh.fprop1(in, tbuf);
-    // x - tanh(x)
-    difmod.fprop1(in, tbuf, out);
-  }
+	// checks
+	if (&in != &out) { // resize only when input and output are different
+		this->resize_output(in, out); // resize iff necessary
+	} else eblerror("in and out should be different buffers");
+	// fprop
+	if (diags) { // use coefficients
+		// x * alpha
+		alpha->fprop1(in, abuf);
+		// tanh(x * alpha)
+		mtanh.fprop1(abuf, tbuf);
+		// (x * alpha) - tanh(x * alpha)
+		difmod.fprop1(in, tbuf, bbuf);
+		// beta * ((x * alpha) - tanh(x * alpha))
+		beta->fprop1(bbuf, out);
+	} else { // no coefficients
+		// tanh(x)
+		mtanh.fprop1(in, tbuf);
+		// x - tanh(x)
+		difmod.fprop1(in, tbuf, out);
+	}
 }
 
 template <typename T>
 void tanh_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
-  // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  abuf.resize_b();
-  bbuf.resize_b();
-  tbuf.resize_b();
-  // zeroing
-  abuf.zero_b();
-  bbuf.zero_b();
-  tbuf.zero_b();
-  // bprop
-  if (diags) { // use coefficients
-    // bprop
-    beta->bprop1(bbuf, out);
-    difmod.bprop1(in, tbuf, bbuf);
-    mtanh.bprop1(abuf, tbuf);
-    alpha->bprop1(in, abuf);
-  } else { // no coefficients
-    difmod.bprop1(in, tbuf, out);
-    mtanh.bprop1(in, tbuf);
-  }
+	// checks
+	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	abuf.resize_b();
+	bbuf.resize_b();
+	tbuf.resize_b();
+	// zeroing
+	abuf.zero_b();
+	bbuf.zero_b();
+	tbuf.zero_b();
+	// bprop
+	if (diags) { // use coefficients
+		// bprop
+		beta->bprop1(bbuf, out);
+		difmod.bprop1(in, tbuf, bbuf);
+		mtanh.bprop1(abuf, tbuf);
+		alpha->bprop1(in, abuf);
+	} else { // no coefficients
+		difmod.bprop1(in, tbuf, out);
+		mtanh.bprop1(in, tbuf);
+	}
 }
 
 template <typename T>
 void tanh_shrink_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  abuf.resize_bb();
-  bbuf.resize_bb();
-  tbuf.resize_bb();
-  // zeroing
-  abuf.zero_bb();
-  bbuf.zero_bb();
-  tbuf.zero_bb();
-  // bbprop
-  if (diags) { // use coefficients
-    // bprop
-    beta->bbprop1(bbuf, out);
-    difmod.bbprop1(in, tbuf, bbuf);
-    mtanh.bbprop1(abuf, tbuf);
-    alpha->bbprop1(in, abuf);
-  } else { // no coefficients
-    difmod.bbprop1(in, tbuf, out);
-    mtanh.bbprop1(in, tbuf);
-  }
+	// checks
+	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+	abuf.resize_bb();
+	bbuf.resize_bb();
+	tbuf.resize_bb();
+	// zeroing
+	abuf.zero_bb();
+	bbuf.zero_bb();
+	tbuf.zero_bb();
+	// bbprop
+	if (diags) { // use coefficients
+		// bprop
+		beta->bbprop1(bbuf, out);
+		difmod.bbprop1(in, tbuf, bbuf);
+		mtanh.bbprop1(abuf, tbuf);
+		alpha->bbprop1(in, abuf);
+	} else { // no coefficients
+		difmod.bbprop1(in, tbuf, out);
+		mtanh.bbprop1(in, tbuf);
+	}
 }
 
 template <typename T>
 module_1_1<T>* tanh_shrink_module<T>::copy(parameter<T> *p) {
-  tanh_shrink_module<T>* s2 = new tanh_shrink_module<T>(NULL, nfeatures);
-  // assign same parameter state
-  if (s2->alpha) delete s2->alpha;
-  if (s2->beta) delete s2->beta;
-  s2->alpha = (diag_module<T>*) alpha->copy();
-  s2->beta = (diag_module<T>*) beta->copy();
-  return (module_1_1<T>*) s2;
+	tanh_shrink_module<T>* s2 = new tanh_shrink_module<T>(NULL, nfeatures);
+	// assign same parameter state
+	if (s2->alpha) delete s2->alpha;
+	if (s2->beta) delete s2->beta;
+	s2->alpha = (diag_module<T>*) alpha->copy();
+	s2->beta = (diag_module<T>*) beta->copy();
+	return (module_1_1<T>*) s2;
 }
 
 template <typename T>
 std::string tanh_shrink_module<T>::describe() {
-  std::string desc;
-  desc << "tanh_shrink module " << this->name()
-       << (diags ? " with" : " without") << " scaling coefficients";
-  return desc;
+	std::string desc;
+	desc << "tanh_shrink module " << this->name()
+			 << (diags ? " with" : " without") << " scaling coefficients";
+	return desc;
 }
 
 } // end namespace ebl
