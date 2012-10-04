@@ -291,6 +291,7 @@ bool state<T>::allocated_bb() {
 template <typename T>
 state<T> state<T>::select_state(int dimension, intg slice_index) {
 	state<T> s;
+	s.f.clear();
 	s.forward_only = forward_only;
 	// forward
 	for (uint i = 0; i < f.size(); i++)
@@ -311,6 +312,7 @@ state<T> state<T>::select_state(int dimension, intg slice_index) {
 template <typename T>
 state<T> state<T>::narrow_state(int d, intg sz, intg o) {
 	state<T> s;
+	s.f.clear();
 	s.forward_only = forward_only;
 	// forward
 	for (uint i = 0; i < f.size(); i++)
@@ -334,8 +336,13 @@ state<T> state<T>::narrow_state(intg size, intg offset) {
 		eblerror("cannot narrow this vector of size " << f.size()
 			 << " to size " << size << " starting at offset " << offset);
 	state<T> s;
+	s.f.clear();
 	s.forward_only = forward_only;
-	for (uint i = 0; i < size; ++i) s.f.push_back(f.at(i + offset));
+	for (uint i = 0; i < size; ++i) {
+		s.add_f(f.at(i + offset));
+		if (i < b.size()) s.b.push_back(b.at(i + offset));
+		if (i < bb.size()) s.bb.push_back(bb.at(i + offset));
+	}
 	return s;
 }
 
@@ -351,6 +358,7 @@ state<T> state<T>::narrow_state(midxdim &dims) {
 		eblerror("expected same size input regions and states but got: "
 			 << dims << " and " << *this);
 	state<T> all;
+	all.f.clear();
 	all.forward_only = forward_only;
 	for (uint i = 0; i < dims.size(); ++i) {
 		idx<T> in = f[i];
@@ -358,7 +366,7 @@ state<T> state<T>::narrow_state(midxdim &dims) {
 		// narrow input, ignoring 1st dim
 		for (uint j = 1; j < d.order(); ++j)
 			in = in.narrow(j, d.dim(j), d.offset(j));
-		all.f.push_back_new(in);
+		all.add_f_new(in);
 	}
 	return all;
 }
@@ -370,6 +378,7 @@ state<T> state<T>::narrow_state_max(mfidxdim &dims) {
 			 << dims << " and " << *this);
 	state<T> all;
 	all.forward_only = forward_only;
+	all.f.clear();
 	for (uint i = 0; i < dims.size(); ++i) {
 		idx<T> in = f[i];
 		fidxdim d = dims[i];
@@ -377,7 +386,7 @@ state<T> state<T>::narrow_state_max(mfidxdim &dims) {
 		for (uint j = 1; j < d.order(); ++j)
 			in = in.narrow(j, (intg) std::min(in.dim(j) - d.offset(j), d.dim(j)),
 				 (intg) d.offset(j));
-		all.f.push_back_new(in);
+		all.add_f_new(in);
 	}
 	return all;
 }
@@ -427,10 +436,22 @@ void state<T>::add_f(idx<T> *m) {
 }
 
 template <typename T>
+void state<T>::add_f(svector<idx<T> > &m) {
+	for (uint i = 0; i < m.size(); ++i)
+		add_f(m[i]);
+}
+
+template <typename T>
 void state<T>::add_f_new(const idx<T> &m) {
 	f.push_back_new(m);
 	// make sure the first element of 0 is same as main tensor
 	if (f.size() == 1) link_f0();
+}
+
+template <typename T>
+void state<T>::add_f_new(svector<idx<T> > &m) {
+	for (uint i = 0; i < m.size(); ++i)
+		add_f_new(m[i]);
 }
 
 // copy methods //////////////////////////////////////////////////////////////
@@ -453,23 +474,20 @@ void state<T>::deep_copy(state<T> &s) {
 
 template <typename T> template <typename T2>
 void state<T>::deep_copy(midx<T2> &s) {
-	//  f.clear();
+	f.clear();
 	idx<T2> tmp;
 	int i;
-	idx<T> *m = NULL;
 	switch (s.order()) {
 		case 0:
 			tmp = s.mget();
-			m = new idx<T>(tmp.get_idxdim());
-			add_f(m);
-			idx_copy(tmp, *m);
+			add_f(new idx<T>(tmp.get_idxdim()));
+			idx_copy(tmp, *(f.at_ptr(0)));
 			break ;
 		case 1:
 			for (i = 0; i < s.dim(0); ++i) {
 				tmp = s.mget(i);
-				m = new idx<T>(tmp.get_idxdim());
-				add_f(m);
-				idx_copy(tmp, *m);
+				add_f(new idx<T>(tmp.get_idxdim()));
+				idx_copy(tmp, *(f.at_ptr(0)));
 			}
 			break ;
 		default: eblerror("not implemented");
