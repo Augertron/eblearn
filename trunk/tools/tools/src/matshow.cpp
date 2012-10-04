@@ -178,8 +178,9 @@ int display(list<string>::iterator &ifname,
     idxdim d = get_matrix_dims(ifname->c_str());
     if (interleaved)
       d.shift_dim(0, 2);
-    if (save_individually || print || !(d.order() == 2 ||
-                                        (d.order() == 3 && (d.dim(2) == 1 || d.dim(2) == 3)))) {
+    if (save_individually || print
+        || !(d.order() == 2  || (d.order() == 3 &&
+                                 (d.dim(2) == 1 || d.dim(2) == 3)))) {
       // this is probably not an image, just display info and print matrix
       string type;
       get_matrix_type(ifname->c_str(), type);
@@ -202,13 +203,13 @@ int display(list<string>::iterator &ifname,
 	if (ms.order() == 1) {
 	  for (intg i = 0; i < ms.dim(0); ++i) {
 	    idx<T> tmp = ms.mget(i);
-	    cout << tmp << " ";
+	    cout << tmp.info() << " ";
 	  }
 	} else if (ms.order() == 2) {
 	  for (intg i = 0; i < ms.dim(0); ++i) {
 	    for (intg j = 0; j < ms.dim(1); ++j) {
 	      idx<T> tmp = ms.mget(i, j);
-	      cout << tmp << " ";
+	      cout << tmp.info() << " ";
 	    }
 	    cout << endl;
 	  }

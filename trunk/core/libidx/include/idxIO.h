@@ -43,8 +43,6 @@
 
 // DUMPING /////////////////////////////////////////////////////////////////////
 
-/* #ifdef __DUMP_STATES__ */
-
 #ifdef __ANDROID__
 #define DUMP_ROOT "/sdcard/"
 #else
@@ -55,8 +53,8 @@ extern uint dump_count;
 extern std::string dump_prefix;
 
 #define INIT_DUMP()				\
-    uint dump_count = 0;			\
-    std::string dump_prefix;
+  uint dump_count = 0;                          \
+  std::string dump_prefix;
 
 #define RESET_DUMP() dump_count = 0;
 #define DUMP_PREFIX(s) { dump_prefix.clear(); dump_prefix << s << "_"; }
@@ -75,9 +73,6 @@ extern std::string dump_prefix;
       std::cerr << "Failed to dump " << n << std::endl;                 \
   }
 
-/* #else */
-/* #define DUMP(mat, fname) */
-/* #endif /\* DUMP_STATES *\/ */
 ////////////////////////////////////////////////////////////////////////////////
 
 // standard lush magic numbers
@@ -106,141 +101,152 @@ extern std::string dump_prefix;
 
 namespace ebl {
 
-  // TODO: implement all types.
-  // TODO: is check for endianess required?
+// TODO: implement all types.
+// TODO: is check for endianess required?
 
-  ////////////////////////////////////////////////////////////////
-  // loading
+// loading /////////////////////////////////////////////////////////////////////
 
-  //! Returns matrix from file filename. If original matrix type is different
-  //! than requested type, it is casted (copied) into the new type.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    idx<T> load_matrix(const char *filename);
-  //! Returns matrix from file filename. If original matrix type is different
-  //! than requested type, it is casted (copied) into the new type.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    idx<T> load_matrix(const std::string &filename);
-  //! Returns matrix that is the concatenation along dimension 'concat_dim'
-  //! of multiple matrices with corresponding filenames.
-  //! If original matrix type is different
-  //! than requested type, it is casted (copied) into the new type.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    idx<T> load_matrix(const std::vector<std::string> &filenames,
-		       intg concat_dim = 0);
-  //! Loads a matrix from file filename into given matrix m.
-  //! m if resized if necessary. Data is cast into m's type if different.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    void load_matrix(idx<T>& m, const char *filename);
-  //! Loads a matrix from file filename into given matrix m.
-  //! m if resized if necessary. Data is cast into m's type if different.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    void load_matrix(idx<T>& m, const std::string &filename);
-  //! Loads a matrix from an opened file pointer 'fp'
-  //! into given matrix out if given,
-  //! allocates a new one otherwise. This returns either *out or the newly
-  //! allocated idx.
-  //! If out is not null, it is resized if necessary.
-  //! In all cases, data is cast into T if different.
-  //! This throws string exceptions upon errors.
-  template <typename T>
-    idx<T> load_matrix(FILE *fp, idx<T> *out);
-  //! Returns matrix of pointers to matrices from file filename.
-  //! If original matrix type is different
-  //! than requested type, it is casted (copied) into the new type.
-  //! This throws string exceptions upon errors.
-  //! \param ondemand If true, do not load matrices but keep a file pointer
-  //!   open and dynamically load each matrix when requested in the midx object.
-  template <typename T>
-    midx<T> load_matrices(const std::string &filename, bool ondemand = true);
+//! Returns matrix from file filename. If original matrix type is different
+//! than requested type, it is casted (copied) into the new type.
+//! This throws string exceptions upon errors.
+template <typename T>
+idx<T> load_matrix(const char *filename);
+//! Returns matrix from file filename. If original matrix type is different
+//! than requested type, it is casted (copied) into the new type.
+//! This throws string exceptions upon errors.
+template <typename T>
+idx<T> load_matrix(const std::string &filename);
+//! Returns matrix that is the concatenation along dimension 'concat_dim'
+//! of multiple matrices with corresponding filenames.
+//! If original matrix type is different
+//! than requested type, it is casted (copied) into the new type.
+//! This throws string exceptions upon errors.
+template <typename T>
+idx<T> load_matrix(const std::vector<std::string> &filenames,
+                   intg concat_dim = 0);
+//! Loads a matrix from file filename into given matrix m.
+//! m if resized if necessary. Data is cast into m's type if different.
+//! This throws string exceptions upon errors.
+template <typename T>
+void load_matrix(idx<T>& m, const char *filename);
+//! Loads a matrix from file filename into given matrix m.
+//! m if resized if necessary. Data is cast into m's type if different.
+//! This throws string exceptions upon errors.
+template <typename T>
+void load_matrix(idx<T>& m, const std::string &filename);
+//! Loads a matrix from an opened file pointer 'fp'
+//! into given matrix out if given,
+//! allocates a new one otherwise. This returns either *out or the newly
+//! allocated idx.
+//! If out is not null, it is resized if necessary.
+//! In all cases, data is cast into T if different.
+//! This throws string exceptions upon errors.
+template <typename T>
+idx<T> load_matrix(FILE *fp, idx<T> *out);
+//! Returns matrix of pointers to matrices from file filename.
+//! If original matrix type is different
+//! than requested type, it is casted (copied) into the new type.
+//! This throws string exceptions upon errors.
+//! \param ondemand If true, do not load matrices but keep a file pointer
+//!   open and dynamically load each matrix when requested in the midx object.
+template <typename T>
+midx<T> load_matrices(const std::string &filename, bool ondemand = true);
 
-  ////////////////////////////////////////////////////////////////
-  // saving
+// saving //////////////////////////////////////////////////////////////////////
 
-  //! Saves a matrix m in file filename.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrix(idx<T>& m, const std::string &filename);
-  //! Saves a matrix m in file filename. One can force the saving type to
-  //! a different type than the passed idx, e.g.
-  //! by calling save_matrix<float>(m, ..);
-  //! Returns true if successful, false otherwise.
-  template <typename T2, typename T>
-    bool save_matrix(idx<T>& m, const std::string &filename);
-  //! Saves a matrix m in file filename.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrix(idx<T>& m, const char *filename);
-  //! Saves a matrix m into a file pointer 'fp'. The user is responsible
-  //! for closing the file pointer afterwards, even if an error occured.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrix(idx<T>& m, FILE *fp);
-  //! Saves a midx m into a single static matrix in file 'filename'.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-  bool save_matrix(midx<T> m, const std::string &filename);
-  //! Saves matrices m in file filename. Elements of m may be NULL and will
-  //! be remembered as empty when loaded back.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrices(midx<T>& m, const std::string &filename);
-  //! Saves all matrices of m in 1 file per matrix, with filename of type
-  //! <root>_<index>.mat. Returns true if successful, false otherwise.
-  //! \param print If true, print saving of each file.
-  template <typename T>
-    bool save_matrices_individually(midx<T>& m, const std::string &root,
-				    bool print = false);
-  //! Concatenates and saves matrices m1 and m2 into file 'filename'.
-  //! The matrices of matrices should have the same dimensions except for
-  //! for the first dimension, which will be concatenated.
-  //! Elements of m may be NULL and will be remembered as empty when loaded
-  //! back. Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename);
-  //! Saves matrices with filenames 'filenames' in a collection of matrices
-  //! in file 'filename'.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrices(std::list<std::string> &filenames,
-		       const std::string &filename);
-  //! Saves matrices with filenames 'filenames' in a single matrix
-  //! of size filenames.size() x (dimensions of first element) in file
-  //! 'filename'. All matrices must have the same dimensions.
-  //! Returns true if successful, false otherwise.
-  template <typename T>
-    bool save_matrix(std::list<std::string> &filenames,
-		     const std::string &filename);
+//! Saves a matrix m in file filename.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrix(idx<T>& m, const std::string &filename);
+//! Saves a matrix m in file filename. One can force the saving type to
+//! a different type than the passed idx, e.g.
+//! by calling save_matrix<float>(m, ..);
+//! Returns true if successful, false otherwise.
+template <typename T2, typename T>
+bool save_matrix(idx<T>& m, const std::string &filename);
+//! Saves a matrix m in file filename.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrix(idx<T>& m, const char *filename);
+//! Saves a matrix m into a file pointer 'fp'. The user is responsible
+//! for closing the file pointer afterwards, even if an error occured.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrix(idx<T>& m, FILE *fp);
+//! Saves a midx m into a single static matrix in file 'filename'.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrix(midx<T> m, const std::string &filename);
+//! Saves matrices m in file filename. Elements of m may be NULL and will
+//! be remembered as empty when loaded back.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrices(midx<T>& m, const std::string &filename);
+//! Saves matrices m in file filename. Elements of m may be NULL and will
+//! be remembered as empty when loaded back.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrices(svector<idx<T> >& m, const std::string &filename);
+//! Saves all matrices of m in 1 file per matrix, with filename of type
+//! <root>_<index>.mat. Returns true if successful, false otherwise.
+//! \param print If true, print saving of each file.
+template <typename T>
+bool save_matrices_individually(midx<T>& m, const std::string &root,
+                                bool print = false);
+//! Concatenates and saves matrices m1 and m2 into file 'filename'.
+//! The matrices of matrices should have the same dimensions except for
+//! for the first dimension, which will be concatenated.
+//! Elements of m may be NULL and will be remembered as empty when loaded
+//! back. Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename);
+//! Saves matrices with filenames 'filenames' in a collection of matrices
+//! in file 'filename'.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrices(std::list<std::string> &fnames, const std::string &filename);
+//! Saves matrices with filenames 'filenames' in a single matrix
+//! of size filenames.size() x (dimensions of first element) in file
+//! 'filename'. All matrices must have the same dimensions.
+//! Returns true if successful, false otherwise.
+template <typename T>
+bool save_matrix(std::list<std::string> &fnames, const std::string &filename);
 
-  ////////////////////////////////////////////////////////////////
-  // helper functions
+// to string saving ////////////////////////////////////////////////////////////
 
-  //! Set string type to a string describing the matrix type found in filename.
-  //! Possible strings are: ubyte, int, float, double, long, uint,
-  //! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
-  //! double (pascal vincent).
-  //! This returns the magic number found in 'filename'.
-  EXPORT int get_matrix_type(const char *filename, std::string &type);
-  //! Return the magic number associated with the matrix's type found in
-  //! 'filename'.
-  EXPORT int get_matrix_type(const char *filename);
-  //! Returns true if the file 'filename' is a matrix file.
-  EXPORT bool is_matrix(const char *filename);
-  //! Return true if this magic number is a vincent magic number.
-  EXPORT bool is_magic_vincent(int magic);
-  //! Return true if this magic number is a regular magic number.
-  EXPORT bool is_magic(int magic);
-  //! Return the dimensions of the matrix contained in 'filename'
-  EXPORT idxdim get_matrix_dims(const char *filename);
-  //! Return the dimensions found in the header and set 'magic' to the magic
-  //! number found (either vincent or regular type).
-  EXPORT idxdim read_matrix_header(FILE *fp, int &magic);
-  //! Returns true if mat file 'filename' contains more than 1 matrix.
-  EXPORT bool has_multiple_matrices(const char *filename);
+//! Saves matrix 'm' to a string and returns it.
+template <typename T> std::string save_matrix_to_string(idx<T>& m);
+//! Saves matrices of 'v' to a string and returns it.
+template <typename T> std::string save_matrices_to_string(svector<idx<T> >& v);
+//! Saves matrices of 'l' to a string and returns it.
+template <typename T> std::string save_matrices_to_string(std::list<idx<T>*>& l);
+//! Saves matrices of 'm' to a string and returns it.
+template <typename T> std::string save_matrices_to_string(midx<T>& m);
+
+// helper functions ////////////////////////////////////////////////////////////
+
+//! Set string type to a string describing the matrix type found in filename.
+//! Possible strings are: ubyte, int, float, double, long, uint,
+//! ubyte (pascal vincent), int (pascal vincent), float (pascal vincent),
+//! double (pascal vincent).
+//! This returns the magic number found in 'filename'.
+EXPORT int get_matrix_type(const char *filename, std::string &type);
+//! Return the magic number associated with the matrix's type found in
+//! 'filename'.
+EXPORT int get_matrix_type(const char *filename);
+//! Returns true if the file 'filename' is a matrix file.
+EXPORT bool is_matrix(const char *filename);
+//! Return true if this magic number is a vincent magic number.
+EXPORT bool is_magic_vincent(int magic);
+//! Return true if this magic number is a regular magic number.
+EXPORT bool is_magic(int magic);
+//! Return the dimensions of the matrix contained in 'filename'
+EXPORT idxdim get_matrix_dims(const char *filename);
+//! Return the dimensions found in the header and set 'magic' to the magic
+//! number found (either vincent or regular type).
+EXPORT idxdim read_matrix_header(FILE *fp, int &magic);
+//! Returns true if mat file 'filename' contains more than 1 matrix.
+EXPORT bool has_multiple_matrices(const char *filename);
 
 } // end namespace ebl
 
