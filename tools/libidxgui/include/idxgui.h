@@ -371,8 +371,8 @@ class ManipInfra {
   int nval;
 };
 
-template class ManipInfra<int,int>;
-template class ManipInfra<uint,uint>;
+//template class ManipInfra<int,int>;
+//template class ManipInfra<uint,uint>;
 EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<uint,uint> &manip);
 EXPORT idxgui& operator<<(idxgui& r, const ManipInfra<int,int> &manip);
 
