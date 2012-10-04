@@ -306,7 +306,7 @@ void load_dataset1(string &ds_name, string &data_fname) {
       load_dataset2<Tdata, uint>(ds_name, data_fname, labels_fname);
       break ;
     default:
-      eblerror("unknown magic number");
+      eblerror("unknown magic number in label matrix");
   }
 }
 
@@ -377,7 +377,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
           load_dataset1<uint>(ds_name, data_fname);
           break ;
         default:
-          eblerror("unknown magic number");
+          eblerror("unknown magic number in data matrix");
       }
     } eblcatcherror();
     secsleep(20);

@@ -38,160 +38,161 @@
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
-  // helper functions
+// helper functions ////////////////////////////////////////////////////////////
 
-  // TODO: if types differ, print warning and cast to expected type
-  // TODO: allow not knowing order in advance (just assign new idx to m)
-  int get_matrix_type(const char *filename, std::string &type) {
-    int magic = get_matrix_type(filename);
-    type = get_magic_str(magic);
+// TODO: if types differ, print warning and cast to expected type
+// TODO: allow not knowing order in advance (just assign new idx to m)
+int get_matrix_type(const char *filename, std::string &type) {
+  int magic = get_matrix_type(filename);
+  type = get_magic_str(magic);
+  return magic;
+}
+
+int get_matrix_type(const char *filename) {
+  // open file
+  FILE *fp = fopen(filename, "rb");
+  if (!fp)
+    eblthrow("failed to open " << filename);
+  int magic = 0;
+  if (has_multiple_matrices(filename)) {
+    // first read offsets matrix
+    idx<int64> p = load_matrix<int64>(fp);
+    // read 2nd matrix header
+    try {
+      read_matrix_header(fp, magic);
+    } catch (ebl::eblexception &e) {}
+    return magic;
+  } else {
+    // header: read magic number
+    try {
+      read_matrix_header(fp, magic);
+    } catch (ebl::eblexception &e) {}
     return magic;
   }
+}
 
-  int get_matrix_type(const char *filename) {
+bool is_magic_vincent(int magic) {
+  if (magic == MAGIC_UBYTE_VINCENT
+      || magic == MAGIC_BYTE_VINCENT
+      || magic == MAGIC_SHORT_VINCENT
+      || magic == MAGIC_INT_VINCENT
+      || magic == MAGIC_FLOAT_VINCENT
+      || magic == MAGIC_DOUBLE_VINCENT)
+    return true;
+  return false;
+}
+
+bool is_magic(int magic) {
+  if (magic == MAGIC_FLOAT_MATRIX
+      || magic == MAGIC_PACKED_MATRIX
+      || magic == MAGIC_DOUBLE_MATRIX
+      || magic == MAGIC_INTEGER_MATRIX
+      || magic == MAGIC_BYTE_MATRIX
+      || magic == MAGIC_SHORT_MATRIX
+      || magic == MAGIC_SHORT8_MATRIX
+      || magic == MAGIC_LONG_MATRIX
+      || magic == MAGIC_ASCII_MATRIX
+      || magic == MAGIC_UINT_MATRIX
+      || magic == MAGIC_UINT64_MATRIX
+      || magic == MAGIC_INT64_MATRIX)
+    return true;
+  return false;
+}
+
+bool is_matrix(const char *filename) {
+  try {
     // open file
     FILE *fp = fopen(filename, "rb");
     if (!fp)
       eblthrow("failed to open " << filename);
     int magic = 0;
-    if (has_multiple_matrices(filename)) {
-      // first read offsets matrix
-      idx<int64> p = load_matrix<int64>(fp);
-      // read 2nd matrix header
-      try {
-	read_matrix_header(fp, magic);
-      } catch (ebl::eblexception &e) {}
-      return magic;
-    } else {
-      // header: read magic number
-      try {
-	read_matrix_header(fp, magic);
-      } catch (ebl::eblexception &e) {}
-      return magic;
-    }
-  }
+    read_matrix_header(fp, magic);
+  } catch (eblexception &e) { return false; }
+  return true;
+}
 
-  bool is_magic_vincent(int magic) {
-    if (magic == MAGIC_UBYTE_VINCENT
-	|| magic == MAGIC_BYTE_VINCENT
-	|| magic == MAGIC_SHORT_VINCENT
-	|| magic == MAGIC_INT_VINCENT
-	|| magic == MAGIC_FLOAT_VINCENT
-	|| magic == MAGIC_DOUBLE_VINCENT)
-      return true;
-    return false;
-  }
+idxdim get_matrix_dims(const char *filename) {
+  // open file
+  FILE *fp = fopen(filename, "rb");
+  if (!fp)
+    eblthrow("failed to open " << filename);
+  // read it
+  int magic;
+  idxdim d = read_matrix_header(fp, magic);
+  fclose(fp);
+  return d;
+}
 
-  bool is_magic(int magic) {
-    if (magic == MAGIC_FLOAT_MATRIX
-	|| magic == MAGIC_PACKED_MATRIX
-	|| magic == MAGIC_DOUBLE_MATRIX
-	|| magic == MAGIC_INTEGER_MATRIX
-	|| magic == MAGIC_BYTE_MATRIX
-	|| magic == MAGIC_SHORT_MATRIX
-	|| magic == MAGIC_SHORT8_MATRIX
-	|| magic == MAGIC_LONG_MATRIX
-	|| magic == MAGIC_ASCII_MATRIX
-	|| magic == MAGIC_UINT_MATRIX
-	|| magic == MAGIC_UINT64_MATRIX
-	|| magic == MAGIC_INT64_MATRIX)
-      return true;
-    return false;
-  }
+idxdim read_matrix_header(FILE *fp, int &magic) {
+  int ndim, v, magic_vincent;
+  int ndim_min = 3; // std header requires at least 3 dims even empty ones.
+  idxdim dims;
 
-  bool is_matrix(const char *filename) {
-    try {
-      // open file
-      FILE *fp = fopen(filename, "rb");
-      if (!fp)
-	eblthrow("failed to open " << filename);
-      int magic = 0;
-      read_matrix_header(fp, magic);
-    } catch (eblexception &e) { return false; }
-    return true;
-  }
-
-  idxdim get_matrix_dims(const char *filename) {
-    // open file
-    FILE *fp = fopen(filename, "rb");
-    if (!fp)
-      eblthrow("failed to open " << filename);
-    // read it
-    int magic;
-    idxdim d = read_matrix_header(fp, magic);
+  // read magic number
+  if (fread(&magic, sizeof (int), 1, fp) != 1) {
     fclose(fp);
-    return d;
+    eblthrow("cannot read magic number");
   }
+  magic_vincent = endian(magic);
+  magic_vincent &= ~0xF; // magic contained in higher bits
 
-  idxdim read_matrix_header(FILE *fp, int &magic) {
-    int ndim, v, magic_vincent;
-    int ndim_min = 3; // std header requires at least 3 dims even empty ones.
-    idxdim dims;
-
-    // read magic number
-    if (fread(&magic, sizeof (int), 1, fp) != 1) {
+  // read number of dimensions
+  if (is_magic(magic)) { // regular magic number, read next number
+    if (fread(&ndim, sizeof (int), 1, fp) != 1) {
       fclose(fp);
-      eblthrow("cannot read magic number");
+      eblthrow("cannot read number of dimensions");
     }
-    magic_vincent = endian(magic);
-    magic_vincent &= ~0xF; // magic contained in higher bits
-
-    // read number of dimensions
-    if (is_magic(magic)) { // regular magic number, read next number
-      if (fread(&ndim, sizeof (int), 1, fp) != 1) {
-	fclose(fp);
-	eblthrow("cannot read number of dimensions");
-      }
-      // check number is valid
-      if (ndim > MAXDIMS) {
-	fclose(fp);
-	eblthrow("too many dimensions: " << ndim << " (MAXDIMS = "
-		 << MAXDIMS << ").");
-      }
-    } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
-      // ndim is contained in lower bits of the magic number
-      ndim = endian(magic) & 0xF;
-      ndim_min = ndim;
-      magic = magic_vincent;
-    } else { // unkown magic
+    // check number is valid
+    if (ndim > MAXDIMS) {
       fclose(fp);
-      eblthrow("unknown magic number: " << reinterpret_cast<void*>(magic)
-	       << " or " << magic << " vincent: " << magic_vincent);
+      eblthrow("too many dimensions: " << ndim << " (MAXDIMS = "
+               << MAXDIMS << ").");
     }
-    // read each dimension
-    for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
-      if (fread(&v, sizeof (int), 1, fp) != 1) {
-	fclose(fp);
-	eblthrow("failed to read matrix dimensions");
-      }
-      // if vincent, convert to endian first
-      if (is_magic_vincent(magic_vincent))
-	v = endian(v);
-      if (i < ndim) { // ndim may be less than ndim_min
-	if (v <= 0) { // check that dimension is valid
-	  fclose(fp);
-	  eblthrow("dimension is negative or zero");
-	}
-	dims.insert_dim(i, v); // insert dimension
-      }
-    }
-    return dims;
+  } else if (is_magic_vincent(magic_vincent)) { // vincent magic number
+    // ndim is contained in lower bits of the magic number
+    ndim = endian(magic) & 0xF;
+    ndim_min = ndim;
+    magic = magic_vincent;
+  } else { // unkown magic
+    fclose(fp);
+    eblthrow("unknown magic number: " << reinterpret_cast<void*>(magic)
+             << " or " << magic << " vincent: " << magic_vincent);
   }
+  // read each dimension
+  for (int i = 0; (i < ndim) || (i < ndim_min); ++i) {
+    if (fread(&v, sizeof (int), 1, fp) != 1) {
+      fclose(fp);
+      eblthrow("failed to read matrix dimensions");
+    }
+    // if vincent, convert to endian first
+    if (is_magic_vincent(magic_vincent))
+      v = endian(v);
+    if (i < ndim) { // ndim may be less than ndim_min
+      if (v <= 0) { // check that dimension is valid
+        fclose(fp);
+        eblthrow("dimension is negative or zero");
+      }
+      dims.insert_dim(i, v); // insert dimension
+    }
+  }
+  return dims;
+}
 
-  bool has_multiple_matrices(const char *filename) {
-    // open file
-    FILE *fp = fopen(filename, "rb");
-    if (!fp)
-      return false;
-    // read header
-    int magic;
-    idxdim d;
-    try { d = read_matrix_header(fp, magic); }
-    catch(ebl::eblexception &e) { return false; }
-    intg size = d.nelements();
-    // compute data size
-    switch (magic) {
+bool has_multiple_matrices(const char *filename) {
+  // open file
+  FILE *fp = fopen(filename, "rb");
+  if (!fp)
+    return false;
+  // read header
+  int magic;
+  idxdim d;
+  try { d = read_matrix_header(fp, magic); }
+  catch(ebl::eblexception &e) { return false; }
+  int magic_vincent = endian(magic);
+  magic_vincent &= ~0xF; // magic contained in higher bits
+  intg size = d.nelements();
+  // compute data size
+  switch (magic) {
     case MAGIC_BYTE_MATRIX:
     case MAGIC_UBYTE_VINCENT:
       size *= sizeof (ubyte);
@@ -221,25 +222,26 @@ namespace ebl {
       size *= sizeof (int64);
       break ;
     default:
-      eblerror("unknown magic number");
-    }
-    // go to end of data
-    fseek(fp, size, SEEK_CUR);
-    fpos_t pos;
-    fgetpos(fp, &pos);
-    // now go to end of file
-    fseek(fp, 0, SEEK_END);
-    fpos_t endpos;
-    fgetpos(fp, &endpos);
-    fclose(fp);
-    // compare
+      eblerror("unknown magic number: " << reinterpret_cast<void*>(magic)
+             << " or " << magic << " vincent: " << magic_vincent);
+  }
+  // go to end of data
+  fseek(fp, size, SEEK_CUR);
+  fpos_t pos;
+  fgetpos(fp, &pos);
+  // now go to end of file
+  fseek(fp, 0, SEEK_END);
+  fpos_t endpos;
+  fgetpos(fp, &endpos);
+  fclose(fp);
+  // compare
 #if defined(__WINDOWS__) || defined(__MAC__) || defined(__ANDROID__)
-    if (pos != endpos)
+  if (pos != endpos)
 #else
     if (pos.__pos != endpos.__pos)
 #endif
       return true;
-    return false;
-  }
+  return false;
+}
 
 } // end namespace ebl

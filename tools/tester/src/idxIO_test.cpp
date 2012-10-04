@@ -1,5 +1,6 @@
 #include "idxIO_test.h"
 #include "libidx.h"
+#include "tools_utils.h"
 
 #ifdef __WINDOWS__
 #define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
@@ -20,32 +21,40 @@ void idxIO_test::setUp() {
 void idxIO_test::tearDown() {
 }
 
-template<class T> void test_save_load_matrix() {
-  idx<T> m(9, 9);
-  std::string fname= TEST_FILE;
-
-  // initialize values
-  double v = 0.1;
-  { idx_aloop1(i, m, T) {
-      *i = (T) v;
-      v++;
-    }
-  }
-  //m.printElems(); cout << std::endl;
+template <typename T>
+void check_loading_equal(idx<T> &ref, const std::string &fname) {
   try {
-    save_matrix(m, fname);
-    idx<T> l = load_matrix<T>(fname);
+    idx<T> loaded = load_matrix<T>(fname);
     // test values
-    v = 0.1;
-    { idx_aloop1(i, l, T) {
-	CPPUNIT_ASSERT_EQUAL((T)v, *i);
-	v++;
+    { idx_aloop2(i, loaded, T, r, ref, T) {
+	CPPUNIT_ASSERT_EQUAL(*r, *i);
       }
     }
   } catch(std::string &err) {
     std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // error
   }
+}
+
+template<class T> void test_save_load_matrix() {
+  std::string fname = TEST_FILE;
+  // initialize matrix
+  idx<T> m(9, 9);
+  double v = 0.1;
+  { idx_aloop1(i, m, T) {
+      *i = (T) v;
+      v++;
+    }
+  }
+  // save and test
+  rm_file(fname.c_str());
+  save_matrix(m, fname);
+  check_loading_equal(m, fname);
+  // test matrix string saving/loading
+  std::string data = save_matrix_to_string(m);
+  rm_file(fname.c_str());
+  string_to_file(data, fname);
+  check_loading_equal(m, fname);
 }
 
 void idxIO_test::test_save_load_matrix_ubyte() {
@@ -121,6 +130,27 @@ void idxIO_test::test_save_load_matrix_matrix() {
   }
 }
 
+void check_matrices(idx<float> &s1, idx<float> &s2, idx<float> &s3,
+                    std::string &fname) {
+  try {
+    midx<float> all2 = load_matrices<float>(fname, true);
+    // check 1st matrix is ok
+    idx<float> m2 = all2.mget(0);
+    CPPUNIT_ASSERT_EQUAL(idx_sum(s1) - idx_sum(m2), (float) 0);
+    // check 2nd matrix is ok
+    m2 = all2.mget(1);
+    CPPUNIT_ASSERT_EQUAL(idx_sum(s2) - idx_sum(m2), (float) 0);
+    // check 3rd matrix is ok
+    m2 = all2.mget(2);
+    CPPUNIT_ASSERT_EQUAL(idx_sum(s3) - idx_sum(m2), (float) 0);
+    // check has_multiple_matrices
+    CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(fname.c_str()), true);
+  } catch(std::string &err) {
+    std::cerr << err << std::endl;
+    CPPUNIT_ASSERT(false); // err
+  }
+}
+
 void idxIO_test::test_save_load_matrices() {
   try {
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
@@ -131,27 +161,25 @@ void idxIO_test::test_save_load_matrices() {
     sim2 << root <<"/table_32_96_connect_1920_fanin_20_density_0.62_random.mat";
     sim3 << root <<"/table_38_68_connect_2040_fanin_30_density_0.79_random.mat";
     sall << root << "/all.mat";
+    CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sim1.c_str()), false);
+    idx<float> s1 = load_matrix<float>(sim1);
+    idx<float> s2 = load_matrix<float>(sim2);
+    idx<float> s3 = load_matrix<float>(sim3);
+
     list<std::string> l;
     l.push_back(sim1);
     l.push_back(sim2);
     l.push_back(sim3);
+    // regular saving
+    rm_file(sall);
     save_matrices<float>(l, sall);
-    midx<float> all2 = load_matrices<float>(sall, true);
-    // check 1st matrix is ok
-    idx<float> m1 = load_matrix<float>(sim1);
-    idx<float> m2 = all2.mget(0);
-    CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
-    // check 2nd matrix is ok
-    m1 = load_matrix<float>(sim2);
-    m2 = all2.mget(1);
-    CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
-    // check 3rd matrix is ok
-    m1 = load_matrix<float>(sim3);
-    m2 = all2.mget(2);
-    CPPUNIT_ASSERT_EQUAL(idx_sum(m1) - idx_sum(m2), (float) 0);
-    // check has_multiple_matrices
-    CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sall.c_str()), true);
-    CPPUNIT_ASSERT_EQUAL(has_multiple_matrices(sim1.c_str()), false);
+    check_matrices(s1, s2, s3, sall);
+    // string saving
+    midx<float> all = load_matrices<float>(sall, true);
+    rm_file(sall);
+    std::string data = save_matrices_to_string(all);
+    string_to_file(data, sall);
+    check_matrices(s1, s2, s3, sall);
   } catch(std::string &err) {
     std::cerr << err << std::endl;
     CPPUNIT_ASSERT(false); // err

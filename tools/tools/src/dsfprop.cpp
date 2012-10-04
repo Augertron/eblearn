@@ -240,7 +240,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       module_1_1<T> *net =
           create_network<T>(theparam, conf, inthick, noutputs, "arch");
       //! initialize the network weights
-      forget_param_linear fgp(1, 0.5, argc, argv);
+      bool fixed_random = conf.try_get_bool("fixed_randomization", false);
+      forget_param_linear fgp(1, 0.5, !fixed_random);
+      if (!fixed_random) fgp.seed(conf.str());
       if (conf.exists_true("retrain")) {
         theparam.load_x(conf.get_cstring("retrain_weights"));
       } else {

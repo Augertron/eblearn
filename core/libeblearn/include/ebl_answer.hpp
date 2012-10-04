@@ -934,8 +934,8 @@ fprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
   if (dsmod) dsmod->fprop_ds2(ds, in2); // specific data production
   else ds.fprop_label_net(in2);      // generic, simply take ds' input 2
 
-  EDEBUG_MAT("input 1: ", in1);
-  EDEBUG_MAT("input 2: ", in2);
+  EDEBUG_MAT("input 1:", in1);
+  EDEBUG_MAT("input 2:", in2);
   TIMING2("sample retrieval");
 
   // fprop flow 1

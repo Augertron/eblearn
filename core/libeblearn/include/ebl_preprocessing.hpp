@@ -336,8 +336,7 @@ module_1_1<T>* rgb_to_yuvn_module<T>::copy(parameter<T> *p) {
                                           this->norm_mode, this->globnorm);
 }
 
-////////////////////////////////////////////////////////////////
-// rgb_to_rgb_module
+// rgb_to_rgb_module ///////////////////////////////////////////////////////////
 
 template <typename T>
 rgb_to_rgb_module<T>::
@@ -361,6 +360,31 @@ void rgb_to_rgb_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 module_1_1<T>* rgb_to_rgb_module<T>::copy(parameter<T> *p) {
   return new rgb_to_rgb_module<T>(this->globnorm);
+}
+
+// y_to_y_module ///////////////////////////////////////////////////////////
+
+template <typename T>
+y_to_y_module<T>::y_to_y_module(bool globnorm)
+    : channels_module<T>(globnorm, "y_to_y") {
+}
+
+template <typename T>
+y_to_y_module<T>::~y_to_y_module() {
+}
+
+template <typename T>
+void y_to_y_module<T>::fprop1(idx<T> &in, idx<T> &out) {
+  channels_module<T>::resize_output(in, out); // resize (iff necessary)
+  // plain copy
+  idx_copy(in, out);
+  // remove global mean and divide by stddev
+  if (this->globnorm) image_global_normalization(out);
+}
+
+template <typename T>
+module_1_1<T>* y_to_y_module<T>::copy(parameter<T> *p) {
+  return new y_to_y_module<T>(this->globnorm);
 }
 
 // rgb_to_rgbn_module //////////////////////////////////////////////////////////

@@ -256,6 +256,22 @@ template <typename T> class rgb_to_rgb_module: public channels_module<T> {
   virtual module_1_1<T>* copy(parameter<T> *p = NULL);
 };
 
+// y_to_y_module ///////////////////////////////////////////////////////////
+
+//! Simple copy of Y and global normalization if specified.
+template <typename T> class y_to_y_module: public channels_module<T> {
+ public:
+  //! Constructor.
+  y_to_y_module(bool globnorm = true);
+  //! destructor
+  virtual ~y_to_y_module();
+  //! forward propagation from in to out
+  virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
+};
+
 // rgb_to_rgbn_module //////////////////////////////////////////////////////////
 
 //! Convert an RGB input into a YUVn output, where YUV is normalized
