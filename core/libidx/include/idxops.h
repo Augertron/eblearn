@@ -43,22 +43,22 @@ namespace ebl {
 
 //! Generic copy of 'src' to 'dst'.
 // TODO-0: using slow idx_copy version, others are bugged, debug
-template <class T1, class T2> void idx_copy(const idx<T1> &src, idx<T2> &dst);
+template <typename T1, typename T2> void idx_copy(const idx<T1> &src, idx<T2> &dst);
 //! copy, specialized float32 version
 template <> void idx_copy(const idx<float32> &src, idx<float32> &dst);
 //! copy, specialized float64 version
 template <> void idx_copy(const idx<float64> &src, idx<float64> &dst);
 //! Generic copy, returns the copied idx
-template <class T1, class T2> idx<T1> idx_copy(const idx<T2> &src);
+template <typename T1, typename T2> idx<T1> idx_copy(const idx<T2> &src);
 //! Generic copy, returns the copied idx
-template <class T> idx<T> idx_copy(const idx<T> &src);
+template <typename T> idx<T> idx_copy(const idx<T> &src);
 
 //template <typename T> void idx_copy(idx<T> &src, idx<T> &dst);
 
 //! copy src into dst but prevent under and overflow if values in src
 //! are bigger than maximum and minimum values of type T1.
 //! Caution: note that this is slower than a reguler idx_copy.
-template <class T1, class T2>
+template <typename T1, typename T2>
 void idx_copy_clip(const idx<T1> &src, idx<T2> &dst);
 
 // idx_clear /////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ template <typename T> void idx_clear(idx<T> &inp);
 // idx_fill //////////////////////////////////////////////////////////////////
 
 //! Fill this idx with v, v is cast with saturation
-template<class T, class T2> inline void idx_fill(idx<T> & inp, T2 v);
+template <typename T, typename T2> inline void idx_fill(idx<T> & inp, T2 v);
 //! Fill this idx with v.
 template <typename T> void idx_fill(idx<T> &inp, T v);
 //! Fill this idx with index of each element.
@@ -93,9 +93,9 @@ void idx_shuffle(idx<T> &in, intg d = 0, idx<T> *out = NULL);
 //! and copied back into in (slower).
 //! Warning: this function assumes that drand is already initialized
 //! (with dynamic_init_drand())
-template <class T1, class T2>
+template <typename T1, typename T2>
 void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, intg d,
-                          idx<T1> *out1 = NULL, idx<T2> *out2 = NULL);
+													idx<T1> *out1 = NULL, idx<T2> *out2 = NULL);
 //! shuffle elements order of dimension d simultaneously of <in1>, <in2> and
 //! <in3>.
 //! the shuffled order will be the same for <in1>, <in2> and <in3> which means
@@ -105,16 +105,16 @@ void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, intg d,
 //! and copied back into in (slower).
 //! Warning: this function assumes that drand is already initialized
 //! (with dynamic_init_drand())
-template <class T1, class T2, class T3>
+template <typename T1, typename T2, typename T3>
 void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, idx<T3> &in3,
-                          intg d,
-                          idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
-                          idx<T3> *out3 = NULL);
+													intg d,
+													idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
+													idx<T3> *out3 = NULL);
 
 // idx_add (not-in-place) ////////////////////////////////////////////////////
 
 //! Add 'i1' and 'i2' into 'out'.
-template<typename T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 // idx_add (in-place) ////////////////////////////////////////////////////////
 
@@ -122,7 +122,7 @@ template<typename T> void idx_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 template <typename T> void idx_add(idx<T> &in, idx<T> &out);
 
 //! Add two idx's as follow: out = out + in, specialized float32 version
-//template<> EXPORT void idx_add(idx<float32> &in, idx<float32> &out);
+//template <> EXPORT void idx_add(idx<float32> &in, idx<float32> &out);
 
 // idx_addc //////////////////////////////////////////////////////////////////
 // TODO: add inplace addc, which can be used for speed up in
@@ -130,12 +130,12 @@ template <typename T> void idx_add(idx<T> &in, idx<T> &out);
 
 //! add a constant to each element:  o1 <- i1+c;
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_addc(idx<T> &inp, T2 c, idx<T> &out);
 //! add a constant to each element:  o1 <- i1+c;
-template<class T> void idx_addc(idx<T> &inp, T c, idx<T> &out);
+template <typename T> void idx_addc(idx<T> &inp, T c, idx<T> &out);
 //! Adds a constant to each element: in <- in + c.
-template<class T> void idx_addc(idx<T> &in, T c);
+template <typename T> void idx_addc(idx<T> &in, T c);
 
 // idx_addc_bounded //////////////////////////////////////////////////////////
 
@@ -146,7 +146,7 @@ template<class T> void idx_addc(idx<T> &in, T c);
 //! Caution: Without IPP's, this is slower than a regular idx_addc.
 //! Warning: bounding not working when T=double (TODO)
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_addc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 //! add a constant to each element:  o1 <- i1+c;
 //! This version bounds the new values to minimum and maximum of type T,
@@ -161,32 +161,32 @@ template <typename T> void idx_addc_bounded(idx<T> &inp, T c, idx<T> &out);
 //! add a constant to each element and accumulate
 //! result: o1 <- o1 + i1+c;
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_addcacc(idx<T> &inp, T2 c, idx<T> &out);
 //! add a constant to each element and accumulate
 //! result: o1 <- o1 + i1+c;
-template<class T> void idx_addcacc(idx<T> &inp, T c, idx<T> &out);
+template <typename T> void idx_addcacc(idx<T> &inp, T c, idx<T> &out);
 
 // idx_sub ///////////////////////////////////////////////////////////////////
 
 //! Subtract 'i2' to 'i1' into 'i1', i.e. i1 -= i2.
-template<class T> void idx_sub(idx<T> &i1, idx<T> &i2);
+template <typename T> void idx_sub(idx<T> &i1, idx<T> &i2);
 //! Subtract 'i2' to 'i1' into 'out', i.e. out = i1 - i2.
-template<class T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
 //! Subtract 'i2' to 'i1' into 'out', i.e. out += i1 - i2.
-template<class T> void idx_subacc(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_subacc(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 // idx_spherical_sub (not-in-place) //////////////////////////////////////////
 
 //! Subtracts two spherical coordinates idx's. The lowest angle difference
 //! between each angle is used.
-template<class T> void idx_spherical_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_spherical_sub(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 // idx_spherical_add (not-in-place) //////////////////////////////////////////
 
 //! Add two spherical coordinates idx's. The lowest angle value is used,
 //! i.e. min(2PI - a, a) for angle 'a'.
-template<class T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 // idx_subc_bounded //////////////////////////////////////////////////////////
 
@@ -197,7 +197,7 @@ template<class T> void idx_spherical_add(idx<T> &i1, idx<T> &i2, idx<T> &out);
 //! Caution: Without IPP's, this is slower than a regular idx_subc.
 //! Warning: bounding not working when T=double (TODO)
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_subc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 //! subtract a constant to each element:  o1 <- i1-c;
 //! This version bounds the new values to minimum and maximum of type T,
@@ -205,32 +205,34 @@ inline void idx_subc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 //! will be 0, for an overflow it will be 255.
 //! Caution: Without IPP's, this is slower than a regular idx_subc.
 //! Warning: bounding not working when T=double (TODO)
-template<class T> void idx_subc_bounded(idx<T> &inp, T c, idx<T> &out);
+template <typename T> void idx_subc_bounded(idx<T> &inp, T c, idx<T> &out);
 
 // idx_minus /////////////////////////////////////////////////////////////////
 
 //! Negate all elements of 'in' into 'out'.
-template<class T> void idx_minus(idx<T> &in, idx<T> &out);
+template <typename T> void idx_minus(idx<T> &in, idx<T> &out);
 
 // idx_minus_acc /////////////////////////////////////////////////////////////
 
 //! Negate all elements of 'in' and accumulate them into 'out'.
-template<class T> void idx_minus_acc(idx<T> &in, idx<T> &out);
+template <typename T> void idx_minus_acc(idx<T> &in, idx<T> &out);
 
 // idx_mul (not-in-place) ////////////////////////////////////////////////////
 
 //! multiply two idx's element-wise: out = i1 * i2
-template<class T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out);
-
+template <typename T> void idx_mul(idx<T> &i1, idx<T> &i2, idx<T> &out);
+//! multiply two idx's element-wise: out = i1 * i2
+ template <typename T, typename T2>
+	 void idx_mul(idx<T> &i1, idx<T2> &i2, idx<T> &out);
 //! Multiply two idx's element-wise and accumulate them: out += i1 * i2
-template<class T> void idx_mulacc(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_mulacc(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 ////////////////////////////////////////////////////////////////
 // idx_dotc
 
 //! multiply all elements by a constant:  o1 <- i1*c;
 //! Be careful that c does not overflow in the type of inp
-template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out);
+template <typename T, typename T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out);
 
 ////////////////////////////////////////////////////////////////
 // idx_dotc_bounded
@@ -242,7 +244,7 @@ template<class T, class T2> void idx_dotc(idx<T> &inp, T2 c, idx<T> &out);
 //! Caution: This is slower than a regular idx_dotc.
 //! Warning: bounding not working when T=double (TODO)
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 void idx_dotc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 
 // idx_dotcacc ///////////////////////////////////////////////////////////////
@@ -250,7 +252,7 @@ void idx_dotc_bounded(idx<T> &inp, T2 c, idx<T> &out);
 //! multiply all elements by a constant and accumulate
 //! result: o1 <- o1 + i1*c;
 //! If c overflows the type of inp, it saturates
-template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out);
+template <typename T, typename T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out);
 
 ////////////////////////////////////////////////////////////////
 // idx_signdotc
@@ -258,32 +260,32 @@ template<class T, class T2> void idx_dotcacc(idx<T> &inp, T2 c, idx<T> &out);
 //! set each element of out to +c if corresponding element of inp
 //! is positive, and to -c otherwise.
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_signdotc(idx<T> &inp, T2 c, idx<T> &out);
 //! set each element of out to +c if corresponding element of inp
 //! is positive, and to -c otherwise.
-template<class T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out);
+template <typename T> void idx_signdotc(idx<T> &inp, T c, idx<T> &out);
 
 // idx_div ///////////////////////////////////////////////////////////////////
 
 //! divide two idx's element-wise: out = i1 / i2
-template<class T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out);
+template <typename T> void idx_div(idx<T> &i1, idx<T> &i2, idx<T> &out);
 
 // idx_inv ///////////////////////////////////////////////////////////////////
 
 //! Inverts all elements, i.e. for each element e, e = 1/e.
-template<class T> void idx_inv(idx<T> &inp, idx<T> &out);
+template <typename T> void idx_inv(idx<T> &inp, idx<T> &out);
 
 // idx_signdotcacc ///////////////////////////////////////////////////////////
 
 //! accumulate into each element of out to +c if corresponding element
 //! of inp is positive, and to -c otherwise.
 //! If c overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_signdotcacc(idx<T> &inp, T2 c, idx<T> &out);
 //! accumulate into each element of out to +c if corresponding element
 //! of inp is positive, and to -c otherwise.
-template<class T> void idx_signdotcacc(idx<T> &inp, T c, idx<T> &out);
+template <typename T> void idx_signdotcacc(idx<T> &inp, T c, idx<T> &out);
 
 // idx_subsquare /////////////////////////////////////////////////////////////
 
@@ -320,28 +322,28 @@ template <typename T> void idx_abs(idx<T>& inp, idx<T>& out);
 //! accumulates -c in <out> if <in> is less than <th>, c if more than <th>,
 //! 0 otherwise (this is used as bprop for sumabs).
 //! If <c> or <th> overflows the type of inp, it saturates
-template<class T, class T2, class T3>
+template <typename T, typename T2, typename T3>
 inline void idx_thresdotc_acc(idx<T>& in, T2 c, T3 th, idx<T>& out);
 //! accumulates -c in <out> if <in> is less than <th>, c if more than <th>,
 //! 0 otherwise (this is used as bprop for sumabs).
-template<class T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out);
+template <typename T> void idx_thresdotc_acc(idx<T>& in, T c, T th, idx<T>& out);
 
 // idx_threshold (in-place) //////////////////////////////////////////////////
 
 //! if input is less than th, assign <th>
 //! If <th> overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_threshold(idx<T>& in, T2 th);
 //! if input is less than th, assign <th>
-template<class T> void idx_threshold(idx<T>& in, T th);
+template <typename T> void idx_threshold(idx<T>& in, T th);
 //! if input is more than th, assign <th>
-template<class T> void idx_threshold2(idx<T>& in, T th);
+template <typename T> void idx_threshold2(idx<T>& in, T th);
 
 // idx_threshold (not-in-place) //////////////////////////////////////////////
 
 //! if input is less than th, assign th, otherwise copy <in>
 //! If <th> overflows the type of inp, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_threshold(idx<T>& in, T2 th, idx<T>& out);
 //! if input is less than th, assign th, otherwise copy <in>
 template <typename T>
@@ -351,16 +353,16 @@ void idx_threshold(idx<T>& in, T th, idx<T>& out);
 
 //! if input is less than th, assign value, otherwise copy <in>
 //! If <th> od <value> overflows the type of inp, it saturates
-template<class T, class T2, class T3>
+template <typename T, typename T2, typename T3>
 void idx_threshold(idx<T>& in, T2 th, T3 value);
 //! if input is less than th, assign value
-template<class T> void idx_threshold(idx<T>& in, T th, T value);
+template <typename T> void idx_threshold(idx<T>& in, T th, T value);
 
 // idx_threshold (with value, not-in-place) //////////////////////////////////
 
 //! if input is less than th, assign value, otherwise copy <in>
 //! If <th> od <value> overflows the type of inp, it saturates
-template<class T, class T2, class T3>
+template <typename T, typename T2, typename T3>
 void idx_threshold(idx<T>& in, T2 th, T3 value, idx<T>& out);
 //! if input is less than th, assign value, otherwise copy <in>
 template <typename T>
@@ -369,7 +371,7 @@ void idx_threshold(idx<T>& in, T th, T value, idx<T>& out);
 // idx_threshold (with below and above) //////////////////////////////////////
 
 //! if input is less than th, assign 'below', else assign 'above'.
-template <class T, class T2>
+template <typename T, typename T2>
 void idx_threshold(idx<T>& in, T th, T2 below, T2 above, idx<T2>& out);
 
 // idx_sqrt //////////////////////////////////////////////////////////////////
@@ -380,7 +382,7 @@ template <typename T> void idx_sqrt(idx<T>& in, idx<T>& out);
 // idx_exp ///////////////////////////////////////////////////////////////////
 
 //! computes the exponential of inp
-template<class T> EXPORT void idx_exp(idx<T>& inp);
+template <typename T> EXPORT void idx_exp(idx<T>& inp);
 //! computes the exponential of inp, float version
 template <> EXPORT void idx_exp(idx<float>& inp);
 //! computes the exponential of inp
@@ -390,11 +392,11 @@ template <> EXPORT void idx_exp(idx<float64>& inp);
 
 //! takes in to the power p and puts it in out.
 //! If <p> overflows the type of <inp>, it saturates
-template<class T, class T2>
+template <typename T, typename T2>
 inline void idx_power(idx<T>& in, T2 p, idx<T>& out);
 
 //! takes in to the power p and puts it in out.
-template<class T> inline void idx_power(idx<T>& in, T p, idx<T>& out);
+template <typename T> inline void idx_power(idx<T>& in, T p, idx<T>& out);
 
 #ifndef __TH__
 //! takes in to the power p and puts it in out, specialized float version
@@ -419,10 +421,10 @@ template <typename T> T idx_sum(idx<T> &inp, T *out);
 #if 0 //TODO
 
 /*
-  #if defined(__OPENMP__) and defined(__USE_SSE__)
-  //! returns the sum of all the terms, specialized float32 version
-  template<> float32 idx_sum(idx<float32> &inp, float32 *out);
-  #endif
+	#if defined(__OPENMP__) and defined(__USE_SSE__)
+	//! returns the sum of all the terms, specialized float32 version
+	template <> float32 idx_sum(idx<float32> &inp, float32 *out);
+	#endif
 */
 
 #endif
@@ -430,44 +432,44 @@ template <typename T> T idx_sum(idx<T> &inp, T *out);
 // idx_sumacc ////////////////////////////////////////////////////////////////
 
 //! sum of all the terms, accumulated in idx0 acc
-template<class T> float64 idx_sumacc(idx<T> &inp, idx<T> &acc);
+template <typename T> float64 idx_sumacc(idx<T> &inp, idx<T> &acc);
 
 // idx_sumabs ////////////////////////////////////////////////////////////////
 
 //! sum of all absolute values of the terms, and optionally puts the result
 //! in out if passed.
-template<class T> float64 idx_sumabs(idx<T> &inp, T *out = NULL);
+template <typename T> float64 idx_sumabs(idx<T> &inp, T *out = NULL);
 
 // idx_sumabs (with accumulator) /////////////////////////////////////////////
 
 //! sum of all absolute values of the terms, accumulated in idx0 acc
-template<class T> float64 idx_sumabs(idx<T> &inp, idx<T> &acc);
+template <typename T> float64 idx_sumabs(idx<T> &inp, idx<T> &acc);
 
 // idx_sumsqr ////////////////////////////////////////////////////////////////
 
 //! sum of square of all the terms
-template<class T> float64 idx_sumsqr(idx<T> &in);
+template <typename T> float64 idx_sumsqr(idx<T> &in);
 
 // idx_l1 ////////////////////////////////////////////////////////////////////
 
 //! l1 norm of two matrices, seen as a vectors.
-template <class T> float64 idx_l1(idx<T> &m1, idx<T> &m2);
+template <typename T> float64 idx_l1(idx<T> &m1, idx<T> &m2);
 
 // idx_l2norm ////////////////////////////////////////////////////////////////
 
 //! l2 norm of an idx, seen as a vector.
 //! equivalent to the square root of idx_sumsqr
-template<class T> float64 idx_l2norm(idx<T> &in);
+template <typename T> float64 idx_l2norm(idx<T> &in);
 //! l2 norm of an idx, seen as a vector (same as idx_l2norm()).
 //! equivalent to the square root of idx_sumsqr
-template<class T> float64 idx_l2(idx<T> &in);
+template <typename T> float64 idx_l2(idx<T> &in);
 //! l2 distance between two matrices, each seen as a vector.
-template<class T> float64 idx_l2(idx<T> &m1, idx<T> &m2);
+template <typename T> float64 idx_l2(idx<T> &m1, idx<T> &m2);
 //! l2 distance between multi-matrices.
-template<class T> float64 idx_l2(midx<T> &m1, midx<T> &m2);
+template <typename T> float64 idx_l2(midx<T> &m1, midx<T> &m2);
 //! l2 distance between overlap of matrices (sub-matrices of m1 and m2 may
 //! have different dimensions).
-template<class T> float64 idx_l2common(midx<T> &m1, midx<T> &m2);
+template <typename T> float64 idx_l2common(midx<T> &m1, midx<T> &m2);
 
 // idx_mean //////////////////////////////////////////////////////////////////
 
@@ -497,17 +499,17 @@ EXPORT void idx_std_normalize(idx<uint32> &in, idx<uint32> &o, uint32 *mean);
 //! Float specialization.
 template <>
 EXPORT void idx_std_normalize(idx<float32> &in, idx<float32> &o,
-                              float32 *mean);
+															float32 *mean);
 
 // idx_dot ///////////////////////////////////////////////////////////////////
 
 //! dot product of two idx. This generic version is not efficient.
 //! Returns sum of product of all elements.
-template <class T> T idx_dot(idx<T> &i1, idx<T> &i2);
+template <typename T> T idx_dot(idx<T> &i1, idx<T> &i2);
 // TODO: this doesn't compiile on newest gcc
 /* //! dot product of two idx. This generic version is not efficient. */
 /* //! Returns sum of product of all elements. */
-/* template <class T> float64 idx_dot(idx<T> &i1, idx<T> &i2); */
+/* template <typename T> float64 idx_dot(idx<T> &i1, idx<T> &i2); */
 #if defined(__CBLAS__) || (defined(__IPP__) && defined(__IPP_DOT__))
 //! dot product of two idx. Returns sum of product of all elements.
 EXPORT float64 idx_dot(idx<float32> &i1, idx<float32> &i2);
@@ -603,10 +605,10 @@ EXPORT void idx_m1squextm1acc(idx<float> &a, idx<float> &x, idx<float> &y);
 //! 2D convolution. all arguments are idx2.
 //! Be careful that it does not uses IPP
 // TODO: specialize a float version that uses IPP
-template<class T> void idx_2dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);
+template <typename T> void idx_2dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);
 //! 3D convolution, each layer of the first dimension is convolved
 //! using idx_2dconvol().
-template<class T> void idx_3dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);
+template <typename T> void idx_3dconvol(idx<T> &in, idx<T> &kernel, idx<T> &out);
 
 // flip functions ////////////////////////////////////////////////////////////
 
@@ -631,7 +633,7 @@ template <typename T> T idx_max(idx<T> &m);
 // idx_max between two idx's (in-place) //////////////////////////////////////
 
 //! Copy maximum between each element of in1 and in2 into in2.
-template<class T> void idx_max(idx<T> &in1, idx<T> &in2);
+template <typename T> void idx_max(idx<T> &in1, idx<T> &in2);
 
 // idx_max between two idx's (not-in-place) //////////////////////////////////
 
@@ -644,7 +646,7 @@ template <typename T> void idx_max(idx<T> &in1, idx<T> &in2, idx<T> &out);
 template <typename T> T idx_min(idx<T> &m);
 
 //! Copy minimum between each element of in1 and in2 into in2.
-template<class T> void idx_min(idx<T> &in1, idx<T> &in2);
+template <typename T> void idx_min(idx<T> &in1, idx<T> &in2);
 
 // idx_indexmax //////////////////////////////////////////////////////////////
 
@@ -661,20 +663,20 @@ template <typename T> intg idx_indexmin(idx<T> &m);
 //! <m> is a vector, <p> is a vector (same dimension as <m>).
 //! on output, <m> is sorted in descending order, and <p>
 //! is sorted with the same permutation table.
-template <class T1, class T2> void idx_sortdown(idx<T1> &m, idx<T2> &p);
+template <typename T1, typename T2> void idx_sortdown(idx<T1> &m, idx<T2> &p);
 //! In-place sort of elements of (continuous) vector <m>
 //! in ascending order.
-template<class T> void idx_sortup(idx<T> &m);
+template <typename T> void idx_sortup(idx<T> &m);
 //! In-place sort of elements of (continuous) vector <m>
 //! in ascending order. m2 will be sorted with the same order as m.
-template<class T1, class T2> void idx_sortup(idx<T1> &m, idx<T2> &m2);
+template <typename T1, typename T2> void idx_sortup(idx<T1> &m, idx<T2> &m2);
 //! In-place sort of elements of (continuous) vector <m>
 //! in ascending order. m2 and m3 will be sorted with the same order as m.
-template<class T1, class T2, class T3>
+template <typename T1, typename T2, typename T3>
 void idx_sortup(idx<T1> &m, idx<T2> &m2, idx<T3> &m3);
 //! In-place sort of elements of (continuous) vector <m>
 //! in descending order.
-template<class T> void idx_sortdown(idx<T> &m);
+template <typename T> void idx_sortdown(idx<T> &m);
 
 // idx_sqrdist ///////////////////////////////////////////////////////////////
 
