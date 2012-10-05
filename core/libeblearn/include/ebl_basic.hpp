@@ -896,8 +896,8 @@ void mul_module<T>::bbprop1(state<T> &in1, state<T> &in2, state<T> &out) {
 // thres_module ////////////////////////////////////////////////////////////////
 
 template <typename T>
-thres_module<T>::thres_module(T thres_, T val_)
-		: module_1_1<T>("thres"), thres(thres_), val(val_) {
+thres_module<T>::thres_module(T thres_, T val_, const char *name_)
+		: module_1_1<T>(name_), thres(thres_), val(val_) {
 }
 
 template <typename T>
@@ -934,6 +934,14 @@ void thres_module<T>::bbprop1(state<T> &in, state<T> &out) {
 	idx_checknelems2_all(in.bb[0], out.bb[0]); // must have same dimensions
 	// backprop
 	idx_add(out.bb[0], in.bb[0]);
+}
+
+template <typename T>
+std::string thres_module<T>::describe() {
+	std::string desc;
+	desc << "threshold module " << this->name() << " sets any value below "
+			 << thres << " to " << val;
+	return desc;
 }
 
 // cutborder_module ////////////////////////////////////////////////////////////

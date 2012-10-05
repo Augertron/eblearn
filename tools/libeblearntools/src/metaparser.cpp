@@ -875,6 +875,8 @@ void metaparser::write_plots(configuration &conf, const char *dir,
 					if (i->second.exists("meta_conf_variables"))
 						title = pairtree::vals_vector[i->second.get_var_id
 																					("meta_conf_variables")];
+					for (uint i = 0; i < title.size(); ++i)
+						if (title[i] == '_') title[i] = ' ';
 					outp << " " << title;
 					if (usefont) outp << "}";
 					outp << "\" with linespoints " << gpline;
