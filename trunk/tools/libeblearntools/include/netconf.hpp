@@ -943,6 +943,13 @@ create_module(const std::string &name, parameter<T> &theparam,
 		get_param(conf, name, "linear", linear, true);
 		module = (module_1_1<T>*) new stdsigmoid_module<T>(linear, name.c_str());
 	}
+	// rectified linear ///////////////////////////////////////////////////////////
+	else if (!type.compare("relu")) {
+		double threshold = 0;
+		get_param(conf, name, "threshold", threshold, true);
+		module = (module_1_1<T>*)
+			new thres_module<T>(threshold, threshold, name.c_str());
+	}
 	// abs //////////////////////////////////////////////////////////////
 	else if (!type.compare("abs"))
 		module = (module_1_1<T>*) new abs_module<T>();

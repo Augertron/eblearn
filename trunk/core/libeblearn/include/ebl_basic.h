@@ -310,15 +310,11 @@ template <typename T> class mul_module : public module_2_1<T> {
 //! smaller then a given threshold is set to a specified value.
 template <typename T> class thres_module : public module_1_1<T> {
  public:
-	T thres;
-	T val;
-
- public:
 	//! <thres> is the threshold value that is used to filter the
 	//! input.
 	//! <val> is the value that is used to replace any input entry.
 	//! smaller than <thres>.
-	thres_module(T thres, T val);
+	thres_module(T thres, T val, const char *name = "threshold");
 	//! destructor
 	virtual ~thres_module();
 	//! forward propagation from in to out
@@ -327,6 +323,12 @@ template <typename T> class thres_module : public module_1_1<T> {
 	virtual void bprop1(state<T> &in, state<T> &out);
 	//! second-derivative backward propagation from out to in
 	virtual void bbprop1(state<T> &in, state<T> &out);
+	//! Returns a string describing this module and its parameters.
+	virtual std::string describe();
+
+ public:
+	T thres;
+	T val;
 };
 
 // cutborder_module ////////////////////////////////////////////////////////////
