@@ -110,19 +110,13 @@ template <typename T> class tanh_module: public module_1_1<T> {
 // softmax /////////////////////////////////////////////////////////////////////
 
 //! softmax module
-//! if in is idx0 -> out is idx0 and equal to 1
-//! if in is idx1 -> it is just one pool
-//! if in is idx2 -> it is just one pool
-//! if in is idx3 -> the last two dimensions are pools
-//! if in is idx4 -> the last two dimensions are pools
-//! if in is idx5 -> the last four dimensions are pools
-//! if in is idx6 -> the last four dimensions are pools
-template <typename T> class softmax: public module_1_1<T> {
+template <typename T> class softmax_module: public module_1_1<T> {
  public:
 	//! Constructor.
-	softmax(double b);
+	//! \param beta If large, turns softmax into a max, if 0 returns 1/N.
+	softmax_module(double beta = 1);
 	//! Destructor.
-	~softmax();
+	~softmax_module();
 
 	//! Forward propagation from 'in' tensor to 'out' tensor.
 	//! Note: because a state object cast to idx is its forward tensor,
@@ -134,9 +128,6 @@ template <typename T> class softmax: public module_1_1<T> {
 	virtual void bbprop1(state<T> &in, state<T> &out);
 
  public:
-	// <b> is the parameter beta in the softmax
-	// large <b> turns the softmax into a max
-	// <b> equal to 0 turns the softmax into 1/N
 	double beta;
 };
 

@@ -872,9 +872,9 @@ void metaparser::write_plots(configuration &conf, const char *dir,
 							 << ijob + 2 << " title \"";
 					if (usefont) outp << "{/" << gpfont;
 					std::string title = pairtree::vals_vector[job];
-					if (i->second.exists("meta_conf_variables"))
-						title = pairtree::vals_vector[i->second.get_var_id
-																					("meta_conf_variables")];
+					// if (i->second.exists("meta_conf_variables"))
+					// 	title = pairtree::vals_vector[i->second.get_var_id
+					// 																("meta_conf_variables")];
 					for (uint i = 0; i < title.size(); ++i)
 						if (title[i] == '_') title[i] = ' ';
 					outp << " " << title;

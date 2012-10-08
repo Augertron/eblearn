@@ -1148,6 +1148,8 @@ create_trainer(configuration &conf, module_1_1<T> &net,
 		// loop on possible energy modules ///////////////////////////////////////
 		if (!energy_type.compare("l2_energy")) {
 			energy = new l2_energy<T>(energy_name.c_str());
+		} else if (!energy_type.compare("cross_entropy_energy")) {
+			energy = new cross_entropy_energy<T>(energy_name.c_str());
 		} else if (!energy_type.compare("scalerclass_energy")) {
 			std::string tanh_name, jsize_name, jselection_name, dist_name, scale_name,
 					pconf_name, pbconf_name, coeffs_name, biases_name;

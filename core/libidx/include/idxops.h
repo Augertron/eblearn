@@ -388,6 +388,13 @@ template <> EXPORT void idx_exp(idx<float>& inp);
 //! computes the exponential of inp
 template <> EXPORT void idx_exp(idx<float64>& inp);
 
+// idx_log ///////////////////////////////////////////////////////////////////
+
+//! computes the log of in, in = log(in).
+template <typename T> EXPORT void idx_log(idx<T>& in);
+//! computes the log of in, out = log(in).
+template <typename T> EXPORT void idx_log(idx<T>& in, idx<T> &out);
+
 // idx_power /////////////////////////////////////////////////////////////////
 
 //! takes in to the power p and puts it in out.
