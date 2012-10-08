@@ -1856,16 +1856,18 @@ template <class T> void idx_exp(idx<T> &m) {
 // idx_log
 
 template <class T> void idx_log(idx<T> &m) {
-#if USING_FAST_ITERS == 0
-	idx_aloop1(i, m, T) {
-		*i = log(*i);
-	};
-#else
 #ifdef __WINDOWS__
 	idx_aloopf1(i, m, T, { *i = (T)log((double)*i); });
 #else
 	idx_aloopf1(i, m, T, { *i = (T)log(*i); });
 #endif
+}
+
+template <typename T> EXPORT void idx_log(idx<T>& in, idx<T> &out) {
+#ifdef __WINDOWS__
+	idx_aloopf2(i, in, T, o, out, T, { *o = (T)log((double)*i); });
+#else
+	idx_aloopf2(i, in, T, o, out, T, { *o = (T)log(*i); });
 #endif
 }
 

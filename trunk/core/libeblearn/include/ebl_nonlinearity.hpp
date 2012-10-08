@@ -140,77 +140,57 @@ std::string tanh_module<T>::describe() {
 // softmax /////////////////////////////////////////////////////////////////////
 
 template <typename T>
-softmax<T>::softmax(double b) : module_1_1<T>("softmax") {
-	beta = b;
+softmax_module<T>::softmax_module(double b) : module_1_1<T>("softmax_module"), beta(b) {
 }
 
 template <typename T>
-softmax<T>::~softmax() {
+softmax_module<T>::~softmax_module() {
 }
 
 template <typename T>
-void softmax<T>::fprop1(idx<T> &in, idx<T> &out){
-	if (in.order() == 0) {
-		idx<double> ib;
-		ib.set(1);
-		idx_copy(ib, out);
-	} else {
-		this->resize_output(in, out);
-		idx<double> pp(new srg<double>(), in.spec);
-		idx<double> dot(new srg<double>(), in.spec);
-		double mm = idx_max(in);
-		idx_addc(in, -mm, pp);
-		idx_dotc(pp, beta, dot);
-		double out_sum = 0.0;
-		double d = idx_sum(dot, &out_sum);
-		idx_dotc(dot, (double)(1/d), out);
-	}
+void softmax_module<T>::fprop1(idx<T> &in, idx<T> &out) {
+	this->resize_output(in, out);
+	// shift to avoid overflow
+	idx_addc(in, -idx_max(in), out);
+	// coefficient
+	if (beta != 1) idx_dotc(out, beta, out);
+	// exp of all
+	idx_exp(out);
+	// normalize by sum of exp
+	idx_dotc(out, 1/idx_sum(out), out);
 }
 
 template <typename T>
-void softmax<T>::bprop1(state<T> &in, state<T> &out){
+void softmax_module<T>::bprop1(state<T> &in, state<T> &out) {
 	DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+	idx<T> tmp(out.b[0].get_idxdim());
 	// backprop
-	int n = in.order();
-	if( n == 0) return;
-	if( n > 6 ) { eblerror("illegal type")}
-	else{
-		idx<double> pp(new srg<double>(), out.b[0].spec);
-		idx<double> mul(new srg<double>(), out.b[0].spec);
-		double dot = idx_dot(out.b[0], out);
-		idx_addc(out.b[0], -dot, pp);
-		idx_mul(out, pp, mul);
-		idx_dotcacc(mul, beta, in);
-	}
+	double dot = idx_dot(out.b[0], out);
+	idx_addc(out.b[0], -dot, tmp);
+	idx_mul(out, tmp, tmp);
+	idx_dotcacc(tmp, beta, in.b[0]);
 }
 
 template <typename T>
-void softmax<T>::bbprop1(state<T> &in, state<T> &out){
+void softmax_module<T>::bbprop1(state<T> &in, state<T> &out) {
 	DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
 	// backprop
-	int n = in.order();
-	if( n == 0) return;
-	if( n > 6 ) { eblerror("illegal type")}
-	else{
-		idx<double> mul(new srg<double>(), out.spec);
-		idx<double> dot(new srg<double>(), out.spec);
-		idx<double> pp(new srg<double>(), out.spec);
-		idx<double> mul2(new srg<double>(), out.spec);
-		idx<double> pp2(new srg<double>(), out.spec);
-		idx<double> mul3(new srg<double>(), out.spec);
-		idx_mul(out, out, mul);
-		idx_dotc(out, (double)-2, dot);
-		idx_addc(dot, (double)1, pp);
-		idx_mul(pp, out.bb[0], mul2);
-		idx_addc(mul2, idx_dot(out.bb[0], mul), pp2);
-		idx_mul(mul, pp2, mul3);
-
-		idx_dotcacc(mul3, beta*beta, in.bb[0]);
-	}
+	idx<T> mul(out.get_idxdim());
+	idx<T> dot(out.get_idxdim());
+	idx<T> pp(out.get_idxdim());
+	idx<T> mul2(out.get_idxdim());
+	idx<T> pp2(out.get_idxdim());
+	idx<T> mul3(out.get_idxdim());
+	idx_mul(out, out, mul);
+	idx_dotc(out, (T)-2, dot);
+	idx_addc(dot, (T)1, pp);
+	idx_mul(pp, out.bb[0], mul2);
+	idx_addc(mul2, idx_dot(out.bb[0], mul), pp2);
+	idx_mul(mul, pp2, mul3);
+	idx_dotcacc(mul3, beta*beta, in.bb[0]);
 }
 
-////////////////////////////////////////////////////////////////
-// abs_module
+// abs_module //////////////////////////////////////////////////////////////////
 
 template <typename T>
 abs_module<T>::abs_module(double thres) : module_1_1<T>("abs") {
