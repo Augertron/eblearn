@@ -687,13 +687,14 @@ void merge_module<T>::fprop(state<T> &in, state<T> &out) {
 	for (uint i = 0; i < states_list.size(); ++i) {
 		std::vector<uint> ids = states_list[i];
 		state<T> mi;
+		mi.clear_all();
 		// create multi-state of states to merge
 		for (uint j = 0; j < ids.size(); ++j) {
 			uint id = ids[j];
 			if (id >= in.f.size())
 				eblerror("trying to access state " << id << " but multi-state only "
 								 << "contains " << in.f.size() << " states: " << in);
-			mi.f.push_back(in.f[id]);
+			mi.add_f_new(in.f[id]);
 		}
 		EDEBUG("merging states with ids " << ids << ": " << mi);
 		// merge them
@@ -715,7 +716,7 @@ void merge_module<T>::bprop(state<T> &in, state<T> &out) {
 			if (id >= in.f.size())
 				eblerror("trying to access state " << id << " but multi-state only "
 								 << "contains " << in.f.size() << " states: " << in);
-			mi.f.push_back(in.f[id]);
+			mi.b.push_back(in.b[id]);
 		}
 		// merge them
 		merge_b(mi, out, i);
@@ -736,7 +737,7 @@ void merge_module<T>::bbprop(state<T> &in, state<T> &out){
 			if (id >= in.f.size())
 				eblerror("trying to access state " << id << " but multi-state only "
 								 << "contains " << in.f.size() << " states: " << in);
-			mi.f.push_back(in.f[id]);
+			mi.bb.push_back(in.bb[id]);
 		}
 		// merge them
 		merge_bb(mi, out, i);
@@ -826,8 +827,8 @@ void merge_module<T>::merge_b(state<T> &in, state<T> &out, uint iout) {
 	// accumulate outputs to inputs
 	intg offset = 0;
 	idx<T> o;
-	for (uint i = 0; i < in.f.size(); ++i) {
-		idx<T> &s = in.f[i];
+	for (uint i = 0; i < in.b.size(); ++i) {
+		idx<T> &s = in.b[i];
 		o = out.b[iout].narrow(concat_dim, s.dim(concat_dim), offset);
 		idx_add(o, s, s);
 		offset += s.dim(concat_dim);
@@ -844,8 +845,8 @@ void merge_module<T>::merge_bb(state<T> &in, state<T> &out, uint iout) {
 	// accumulate outputs to inputs
 	intg offset = 0;
 	idx<T> o;
-	for (uint i = 0; i < in.f.size(); ++i) {
-		idx<T> &s = in.f[i];
+	for (uint i = 0; i < in.bb.size(); ++i) {
+		idx<T> &s = in.bb[i];
 		o = out.bb[iout].narrow(concat_dim, s.dim(concat_dim), offset);
 		idx_add(o, s, s);
 		offset += s.dim(concat_dim);
