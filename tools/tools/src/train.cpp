@@ -87,13 +87,19 @@ int train(configuration &conf, string &conffname) {
     if (!test_only)
       train_ds = create_training_set<T,Tdata,Tlabel>(conf, noutputs,
 							traindata);
+    if (conf.exists_true("add_features_dimension")) {
+      test_ds->add_features_dimension();
+      train_ds->add_features_dimension();
+    }
     // create the trainable network
     uint iter = 0;
-    bbparameter<T> theparam;
+    ddparameter<T> theparam;
     module_1_1<T> *net = NULL;
     supervised_trainer<T,Tdata,Tlabel> *thetrainer =
         create_trainable_network<T,Tdata,Tlabel>(theparam, conf, noutputs,
                                                  &net, iter);
+    thetrainer->set_test_display_modulo
+        (conf.try_get_intg("test_display_modulo", 0));
     // a classifier-meter measures classification errors
     classifier_meter trainmeter, testmeter;
     trainmeter.init(noutputs);
@@ -256,6 +262,8 @@ int main(int argc, char **argv) { // regular main without gui
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
   string conffname = argv[1];
+  if (!file_exists(conffname.c_str()))
+    eblerror("configuration file not found: " << conffname);
   configuration conf(conffname, true, true, false); // configuration file
   if (conf.exists_true("fixed_randomization"))
     cout << "Using fixed seed: " << fixed_init_drand() << endl;

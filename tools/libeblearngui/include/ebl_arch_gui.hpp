@@ -134,9 +134,9 @@ namespace ebl {
 DISPLAY_1_1(display_fprop, display_fprop2)
 DISPLAY_1_1(display_bprop, display_bprop2)
 DISPLAY_1_1(display_bbprop, display_bbprop2)
-DISPLAY2_1_1(display_fprop, display_fprop2, fprop, f)
-DISPLAY2_1_1(display_bprop, display_bprop2, bprop, b)
-DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop, bb)
+DISPLAY2_1_1(display_fprop, display_fprop2, fprop, x)
+DISPLAY2_1_1(display_bprop, display_bprop2, bprop, dx)
+DISPLAY2_1_1(display_bbprop, display_bbprop2, bbprop, ddx)
 
 template <typename T>
 void module_1_1_gui::
@@ -283,13 +283,13 @@ DISPLAY_TRAINABLE(display_bbprop, display_bbprop2)
       }									\
     }									\
     /* remember number of input/outputs */				\
-    ln.ninputs = in.f.size();						\
-    ln.noutputs = out.f.size();						\
+    ln.ninputs = in.x.size();						\
+    ln.noutputs = out.x.size();						\
   }
 
-DISPLAY_LAYERS(display_fprop, display_fprop2, f)
-DISPLAY_LAYERS(display_bprop, display_bprop2, b)
-DISPLAY_LAYERS(display_bbprop, display_bbprop2, bb)
+DISPLAY_LAYERS(display_fprop, display_fprop2, x)
+DISPLAY_LAYERS(display_bprop, display_bprop2, dx)
+DISPLAY_LAYERS(display_bbprop, display_bbprop2, ddx)
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -337,11 +337,11 @@ void layers_gui::display_internals(module_1_1<T> &m, uint &h0, uint &w0,
       EDEBUG("msins " << ms.ins[i]);					\
       g.name2(*(ms.used_pipes[i]), ms.ins[i], b, h0, w0, zoom,          \
 	      vmin, vmax, false, g.display_wid_fprop);			\
-      out.add_f(b);                                                     \
-      ms.pipes_noutputs[i] = b.f.size();                                \
+      out.add_x(b);                                                     \
+      ms.pipes_noutputs[i] = b.x.size();                                \
     }									\
     /* remember number of outputs */					\
-    ms.noutputs = out.f.size();						\
+    ms.noutputs = out.x.size();						\
   }
 
 #define DISPLAY_MSMODULE_B(name1, name2)				\

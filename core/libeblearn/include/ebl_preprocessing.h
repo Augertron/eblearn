@@ -246,7 +246,7 @@ template <typename T> class rgb_to_yuvn_module: public channorm_module<T> {
 template <typename T> class rgb_to_rgb_module: public channels_module<T> {
  public:
   //! Constructor.
-  rgb_to_rgb_module(bool globnorm = true);
+  rgb_to_rgb_module(bool globnorm = true, const char *name = "rgb_to_rgb");
   //! destructor
   virtual ~rgb_to_rgb_module();
   //! forward propagation from in to out

@@ -227,14 +227,16 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    (argv[2], height, width, conf.get_uint("input_video_sstep"),
 	     conf.get_uint("input_video_max_duration"));
 	else eblerror("expected 2nd argument");
+      } else if (!strcmp(cam_type.c_str(), "datasource")) {
+        cam = new camera_datasource<ubyte,int>(conf);
       } else eblerror("unknown camera type, set \"camera\" in your .conf");
       // a camera directory may be used first, then switching to regular cam
       if (conf.exists_true("precamera"))
 	cam2 = new camera_directory<ubyte>(conf.get_cstring("precamdir"),
 					   height, width, input_random,
 					   npasses, mout, merr, fpattern);
-      if (conf.exists_true("camera_grayscale"))
-	cam->set_grayscale();
+      if (conf.exists_true("camera_grayscale")) cam->set_grayscale();
+      if (conf.exists_true("silent")) cam->set_silent();
 
       // answer variables & initializations
       bboxes bb;
@@ -300,8 +302,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	    idxdim d(detframe);
 	    if (boot.activated()) bb.clear();
 	    if (bbsaving != bbox_none) {
-	      mout << "Adding " << bb.size() << " boxes into new group: "
-		   << processed_fname << " with id " << processed_id << endl;
+              if (!silent)
+                mout << "Adding " << bb.size() << " boxes into new group: "
+                     << processed_fname << " with id " << processed_id << endl;
 	      boxes.new_group(d, &processed_fname, processed_id);
 	      boxes.add(bb, d, &processed_fname, processed_id);
 	      if (cnt % save_bbox_period == 0) boxes.save();
@@ -314,6 +317,12 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      all_samples.push_back_new(samples);
 	      all_bbsamples.push_back_new(bbsamples);
 	    }
+            // datasource mode, check and log answers
+            if (dynamic_cast<camera_datasource<ubyte,int>*>(cam)) {
+              camera_datasource<ubyte,int>* dscam =
+                  (camera_datasource<ubyte,int>*) cam;
+              dscam->log_answers(bb);
+            }
 	    cnt++;
 	    // display processed frame
 #ifdef __GUI__
@@ -350,32 +359,34 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	      millisleep(display_sleep);
 	    }
 #endif
-	    // output info
-	    uint k = cnt, tot = cam->size() - cnt; // progress variables
-	    if (conf.exists("save_max")) tot = conf.get_uint("save_max");
-	    if (!silent) {
-	      if (save_detections) {
-		mout << "total_saved=" << idx_sum(total_saved);
-		if (conf.exists("save_max")) mout << " / " << tot;
-		mout << endl;
-	      }
-	    }
-	    if (boot.activated())
-	      mout << "total_bootstrapping=" << all_samples.size() << endl;
-	    mout << "remaining=" << (cam->size() - cnt)
-		 << " elapsed=" << toverall.elapsed();
-	    if (cam->size() > 0)
-	      mout << " ETA=" << toverall.eta(cnt, cam->size());
-	    if (conf.exists("save_max") && save_detections) {
-	      k = idx_sum(total_saved);
-	      mout << " save_max_ETA=" << toverall.eta(k, tot);
-	    }
-	    mout << endl;
-	    mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
-		 << " fps: " << cam->fps() << endl;
-	    // save progress
-	    if (!conf.exists_false("save_progress"))
-	      job::write_progress(k, tot);
+            if (!silent) {
+              // output info
+              uint k = cnt, tot = cam->size() - cnt; // progress variables
+              if (conf.exists("save_max")) tot = conf.get_uint("save_max");
+              if (!silent) {
+                if (save_detections) {
+                  mout << "total_saved=" << idx_sum(total_saved);
+                  if (conf.exists("save_max")) mout << " / " << tot;
+                  mout << endl;
+                }
+              }
+              if (boot.activated())
+                mout << "total_bootstrapping=" << all_samples.size() << endl;
+              mout << "remaining=" << (cam->size() - cnt)
+                   << " elapsed=" << toverall.elapsed();
+              if (cam->size() > 0)
+                mout << " ETA=" << toverall.eta(cnt, cam->size());
+              if (conf.exists("save_max") && save_detections) {
+                k = idx_sum(total_saved);
+                mout << " save_max_ETA=" << toverall.eta(k, tot);
+              }
+              mout << endl;
+              mout << "i=" << cnt << " processing: " << tpass.elapsed_ms()
+                   << " fps: " << cam->fps() << endl;
+              // save progress
+              if (!conf.exists_false("save_progress"))
+                job::write_progress(k, tot);
+            }
 	  }
 	  // check if ready
 	  if ((*ithreads)->available()) {
@@ -467,8 +478,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	}
       }
       // saving boxes
-      if (bbsaving != bbox_none)
-	boxes.save();
+      if (bbsaving != bbox_none) boxes.save();
       mout << "Execution time: " << toverall.elapsed() << endl;
       if (save_video)
 	cam->stop_recording(conf.exists_bool("use_original_fps") ?

@@ -55,7 +55,7 @@ class supervised_trainer {
  public:
   //! constructor.
   supervised_trainer(trainable_module<T,Tdata,Tlabel> &m,
-                     bbparameter<T> &p);
+                     ddparameter<T> &p);
   //! destructor.
   virtual ~supervised_trainer();
 
@@ -108,6 +108,8 @@ class supervised_trainer {
   //! Set iteration id to i. This can be useful when resuming a training
   //! to a certain iteration.
   void set_iteration(int i);
+  //! Set the modulo at which test results are displayed (0 by default).
+  void set_test_display_modulo(intg modulo);
   //! pretty some information about training, e.g. input and network sizes.
   void pretty(labeled_datasource<T, Tdata, Tlabel> &ds);
   //! Sets the name of the file indicating progress of training.
@@ -135,7 +137,7 @@ class supervised_trainer {
   // members /////////////////////////////////////////////////////////////////
  protected:
   trainable_module<T,Tdata,Tlabel> &machine;
-  bbparameter<T> &param;                //!< the learned params
+  ddparameter<T> &param;                //!< the learned params
   state<T>        energy;               //!< Tmp energy buffer.
   state<T>       *answers;              //!< Tmp answer buffer.
   state<T>       *label;                //!< Tmp label buffer.
@@ -146,6 +148,7 @@ class supervised_trainer {
   std::string     progress_file;        //!< Name of progress file.
   intg            progress_cnt;         //!< A count for updating progress.
   bool            test_running;         //!< Show test on trained.
+  intg            test_display_modulo;  //!< Modulo at which to display.
 };
 
 } // namespace ebl {

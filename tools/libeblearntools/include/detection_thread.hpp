@@ -318,7 +318,8 @@ void detection_thread<T>::execute() {
         if (!silent) mout << "saved " << fname << std::endl;
       }
 #endif
-      mout << "processing done for frame " << frame_name << std::endl;
+      if (!silent)
+        mout << "processing done for frame " << frame_name << std::endl;
       // bootstrapping
       if (conf.exists_true("bootstrapping")) {
         boot.fprop(detect, frame_name);

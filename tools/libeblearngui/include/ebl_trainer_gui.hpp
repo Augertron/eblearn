@@ -255,7 +255,8 @@ display_correctness(bool incorrect, bool up,
                     labeled_datasource<T, Tdata, Tlabel> &ds,
                     infer_param &infp,
                     unsigned int nh, unsigned int nw,
-                    bool print_raw_outputs, bool draw_all_jitter,
+                    bool print_raw_outputs, bool print_energy,
+                    bool draw_all_jitter,
                     bool show_only_images,
                     unsigned int h0, unsigned int w0, double zoom, int wid,
                     const char *title, bool scrolling) {
@@ -399,12 +400,13 @@ display_correctness(bool incorrect, bool up,
     ds.fprop_data(input);
     ds.fprop_label(label);
     uint ht = 0, wt = 0;
-
+    // skip correct answers
+    if (incorrect && (int) label.get(0) == (int)answer) continue ;
     // 1. display dataset with incorrect and correct answers
     if (nh1 < nh) {
       // draw sample
-      for (uint a = 0; a < input.f.size(); ++a) {
-        idx<T> m = input.f[a].shift_dim(0, 2);
+      for (uint a = 0; a < input.x.size(); ++a) {
+        idx<T> m = input.x[a].shift_dim(0, 2);
         draw_matrix(m, h1, w1 + wt, zoom, zoom);
         wt += m.dim(1) + 2;
         ht = std::max(ht, (uint) m.dim(0));
@@ -413,17 +415,21 @@ display_correctness(bool incorrect, bool up,
       if (!show_only_images) {
         ostringstream s;
         s.precision(2);
-        if (cds)
-          s << cds->get_class_name((int)answer) << " ";
-        s << energies.get(i);
-        gui << at(h1 + 2, w1 + 2) << s.str().c_str();
+        // print our answer
+        if (cds) gui << at(h1, w1) << cds->get_class_name((int)answer);
+        // print correct info (only if incorrect)
+        if (incorrect && cds)
+          gui << at(h1 + d.dim(1) - 12, w1) << "="
+              << cds->get_class_name((int) label.get(0));
+        // print energy
+        if (print_energy) gui << at(h1 + 2, w1 + 2) << energies.get(i);;
         // print raw outputs
         if (print_raw_outputs) {
           for (uint a = 0; a < raw.dim(0); ++a) {
             s.str(""); s << raw.get(a);
             gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
           }
-        } else { // print outputs answers
+          // print outputs answers
           for (uint a = 0; a < answers.dim(0); ++a) {
             s.str(""); s << answers.get(a);
             gui << at(h1 + 17 + a * 15, w1 + 2) << s.str().c_str();
@@ -431,15 +437,11 @@ display_correctness(bool incorrect, bool up,
         }
         // print target info
         //ds.fprop_jitter(jitt);
-        for (uint a = 0; a < target.dim(0); ++a) {
-          s.str(""); s << target.gget(a);
-          gui << at(h1 + 17 + a * 15, w1 + wt - 35) << s.str().c_str();
-        }
-        // print correct info when incorrect
-        if (incorrect && cds) {
-          s.str("");
-          s << "(" << cds->get_class_name((int) label.get(0)) << ")";
-          gui << at(h1 + d.dim(0) - 15, w1 + 2) << s.str().c_str();
+        if (print_raw_outputs) {
+          for (uint a = 0; a < target.dim(0); ++a) {
+            s.str(""); s << target.gget(a);
+            gui << at(h1 + 17 + a * 15, w1 + wt - 35) << s.str().c_str();
+          }
         }
         // draw scale box if not a background class
         if (answer != bgid && answers.dim(0) > 2) {

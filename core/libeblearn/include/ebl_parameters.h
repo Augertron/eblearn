@@ -175,35 +175,35 @@ template <typename T> class parameter : public state<T> {
   idx<T> deltax;   //!< Average derivatives.
   idx<T> epsilons; //!< Individual learning rates.
   idx<T> ddeltax;  //!< Average second-derivatives.
-  using state<T>::f;
-  using state<T>::b;
-  using state<T>::bb;
+  using state<T>::x;
+  using state<T>::dx;
+  using state<T>::ddx;
 };
 
-// bparameter ////////////////////////////////////////////////////////////////
+// dparameter ////////////////////////////////////////////////////////////////
 
 //! A trainable set of parameter.
-template <typename T> class bparameter : public parameter<T> {
+template <typename T> class dparameter : public parameter<T> {
  public:
-  //! initialize the bbparameter with size initial_size.
-  bparameter(intg initial_size = 100);
-  //! initialize the bbparameter with a previously saved x component.
-  bparameter(const char *param_filename);
+  //! initialize the ddparameter with size initial_size.
+  dparameter(intg initial_size = 100);
+  //! initialize the ddparameter with a previously saved x component.
+  dparameter(const char *param_filename);
   //! destructor
-  virtual ~bparameter();
+  virtual ~dparameter();
 };
 
-// bbparameter ////////////////////////////////////////////////////////////////
+// ddparameter ////////////////////////////////////////////////////////////////
 
 //! A 2nd-order trainable set of parameter.
-template <typename T> class bbparameter : public parameter<T> {
+template <typename T> class ddparameter : public parameter<T> {
  public:
-  //! initialize the bbbparameter with size initial_size.
-  bbparameter(intg initial_size = 100);
-  //! initialize the bbbparameter with a previously saved x component.
-  bbparameter(const char *param_filename);
+  //! initialize the bddparameter with size initial_size.
+  ddparameter(intg initial_size = 100);
+  //! initialize the bddparameter with a previously saved x component.
+  ddparameter(const char *param_filename);
   //! destructor
-  virtual ~bbparameter();
+  virtual ~ddparameter();
 };
 
 } // namespace ebl {

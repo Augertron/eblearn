@@ -113,6 +113,8 @@ template <typename Tdata> class camera {
   //! Return the total number of frames to process from the initialization,
   //! of the camera, -1 if unknown.
   virtual int size();
+  //! Prevents info printing.
+  virtual void set_silent();
 
   // internal methods ////////////////////////////////////////////////////////
  protected:
@@ -145,7 +147,9 @@ template <typename Tdata> class camera {
   uint         cntfps;        //!< counter for computing fps.
   int          narrow_dim, narrow_size, narrow_off; //!< Narrow parameters.
   bool         grayscale;     //!< If true, output grayscale images.
+  bool         silent;
 };
+
 
 } // end namespace ebl
 

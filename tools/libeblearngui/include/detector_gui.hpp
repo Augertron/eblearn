@@ -212,7 +212,7 @@ display_inputs_outputs(detector<T> &cl, idx<Tin> &img,
   if (vmin == vmax) {
     for (uint i = 0; i < cl.outputs.size(); ++i) {
       state<T> &o = cl.outputs[i];
-      for (uint j = 0; j < o.f.size(); ++j) {
+      for (uint j = 0; j < o.x.size(); ++j) {
         idx<T> outx = o[j];
         if (first_time) {
           vmin = idx_min(outx);
@@ -306,8 +306,8 @@ display_inputs(detector<T> &cl, uint &h0, uint &w0, bboxes &bb,
   // display all outputs
   for (int scale = 0; scale < (int) cl.ppinputs.size(); ) {
     state<T> &ins = cl.ppinputs[scale];
-    for (uint i = 0; i < ins.f.size(); ++i) {
-      idx<T> &t = ins.f[i];
+    for (uint i = 0; i < ins.x.size(); ++i) {
+      idx<T> &t = ins.x[i];
       // draw inputs
       string ss;
       ss << "scale #" << scale;
@@ -362,9 +362,9 @@ display_outputs(detector<T> &cl, uint &h0, uint &w0, bboxes &bb,
   // draw answers
   for (uint l = 0; l < cl.answers.size(); ++l) {
     state<T> &answer = cl.answers[l];
-    for (uint k = 0; k < answer.f.size(); ++k) {
+    for (uint k = 0; k < answer.x.size(); ++k) {
       double czoom = dzoom;//* 2.0;
-      idx<T> &o = answer.f[k];
+      idx<T> &o = answer.x[k];
 
       //uint lab = 0;
       idx<T> out0 = o.select(0, 0);
@@ -395,9 +395,9 @@ display_outputs(detector<T> &cl, uint &h0, uint &w0, bboxes &bb,
   // draw outputs
   for (uint scale = 0; scale < cl.outputs.size(); ++scale) {
     state<T> &oo = cl.outputs[scale];
-    for (uint k = 0; k < oo.f.size(); ++k) {
+    for (uint k = 0; k < oo.x.size(); ++k) {
       double czoom = dzoom;// * 2.0;
-      idx<T> &o = oo.f[k];
+      idx<T> &o = oo.x[k];
       uint lab = 0;
       idx<T> outx = o;
       uint w = w0;

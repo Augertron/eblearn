@@ -68,10 +68,10 @@ void full_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void full_layer<T>::bprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  sum->resize_b(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_dx(); // make sure backward tensors are allocated
   // backprpo
-  idx_clear(sum->b[0]);
+  idx_clear(sum->dx[0]);
   sigmoid->bprop1(*sum, out);
   adder.bprop1(*sum, *sum);
   linear.bprop1(in, *sum);
@@ -80,10 +80,10 @@ void full_layer<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void full_layer<T>::bbprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  sum->resize_bb(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_ddx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(sum->bb[0]);
+  idx_clear(sum->ddx[0]);
   sigmoid->bbprop1(*sum, out);
   adder.bbprop1(*sum, *sum);
   linear.bbprop1(in, *sum);
@@ -162,10 +162,10 @@ void convolution_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void convolution_layer<T>::bprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  sum->resize_b(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_dx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(sum->b[0]);
+  idx_clear(sum->dx[0]);
   sigmoid->bprop1(*sum, out);
   adder.bprop1(*sum, *sum);
   convol.bprop1(in, *sum);
@@ -174,10 +174,10 @@ void convolution_layer<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void convolution_layer<T>::bbprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  sum->resize_bb(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_ddx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(sum->bb[0]);
+  idx_clear(sum->ddx[0]);
   sigmoid->bbprop1(*sum, out);
   adder.bbprop1(*sum, *sum);
   convol.bbprop1(in, *sum);
@@ -250,12 +250,12 @@ void convabsnorm_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void convabsnorm_layer<T>::bprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  tmp->resize_b(); // make sure backward tensors are allocated
-  tmp2->resize_b(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  tmp->resize_dx(); // make sure backward tensors are allocated
+  tmp2->resize_dx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(tmp->b[0]);
-  idx_clear(tmp2->b[0]);
+  idx_clear(tmp->dx[0]);
+  idx_clear(tmp2->dx[0]);
   norm.bprop1(*tmp2, out);
   abs.bprop1(*tmp, *tmp2);
   lconv.bprop1(in, *tmp);
@@ -264,12 +264,12 @@ void convabsnorm_layer<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void convabsnorm_layer<T>::bbprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  tmp->resize_bb(); // make sure backward tensors are allocated
-  tmp2->resize_bb(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  tmp->resize_ddx(); // make sure backward tensors are allocated
+  tmp2->resize_ddx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(tmp->bb[0]);
-  idx_clear(tmp2->bb[0]);
+  idx_clear(tmp->ddx[0]);
+  idx_clear(tmp2->ddx[0]);
   norm.bbprop1(*tmp2, out);
   abs.bbprop1(*tmp, *tmp2);
   lconv.bbprop1(in, *tmp);
@@ -339,10 +339,10 @@ void subsampling_layer<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void subsampling_layer<T>::bprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  sum->resize_b(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_dx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(sum->b[0]);
+  idx_clear(sum->dx[0]);
   sigmoid->bprop1(*sum, out);
   adder.bprop1(*sum, *sum);
   subsampler.bprop1(in, *sum);
@@ -351,10 +351,10 @@ void subsampling_layer<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void subsampling_layer<T>::bbprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  sum->resize_bb(); // make sure backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  sum->resize_ddx(); // make sure backward tensors are allocated
   // backprop
-  idx_clear(sum->bb[0]);
+  idx_clear(sum->ddx[0]);
   sigmoid->bbprop1(*sum, out);
   adder.bbprop1(*sum, *sum);
   subsampler.bbprop1(in, *sum);
@@ -394,7 +394,7 @@ std::string subsampling_layer<T>::describe() {
   desc << "subsampling layer " << this->name() << " with thickness "
        << subsampler.thickness << ", kernel "
        << subsampler.kernel << ", stride " << subsampler.stride
-       << ", bias " << adder.bias.f[0]
+       << ", bias " << adder.bias.x[0]
        << " and non linearity " << sigmoid->name();
   return desc;
 }

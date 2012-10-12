@@ -133,9 +133,9 @@ template <typename T> class layers : public module_1_1<T> {
   //! Return the number of layers contained in this object.
   virtual uint size();
   //! Zero-out internal hidden's states backward tensors.
-  virtual void zero_b();
+  virtual void zero_dx();
   //! Zero-out internal hidden's states 2nd order backward tensors.
-  virtual void zero_bb();
+  virtual void zero_ddx();
   //! Find first module whose name matches 'name', return NULL if not found.
   module_1_1<T>* find(const char *name);
   //! Returns the last module contained in this module, or itself if composed

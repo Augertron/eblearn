@@ -116,6 +116,9 @@ public:
   //! in a continuous chunk of memory. This is useful
   //! to optimize iterators over the data.
   bool contiguousp() const;
+  //! Returns the "true" order of this tensor, e.g. 10, 10x1, 10x1x1
+  //! are in effect 1 dimensional tensors even though their order differ.
+  intg true_order() const;
 
   // print methods /////////////////////////////////////////////////////////////
 

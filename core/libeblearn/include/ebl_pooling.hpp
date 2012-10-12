@@ -98,10 +98,10 @@ void subsampling_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void subsampling_module<T>::bprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  sub.resize_b(); // sub is only local, ok to resize from here
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  sub.resize_dx(); // sub is only local, ok to resize from here
   // backprop
-  idx<T> indx = in.b[0], outdx = out.b[0];
+  idx<T> indx = in.dx[0], outdx = out.dx[0];
   intg in1 = indx.dim(1) - (indx.dim(1) % stride.dim(0));
   intg in2 = indx.dim(2) - (indx.dim(2) % stride.dim(1));
   // input too small, do nothing
@@ -116,11 +116,11 @@ void subsampling_module<T>::bprop1(state<T> &in, state<T> &out) {
     outdx = outdx.narrow(2,(intg)floor((float)(indx.dim(2)/stride.dim(1))),0);
   }
   // update internal coefficient's dx
-  idx_bloop3(lcdx, coeff.b[0], T, ltdx, outdx, T, lsx, sub, T) {
+  idx_bloop3(lcdx, coeff.dx[0], T, ltdx, outdx, T, lsx, sub, T) {
     idx_dotacc(lsx, ltdx, lcdx);
   }
   // oversampling and accumulate to input's dx
-  idx_bloop4(lidx, indx, T, lsdx, sub.b[0], T,
+  idx_bloop4(lidx, indx, T, lsdx, sub.dx[0], T,
              lcx, coeff, T, ltdx2, outdx, T) {
     idx_dotc(ltdx2, lcx.get(), lsdx);
     idx_m2oversampleacc(lsdx, stride.dim(0), stride.dim(1), lidx);
@@ -130,10 +130,10 @@ void subsampling_module<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void subsampling_module<T>::bbprop1(state<T> &in, state<T> &out) {
   // checks
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  sub.resize_bb(); // sub is only local, ok to resize from here
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  sub.resize_ddx(); // sub is only local, ok to resize from here
   // backprop
-  idx<T> inddx = in.bb[0], outddx = out.bb[0];
+  idx<T> inddx = in.ddx[0], outddx = out.ddx[0];
   intg in1 = inddx.dim(1) - (inddx.dim(1) % stride.dim(0));
   intg in2 = inddx.dim(2) - (inddx.dim(2) % stride.dim(1));
   // input too small, do nothing
@@ -150,11 +150,11 @@ void subsampling_module<T>::bbprop1(state<T> &in, state<T> &out) {
                                                    / stride.dim(1))), 0);
   }
   // update internal coefficient's ddx
-  idx_bloop3(lcdx, coeff.bb[0], T, ltdx, outddx, T, lsx, sub, T) {
+  idx_bloop3(lcdx, coeff.ddx[0], T, ltdx, outddx, T, lsx, sub, T) {
     idx_m2squdotm2acc(lsx, ltdx, lcdx);
   }
   // oversampling and accumulte to input's ddx
-  idx_bloop4(lidx, inddx, T, lsdx, sub.bb[0], T,
+  idx_bloop4(lidx, inddx, T, lsdx, sub.ddx[0], T,
              lcx, coeff, T, ltdx2, outddx, T) {
     T cf = lcx.get();
     idx_dotc(ltdx2, cf * cf, lsdx);
@@ -166,7 +166,7 @@ template <typename T>
 void subsampling_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
   fprop1(in, out);
   DUMP(in, this->name() << "_subsampling_module_in");
-  DUMP(coeff.f[0], this->name() << "_subsampling_module_coeff");
+  DUMP(coeff.x[0], this->name() << "_subsampling_module_coeff");
   DUMP(out, this->name() << "_subsampling_module_out");
 }
 
@@ -331,17 +331,17 @@ void lppooling_module<T>::bprop1(state<T> &in, state<T> &out) {
     return;
   }
   // checks
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  conv->kernel.resize_b(); // not actually learned, TODO: reduce computation
-  squared.resize_b();
-  convolved.resize_b();
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  conv->kernel.resize_dx(); // not actually learned, TODO: reduce computation
+  squared.resize_dx();
+  convolved.resize_dx();
   // clear tensors
-  squared.zero_b();
-  convolved.zero_b();
+  squared.zero_dx();
+  convolved.zero_dx();
   // backpropagate
 
   // this is not correct //
-  if ((lp_pow % 2) == 1) idx_abs(convolved.b[0], convolved.b[0]);
+  if ((lp_pow % 2) == 1) idx_abs(convolved.dx[0], convolved.dx[0]);
   /////////////////////////
 
   EDEBUG("bprop convolved " << convolved << " out " << out);
@@ -360,17 +360,17 @@ void lppooling_module<T>::bbprop1(state<T> &in, state<T> &out) {
     return;
   }
   // resize backward if necessary
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  squared.resize_bb();
-  convolved.resize_bb();
-  conv->kernel.resize_bb(); // not actually learned, TODO: reduce computation
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  squared.resize_ddx();
+  convolved.resize_ddx();
+  conv->kernel.resize_ddx(); // not actually learned, TODO: reduce computation
   // clear tensors
-  squared.zero_bb();
-  convolved.zero_bb();
+  squared.zero_ddx();
+  convolved.zero_ddx();
   // backpropagate
 
   // this is not correct //
-  if ((lp_pow % 2) == 1) idx_abs(convolved.bb[0], convolved.bb[0]);
+  if ((lp_pow % 2) == 1) idx_abs(convolved.ddx[0], convolved.ddx[0]);
   /////////////////////////
 
   sqrtmod.bbprop1(convolved, out);
@@ -624,17 +624,17 @@ void average_pyramid_module<T>::fprop(state<T> &in, state<T> &out){
   out.resize_forward_orders(in, 1, strides.size());
   if (well_behaved) { // we can reuse results of previous scale
     for (uint i = 0; i < mods.size(); ++i) {
-      idx<T> &o = out.f[i];
+      idx<T> &o = out.x[i];
       if (i == 0) // first time, start from in
         mods[i]->fprop1(in, o);
       else { // start from previous scale
-        idx<T> i0 = out.f[i - 1];
+        idx<T> i0 = out.x[i - 1];
         mods[i]->fprop1(i0, o);
       }
     }
   } else { // generate each scale from scratch (less efficient)
     for (uint i = 0; i < mods.size(); ++i) {
-      idx<T> &o = out.f[i];
+      idx<T> &o = out.x[i];
       mods[i]->fprop1(in, o);
     }
   }
@@ -642,21 +642,21 @@ void average_pyramid_module<T>::fprop(state<T> &in, state<T> &out){
 
 template <typename T>
 void average_pyramid_module<T>::bprop(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
   // backprop
   if (well_behaved) { // we can reuse results of previous scale
     for (int i = (int) mods.size() - 1; i >= 0; --i) {
-      state<T> o = out.get_b(i);
+      state<T> o = out.get_dx(i);
       if (i == 0) // first time, start from in
         mods[i]->bprop(in, o);
       else { // start from previous scale
-        state<T> i0 = out.get_b(i - 1);
+        state<T> i0 = out.get_dx(i - 1);
         mods[i]->bprop(i0, o);
       }
     }
   } else { // generate each scale from scratch (less efficient)
     for (int i = (int) mods.size() - 1; i >= 0; --i) {
-      state<T> o = out.get_b(i);
+      state<T> o = out.get_dx(i);
       mods[i]->bprop(in, o);
     }
   }
@@ -664,21 +664,21 @@ void average_pyramid_module<T>::bprop(state<T> &in, state<T> &out) {
 
 template <typename T>
 void average_pyramid_module<T>::bbprop(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
   // backprop
   if (well_behaved) { // we can reuse results of previous scale
     for (int i = (int) mods.size() - 1; i >= 0; --i) {
-      state<T> o = out.get_bb(i);
+      state<T> o = out.get_ddx(i);
       if (i == 0) // first time, start from in
         mods[i]->bbprop(in, o);
       else { // start from previous scale
-        state<T> i0 = out.get_bb(i - 1);
+        state<T> i0 = out.get_ddx(i - 1);
         mods[i]->bbprop(i0, o);
       }
     }
   } else { // generate each scale from scratch (less efficient)
     for (int i = (int) mods.size() - 1; i >= 0; --i) {
-      state<T> o = out.get_bb(i);
+      state<T> o = out.get_ddx(i);
       mods[i]->bbprop(in, o);
     }
   }
@@ -773,18 +773,18 @@ void maxss_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T>
 void maxss_module<T>::bprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
   // backprop
 #ifdef __TH__
   if((float_precision || double_precision) && in.order()==3) {
-    th_maxpool_3d_bprop(in, kernel.dim(0), kernel.dim(1), out.b[0], in.b[0],
+    th_maxpool_3d_bprop(in, kernel.dim(0), kernel.dim(1), out.dx[0], in.dx[0],
                         stride.dim(0), stride.dim(1), indices);
     return;
   }
 #endif
   // copy derivatives in the position given by the switches
   int i = 0, j = 0;
-  idx_bloop3(di1, in.b[0], T, s1, switches, int, do1, out.b[0], T) {
+  idx_bloop3(di1, in.dx[0], T, s1, switches, int, do1, out.dx[0], T) {
     idx_bloop2(s2, s1, int, do2, do1, T) {
       idx_bloop2(s3, s2, int, do3, do2, T) {
         i = s3.get(0); j = s3.get(1);
@@ -794,18 +794,18 @@ void maxss_module<T>::bprop1(state<T> &in, state<T> &out) {
 
 template <typename T>
 void maxss_module<T>::bbprop1(state<T> &in, state<T> &out) {
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
   // backprop
 #ifdef __TH__
   if((float_precision || double_precision) && in.order()==3) {
-    th_maxpool_3d_bprop(in, kernel.dim(0), kernel.dim(1), out.bb[0], in.bb[0],
+    th_maxpool_3d_bprop(in, kernel.dim(0), kernel.dim(1), out.ddx[0], in.ddx[0],
                         stride.dim(0), stride.dim(1), indices);
     return;
   }
 #endif
   // copy derivatives in the position given by the switches
   int i = 0, j = 0;
-  idx_bloop3(di1, in.bb[0], T, s1, switches, int, do1, out.bb[0], T) {
+  idx_bloop3(di1, in.ddx[0], T, s1, switches, int, do1, out.ddx[0], T) {
     idx_bloop2(s2, s1, int, do2, do1, T) {
       idx_bloop2(s3, s2, int, do3, do2, T) {
         i = s3.get(0); j = s3.get(1);

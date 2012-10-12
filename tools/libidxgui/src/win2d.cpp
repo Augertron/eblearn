@@ -498,7 +498,8 @@ namespace ebl {
   	box &b = **i;
   	// set color
   	QPen qp(QColor(b.r, b.g, b.b, b.a));
-  	qp.setWidth(4);
+  	qp.setWidth(1);
+        //  	qp.setWidth(4);
   	painter.setPen(qp);
   	// draw box
   	QRectF r(b.w0, b.h0, b.w, b.h);

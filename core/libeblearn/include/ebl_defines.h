@@ -47,22 +47,22 @@ Please call init_drand(time(NULL)) before using this function !\n"); }
 
 #ifdef __DEBUG__
 // in debug mode, check that backward tensor has the right size
-#define DEBUG_CHECK_B(in) {                                             \
-    if (!in.allocated_b())                                              \
+#define DEBUG_CHECK_DX(in) {                                             \
+    if (!in.allocated_dx())                                              \
       eblerror("state::b should have the same size as state::f in " << in); \
   }
 #else
-#define DEBUG_CHECK_B(in)
+#define DEBUG_CHECK_DX(in)
 #endif
 
 #ifdef __DEBUG__
 // in debug mode, check that backward tensor has the right size
-#define DEBUG_CHECK_BB(in) {                                            \
-    if (!in.allocated_bb())                                             \
+#define DEBUG_CHECK_DDX(in) {                                            \
+    if (!in.allocated_ddx())                                             \
       eblerror("state::b should have the same size as state::f in " << in); \
   }
 #else
-#define DEBUG_CHECK_BB(in)
+#define DEBUG_CHECK_DDX(in)
 #endif
 
 #endif /* EBL_DEFINES */

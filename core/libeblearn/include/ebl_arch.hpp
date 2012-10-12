@@ -261,32 +261,32 @@ std::string layers<T>::pretty(mfidxdim &isize) {
 }
 
 template <typename T>
-void layers<T>::zero_b() {
+void layers<T>::zero_dx() {
   // clear hidden states
   for (uint i = 0; i < hiddens.size(); i++)
     if (hiddens[i]) {
-      hiddens[i]->resize_b(); // make sure it has the right size
-      hiddens[i]->zero_b();
+      hiddens[i]->resize_dx(); // make sure it has the right size
+      hiddens[i]->zero_dx();
     }
   // clear hidden in each module
   for (uint i = 0; i < modules.size(); i++)
     if (modules[i]) {
-      modules[i]->zero_b(); // make sure it has the right size
+      modules[i]->zero_dx(); // make sure it has the right size
     }
 }
 
 template <typename T>
-void layers<T>::zero_bb() {
+void layers<T>::zero_ddx() {
   // clear hidden states
   for (uint i = 0; i < hiddens.size(); i++)
     if (hiddens[i]) {
-      hiddens[i]->resize_bb(); // make sure it has the right size
-      hiddens[i]->zero_bb();
+      hiddens[i]->resize_ddx(); // make sure it has the right size
+      hiddens[i]->zero_ddx();
     }
   // clear hidden in each module
   for (uint i = 0; i < modules.size(); i++)
     if (modules[i]) {
-      modules[i]->zero_bb(); // make sure it has the right size
+      modules[i]->zero_ddx(); // make sure it has the right size
     }
 }
 
@@ -392,8 +392,8 @@ void layers<T>::forward(state<T>& in, state<T>& out, fprop_type fp) {
     LOCAL_TIMING_REPORT(mod->name()); // timing debugging
   }
   // remember number of input/outputs
-  this->ninputs = in.f.size();
-  this->noutputs = out.f.size();
+  this->ninputs = in.x.size();
+  this->noutputs = out.x.size();
 }
 
 
@@ -403,7 +403,7 @@ void layers<T>::backward(state<T>& in, state<T>& out, bprop_type bp) {
     eblerror("cannot bprop while using dual-buffer memory optimization");
   if (modules.empty()) eblerror("trying to bprop through empty layers");
   // clear hidden states
-  zero_b();
+  zero_dx();
   EDEBUG(this->name() << ": in " << in);
   // init buffers
   hi = &out;
@@ -415,16 +415,16 @@ void layers<T>::backward(state<T>& in, state<T>& out, bprop_type bp) {
     if (i == 0) hi = &in;
     else hi = hiddens[i - 1];
     // make sure input's backward tensors exist
-    hi->resize_b();
+    hi->resize_dx();
     // run module
     module_1_1<T> *mod = modules[i];
-    EDEBUG_MAT(mod->name() << ": ho.dx ", ho->b[0]);
+    EDEBUG_MAT(mod->name() << ": ho.dx ", ho->dx[0]);
     switch (bp) {
       case T_BPROP1: mod->bprop1(*hi, *ho); break ;
       case T_BPROP: mod->bprop(*hi, *ho); break ;
       default: eblerror("unknown type");
     }
-    EDEBUG_MAT(mod->name() << ": hi.dx ", hi->b[0]);
+    EDEBUG_MAT(mod->name() << ": hi.dx ", hi->dx[0]);
     ho = hi;
     LOCAL_TIMING_REPORT(mod->name() << " bprop"); // timing debugging
   }
@@ -436,7 +436,7 @@ void layers<T>::bbackward(state<T>& in, state<T>& out, bprop_type bp) {
     eblerror("cannot bbprop while using dual-buffer memory optimization");
   if (modules.empty()) eblerror("trying to bbprop through empty layers");
   // clear hidden states
-  zero_bb();
+  zero_ddx();
 
   hi = &out;
   ho = &out;
@@ -447,16 +447,16 @@ void layers<T>::bbackward(state<T>& in, state<T>& out, bprop_type bp) {
     if (i == 0) hi = &in;
     else hi = hiddens[i-1];
     // make sure input's backward tensors exist
-    hi->resize_bb();
+    hi->resize_ddx();
     // run module
     module_1_1<T> *mod = modules[i];
-    EDEBUG_MAT(mod->name() << ": ho.ddx ", ho->bb[0]);
+    EDEBUG_MAT(mod->name() << ": ho.ddx ", ho->ddx[0]);
     switch (bp) {
       case T_BPROP1: mod->bbprop1(*hi, *ho); break ;
       case T_BPROP: mod->bbprop(*hi, *ho); break ;
       default: eblerror("unknown type");
     }
-    EDEBUG_MAT(mod->name() << ": hi.ddx ", hi->bb[0]);
+    EDEBUG_MAT(mod->name() << ": hi.ddx ", hi->ddx[0]);
     // shift output pointer to input
     ho = hi;
     LOCAL_TIMING_REPORT(mod->name() << " bbprop"); // timing debugging
@@ -501,25 +501,25 @@ void narrow_module<T>::fprop(state<T> &in, state<T> &out) {
   // narrow each tensor of multi-tensor in
   if (narrow_tensors) {
     out.resize(in);
-    for (uint i = 0; i < in.f.size(); ++i)
-      fprop1(in.f[i], out.f[i]);
+    for (uint i = 0; i < in.x.size(); ++i)
+      fprop1(in.x[i], out.x[i]);
   } else { // narrow multi-state itself
     if (dim == 0) { // narrow on states
       out.resize(in, offsets.size() * size);
       for (uint o = 0; o < offsets.size(); ++o) {
         intg offset = offsets[o];
-        if ((intg) in.f.size() < offset + size)
+        if ((intg) in.x.size() < offset + size)
           eblerror("expected at least " << offset + size
                    << " states in narrow of dimension "
                    << dim << " at offset " << offset << " to size " << size
-                   << " but found only " << in.f.size() << " states");
+                   << " but found only " << in.x.size() << " states");
         for (intg i = offset; i < offset + size; ++i)
-          out.f[i - offset + o * size] = in.f[i];
+          out.x[i - offset + o * size] = in.x[i];
       }
     } else eblerror("not implemented");
   }
-  this->ninputs = in.f.size();
-  this->noutputs = out.f.size();
+  this->ninputs = in.x.size();
+  this->noutputs = out.x.size();
   EDEBUG("narrowed " << in << " to " << out);
 }
 
@@ -612,15 +612,15 @@ table_module<T>::~table_module() {
 
 template <typename T>
 void table_module<T>::fprop(state<T> &in, state<T> &out) {
-  out.f.clear();
+  out.x.clear();
   for (uint i = 0; i < table.size(); ++i) {
     intg k = table[i];
-    if (k < 0 || k >= (intg) in.f.size())
+    if (k < 0 || k >= (intg) in.x.size())
       eblerror("trying to access index " << k << " in inputs " << in);
-    out.f.push_back(in.f[k]);
+    out.x.push_back(in.x[k]);
   }
-  this->ninputs = in.f.size();
-  this->noutputs = out.f.size();
+  this->ninputs = in.x.size();
+  this->noutputs = out.x.size();
   EDEBUG(this->name() << ": mapped " << in << " to " << out);
 }
 

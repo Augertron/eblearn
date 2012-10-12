@@ -57,7 +57,7 @@ namespace ebl {
 //! This creates a trainable network and returns it.
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T,Tdata,Tlabel>*
-create_trainable_network(bbparameter<T> &theparam, configuration &conf,
+create_trainable_network(ddparameter<T> &theparam, configuration &conf,
                          uint noutputs, module_1_1<T> **net, uint &iter);
 //! A function that performs tests, saves current weights and display.
 //! \param iteration_seconds An optional elapsed time for the iteration,

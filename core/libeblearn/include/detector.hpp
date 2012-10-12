@@ -447,10 +447,10 @@ void detector<T>::init(idxdim &dsample, const char *frame_name, int frame_id) {
     for (uint i = 0; i < scales.size(); ++i) {
       ppinputs.push_back(new state<T>());
       ppinputs[i].set_forward_only();
-      ppinputs[i].add_f(new idx<T>(order));
+      ppinputs[i].add_x(new idx<T>(order));
       outputs.push_back(new state<T>());
       outputs[i].set_forward_only();
-      outputs[i].add_f(new idx<T>(order));
+      outputs[i].add_x(new idx<T>(order));
       answers.push_back(new state<T>());
     }
     DEBUGMEM_PRETTY("detector end of init scales");
@@ -724,8 +724,8 @@ template <typename T>
 void detector<T>::threshold_outputs(T t, T val) {
   for (uint j = 0; j < outputs.size(); ++j) {
     state<T> &o = outputs[j];
-    for (uint i = 0; i < o.f.size(); ++i) {
-      idx_threshold(o.f[i], t, val);
+    for (uint i = 0; i < o.x.size(); ++i) {
+      idx_threshold(o.x[i], t, val);
     }
   }
 }
@@ -737,8 +737,8 @@ void detector<T>::smooth_outputs() {
     uint wpad = (uint) (smoothing_kernel.dim(1) / 2);
     for (uint j = 0; j < outputs.size(); ++j) {
       state<T> &o = outputs[j];
-      for (uint i = 0; i < o.f.size(); ++i) {
-        idx<T> &outx = o.f[i];
+      for (uint i = 0; i < o.x.size(); ++i) {
+        idx<T> &outx = o.x[i];
         intg h = outx.dim(1), w = outx.dim(2);
         idx<T> in(h + 2 * hpad, w + 2 * wpad);
         idx<T> inc = in.narrow(0, h, hpad);
@@ -932,11 +932,11 @@ void detector<T>::get_corners(state<T> &outputs, uint scale, bool force) {
       ibl[scale].clear(); ibr[scale].clear();
       pptl[scale].clear(); pptr[scale].clear();
       ppbl[scale].clear(); ppbr[scale].clear();
-      for (uint i = 0; i < outputs.f.size(); ++i) {
-        idx<T> &o = outputs.f[i];
+      for (uint i = 0; i < outputs.x.size(); ++i) {
+        idx<T> &o = outputs.x[i];
         fidxdim d(o.get_idxdim());
         fidxdim c(1, 1, 1), mc0;
-        mfidxdim mc(outputs.f.size());
+        mfidxdim mc(outputs.x.size());
         mc.set_new(c, n);
         mfidxdim m;
         // top left
@@ -1064,16 +1064,16 @@ void detector<T>::extract_bboxes(T threshold, bboxes &bbs) {
   intg offset_h = 0, offset_w = 0;
   int scale_index = 0;
   for (uint scale = 0; scale < outputs.size(); ++scale) {
-    answers[scale].f.clear();
+    answers[scale].x.clear();
     // get 4 corners coordinates for each scale
     state<T> &oo = outputs[scale];
 
     // loop on output
-    for (uint o = 0; o < oo.f.size(); ++o) {
+    for (uint o = 0; o < oo.x.size(); ++o) {
       if (o < raw_thresholds.size()) threshold = raw_thresholds[o];
       float thresh = threshold;
       // state<T> &input = ppinputs[0][0];
-      state<T> output = oo.get_f(o);
+      state<T> output = oo.get_x(o);
       idx<T> outx = output;
       fidxdim &tl = itl[scale][o], &tr = itr[scale][o], &bl = ibl[scale][o];
       fidxdim &ptl = pptl[scale][o], &ptr = pptr[scale][o],
@@ -1115,7 +1115,7 @@ void detector<T>::extract_bboxes(T threshold, bboxes &bbs) {
       offset_w = 0;
       state<T> out(outx.get_idxdim());
       answer->fprop(output, out);
-      answers[scale].f.push_back_new(out.f[0]);
+      answers[scale].x.push_back_new(out.x[0]);
 
       idx<T> tmp = outx.select(0, 1);
       // std::cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
@@ -1490,7 +1490,7 @@ midx<T> detector<T>::get_preprocessed(const bbox &bb) {
   d.setoffset(1, bb.o.h0);
   d.setoffset(2, bb.o.w0);
   mfidxdim md;
-  for (uint i = 0; i < outs.f.size(); ++i) {
+  for (uint i = 0; i < outs.x.size(); ++i) {
     if (i == (uint) bb.oscale_index) md.push_back(d);
     else md.push_back_empty();
   }
@@ -1499,9 +1499,9 @@ midx<T> detector<T>::get_preprocessed(const bbox &bb) {
          << " from outputs " << outs << " to input " << ins);
   // get bboxes after the resizepp
   mfidxdim dims = resizepp->get_msize();
-  if (dims.size() != ins.f.size())
+  if (dims.size() != ins.x.size())
     eblerror("expected same size dimensions and ins but got " << dims.size()
-             << " and " << ins.f.size() << " in " << dims << " and " << ins);
+             << " and " << ins.x.size() << " in " << dims << " and " << ins);
   midx<T> all(1);
   ins.get_padded_midx(dims, all);
   return all;
@@ -1625,6 +1625,12 @@ void detector<T>::prepare_scale(uint i) {
   // set resizing of current scale
   idxdim d = scales[i];
   resizepp->set_dimensions(d.dim(1), d.dim(2));
+  rect<int> outr(0, 0, d.dim(1), d.dim(2));
+  resizepp->set_output_region(outr);
+  // if smaller than network size, pad
+  if (d.dim(1) < netdim.dim(1) || d.dim(2) < netdim.dim(2))
+    resizepp->set_dimensions(netdim.dim(1), netdim.dim(2));
+
   // // save actual resolutions
   // fidxdim tmp = d;
   // idxdim actual = thenet.fprop_size(tmp);
@@ -1656,8 +1662,8 @@ void detector<T>::multi_res_fprop() {
       std::string fname = outputs_dump;
       std::string dir = ebl::dirname(fname.c_str());
       mkdir_full(dir);
-      if (out.f.size() == 1) {
-        idx<T> &o = out.f[0];
+      if (out.x.size() == 1) {
+        idx<T> &o = out.x[0];
         fname << "_" << o << ".mat";
         save_matrix(o, fname);
         mout << "Saved " << fname << " (" << o << ", min: " << idx_min(o)
