@@ -129,8 +129,8 @@ display(labeled_datasource<T, Tdata, Tlabel> &ds,
       if (ds.mstate_samples()) { // dataset has multiple states per sample
         state<T> ms;
         ds.fprop_data(ms);
-        for (uint i = 0; i < ms.f.size(); ++i) {
-          idx<T> mm = ms.f[i];
+        for (uint i = 0; i < ms.x.size(); ++i) {
+          idx<T> mm = ms.x[i];
           mm = mm.shift_dim(0, 2);
           draw_matrix(mm, h, w, _zoom, _zoom, _rmin, _rmax);
           w += mm.dim(1) + 1;

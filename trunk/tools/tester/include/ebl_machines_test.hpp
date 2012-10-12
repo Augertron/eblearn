@@ -72,7 +72,7 @@ void test_lenet5_mnist(string *dir, string *errmsg, double eta) {
 
   // create the network weights, network and trainer
   idxdim dims(train_ds.sample_dims()); // get order and dimensions of sample
-  bbparameter<Tnet> theparam(60000); // create trainable parameter
+  ddparameter<Tnet> theparam(60000); // create trainable parameter
   lenet5<Tnet> net(theparam, 32, 32, 5, 5, 2, 2, 5, 5, 2, 2, 120,
 		   nclasses, true, false, true, false);
   cout << net.describe() << endl;

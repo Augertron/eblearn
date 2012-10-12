@@ -350,8 +350,8 @@ bboxes bootstrapping<T>::get_positives
     // loop on outputs maps
     for (uint oo = 0; oo < outputs.size(); ++oo) {
       state<T> &output = outputs[oo];
-      for (uint o = 0; o < output.f.size(); ++o) {
-        idx<T> &out = output.f[o];
+      for (uint o = 0; o < output.x.size(); ++o) {
+        idx<T> &out = output.x[o];
         // input space corners
         fidxdim &tl = topleft[oo][o], &tr = topright[oo][o],
 	    &bl = bottomleft[oo][o];
@@ -504,8 +504,8 @@ bboxes bootstrapping<T>::get_negatives
   bboxes pos2, res2;
   for (uint oo = 0; oo < answers.size(); ++oo) {
     state<T> &answer = answers[oo];
-    for (uint o = 0; o < answer.f.size(); ++o) {
-      idx<T> &ans = answer.f[o];
+    for (uint o = 0; o < answer.x.size(); ++o) {
+      idx<T> &ans = answer.x[o];
       // input space corners
       fidxdim &tl = topleft[oo][o], &tr = topright[oo][o],
 	  &bl = bottomleft[oo][o];

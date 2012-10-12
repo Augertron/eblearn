@@ -39,14 +39,14 @@ namespace ebl {
 
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T, Tdata, Tlabel>::
-supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, bbparameter<T> &p)
+supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, ddparameter<T> &p)
     : machine(m), param(p), energy(), answers(NULL), label(NULL), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false), progress_cnt(0),
-      test_running(false) {
-  energy.resize_b();
-  energy.resize_bb();
-  energy.b[0].set(1.0); // d(E)/dE is always 1
-  energy.bb[0].set(0.0); // dd(E)/dE is always 0
+      test_running(false), test_display_modulo(0) {
+  energy.resize_dx();
+  energy.resize_ddx();
+  energy.dx[0].set(1.0); // d(E)/dE is always 1
+  energy.ddx[0].set(0.0); // dd(E)/dE is always 0
   std::cout << "Training with: " << m.describe() << std::endl;
 }
 
@@ -69,7 +69,7 @@ T supervised_trainer<T, Tdata, Tlabel>::
 train_sample(labeled_datasource<T,Tdata,Tlabel> &ds, gd_param &args) {
   TIMING2("until train_sample");
   machine.fprop(ds, energy);
-  param.zero_b();
+  param.zero_dx();
   machine.bprop(ds, energy);
   param.update(args);
   TIMING2("entire train_sample");
@@ -89,7 +89,7 @@ train_sample(state<T> &sample, const Tlabel lab, gd_param &args) {
   EDEBUG("training with label " << lab << " target: " << target.str());
 
   machine.fprop(sample, *label, energy);
-  param.zero_bb();
+  param.zero_ddx();
   machine.bprop(sample, *label, energy);
   param.update(args);
   return energy.get();
@@ -109,6 +109,12 @@ test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
     std::cout << "Limiting the number of tested samples to " << ntest
               << std::endl;
   }
+  // TODO: simplify this
+  std::vector<std::string*> lblstr;
+  class_datasource<T,Tdata,Tlabel> *cds =
+      dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
+  if (cds) lblstr = cds->get_label_strings();
+
   // loop
   uint i = 0;
   do {
@@ -123,16 +129,12 @@ test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
     ds.set_sample_energy((double) energy.get(), correct, machine.out1,
                          *answers, target);
     ds.pretty_progress();
+    if (test_display_modulo > 0 && i % test_display_modulo == 0)
+      log.display(iteration, ds.name(), &lblstr, ds.is_test());
     update_progress(); // tell the outside world we're still running
     TIMING2("sample test (" << machine.msin1 << ")");
   } while (ds.next() && i++ < ntest);
   ds.normalize_all_probas();
-  // TODO: simplify this
-  std::vector<std::string*> lblstr;
-  class_datasource<T,Tdata,Tlabel> *cds =
-      dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
-  if (cds)
-    lblstr = cds->get_label_strings();
   log.display(iteration, ds.name(), &lblstr, ds.is_test());
   std::cout << std::endl;
 }
@@ -222,9 +224,9 @@ compute_diaghessian(labeled_datasource<T,Tdata,Tlabel> &ds, intg niter,
   // loop
   for (int i = 0; i < niter; ++i) {
     machine.fprop(ds, energy);
-    param.zero_b();
+    param.zero_dx();
     machine.bprop(ds, energy);
-    param.zero_bb();
+    param.zero_ddx();
     machine.bbprop(ds, energy);
     EDEBUG("param: " << param.info());
     param.update_ddeltax((1 / (double) niter), 1.0);
@@ -247,6 +249,11 @@ template <typename T, typename Tdata, typename Tlabel>
 void supervised_trainer<T, Tdata, Tlabel>::set_iteration(int i) {
   std::cout << "Setting iteration id to " << i << std::endl;
   iteration = i;
+}
+
+template <typename T, typename Tdata, typename Tlabel>
+void supervised_trainer<T, Tdata, Tlabel>::set_test_display_modulo(intg mod) {
+  test_display_modulo = mod;
 }
 
 template <typename T, typename Tdata, typename Tlabel>

@@ -155,20 +155,20 @@ void divisive_norm_module<T>::invert(idx<T> &in, idx<T> &thstd_, idx<T> &out) {
 template <typename T>
 void divisive_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  insq.resize_b();
-  invar.resize_b();
-  instd.resize_b();
-  thstd.resize_b();
-  invstd.resize_b();
-  divconv->kernel.resize_b(); // not actually learned, TODO: reduce computation
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  insq.resize_dx();
+  invar.resize_dx();
+  instd.resize_dx();
+  thstd.resize_dx();
+  invstd.resize_dx();
+  divconv->kernel.resize_dx(); // not actually learned, TODO: reduce computation
   // clear derivatives
-  insq.zero_b();
-  invar.zero_b();
-  instd.zero_b();
-  thstd.zero_b();
-  invstd.zero_b();
-  convvar.zero_b();
+  insq.zero_dx();
+  invar.zero_dx();
+  instd.zero_dx();
+  thstd.zero_dx();
+  invstd.zero_dx();
+  convvar.zero_dx();
   // out = in/std
   mcw.bprop1(in, invstd, out);
   // 1/std
@@ -186,20 +186,20 @@ void divisive_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void divisive_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  insq.resize_bb();
-  invar.resize_bb();
-  instd.resize_bb();
-  thstd.resize_bb();
-  invstd.resize_bb();
-  divconv->kernel.resize_bb(); // not actually learned, TODO: reduce computation
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  insq.resize_ddx();
+  invar.resize_ddx();
+  instd.resize_ddx();
+  thstd.resize_ddx();
+  invstd.resize_ddx();
+  divconv->kernel.resize_ddx(); // not actually learned, TODO: reduce computation
   // clear derivatives
-  insq.zero_bb();
-  invar.zero_bb();
-  instd.zero_bb();
-  thstd.zero_bb();
-  invstd.zero_bb();
-  convvar.zero_bb();
+  insq.zero_ddx();
+  invar.zero_ddx();
+  instd.zero_ddx();
+  thstd.zero_ddx();
+  invstd.zero_ddx();
+  convvar.zero_ddx();
   // out = in/std
   mcw.bbprop1(in, invstd, out);
   // 1/std
@@ -356,14 +356,14 @@ void subtractive_norm_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void subtractive_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  inmean.resize_b();
-  meanconv->kernel.resize_b(); // not actually learned, TODO: reduce computation
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  inmean.resize_dx();
+  meanconv->kernel.resize_dx(); // not actually learned, TODO: reduce computation
   // clear derivatives
-  inmean.zero_b();
-  convmean.zero_b();
+  inmean.zero_dx();
+  convmean.zero_dx();
   // crop in if valid convolution
-  state<T> cin(in.f[0], in.b[0]);
+  state<T> cin(in.x[0], in.dx[0]);
   if (valid) {
     cin = cin.narrow_state(1, inmean.dim(1), (in.dim(1) - inmean.dim(1)) / 2);
     cin = cin.narrow_state(2, inmean.dim(2), (in.dim(2) - inmean.dim(2)) / 2);
@@ -377,14 +377,14 @@ void subtractive_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void subtractive_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  inmean.resize_bb();
-  meanconv->kernel.resize_bb(); // not actually learned, TODO: reduce comp
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  inmean.resize_ddx();
+  meanconv->kernel.resize_ddx(); // not actually learned, TODO: reduce comp
   // clear derivatives
-  inmean.zero_bb();
-  convmean.zero_bb();
+  inmean.zero_ddx();
+  convmean.zero_ddx();
   // crop in if valid convolution
-  state<T> cin(in.f[0], in.b[0]);
+  state<T> cin(in.x[0], in.dx[0]);
   // state<T> cin(in);
   if (valid) {
     cin = cin.narrow_state(1, inmean.dim(1), (in.dim(1) - inmean.dim(1)) / 2);
@@ -426,7 +426,7 @@ template <typename T>
 std::string subtractive_norm_module<T>::describe() {
   std::string desc;
   desc << "subtractive_norm module with " << (param ? "learned" : "fixed")
-       << " mean weighting and kernel " << meanconv->kernel.f[0]
+       << " mean weighting and kernel " << meanconv->kernel.x[0]
        << ", " << (global_norm ? "" : "not ")
        << "using global normalization";
   if (valid) desc << ", and valid";
@@ -485,10 +485,10 @@ void contrast_norm_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 void contrast_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_B(in); // in debug mode, check backward tensors are allocated
-  tmp.resize_b();
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  tmp.resize_dx();
   // clear derivatives
-  tmp.zero_b();
+  tmp.zero_dx();
   // divisive normalization
   divnorm->bprop1(tmp, out);
   // subtractive normalization
@@ -498,10 +498,10 @@ void contrast_norm_module<T>::bprop1(state<T> &in, state<T> &out) {
 template <typename T>
 void contrast_norm_module<T>::bbprop1(state<T> &in, state<T> &out) {
   // make sure backward tensors are allocated
-  DEBUG_CHECK_BB(in); // in debug mode, check backward tensors are allocated
-  tmp.resize_bb();
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  tmp.resize_ddx();
   // clear derivatives
-  tmp.zero_bb();
+  tmp.zero_ddx();
   // divisive normalization
   divnorm->bbprop1(tmp, out);
   // subtractive normalization

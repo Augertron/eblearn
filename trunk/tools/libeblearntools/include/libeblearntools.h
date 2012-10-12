@@ -35,6 +35,7 @@
 
 #include "bootstrapping.h"
 #include "camera.h"
+#include "camera_datasource.h"
 #include "camera_directory.h"
 #include "camera_kinect.h"
 #include "camera_mac.h"

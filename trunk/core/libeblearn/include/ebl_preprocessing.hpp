@@ -340,8 +340,8 @@ module_1_1<T>* rgb_to_yuvn_module<T>::copy(parameter<T> *p) {
 
 template <typename T>
 rgb_to_rgb_module<T>::
-rgb_to_rgb_module(bool globnorm)
-    : channels_module<T>(globnorm, "rgb_to_rgb") {
+rgb_to_rgb_module(bool globnorm, const char *name_)
+    : channels_module<T>(globnorm, name_) {
 }
 
 template <typename T>
@@ -981,8 +981,8 @@ void resize_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   EDEBUG_MAT(this->name() << ": out", out);
 
    // remember last output
-  lout.f.clear();
-  lout.add_f_new(out);
+  lout.x.clear();
+  lout.add_x_new(out);
   lastout = &lout;
   copy_outputs(lout);
 }
@@ -1231,8 +1231,8 @@ void resizepp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   EDEBUG_MAT(this->name() << ": out", out);
 
   // remember last output
-  lout.f.clear();
-  lout.add_f_new(out);
+  lout.x.clear();
+  lout.add_x_new(out);
   lastout = &lout;
   this->copy_outputs(lout);
 }
@@ -1323,7 +1323,7 @@ void fovea_module<T>::fprop(state<T> &in, state<T> &out) {
   rect<int> obbox, ibbox;
   // fprop all scales
   for (uint f = 0; f < fovea.size(); ++f) {
-    idx<T> &o = out.f[f];
+    idx<T> &o = out.x[f];
     if (boxscale) // box scaling mode
       this->set_scale_factor(fovea[f]);
     else { // image scaling mode
@@ -1357,8 +1357,8 @@ void fovea_module<T>::fprop(state<T> &in, midx<T> &out) {
   state<T> mout;
   this->fprop1(in, mout);
   // convert mout (which is a vector) into out (midx)
-  for (uint i = 0; i < mout.f.size(); ++i)
-    out.mset(mout.f[i], i);
+  for (uint i = 0; i < mout.x.size(); ++i)
+    out.mset(mout.x[i], i);
 }
 
 template <typename T>
@@ -1425,7 +1425,7 @@ void mschan_module<T>::fprop(state<T> &in, state<T> &out) {
   // copy each channel into its state
   // TODO: handle multiple channels per state, using fovea size
   for (uint f = 0; f < in.dim(0); ++f) {
-    idx<T> &o = out.f[f];
+    idx<T> &o = out.x[f];
     idx<T> inx = in.narrow(0, nchans, f * nchans);
     idx_copy(inx, o);
   }
@@ -1578,14 +1578,14 @@ void laplacian_pyramid_module<T>::init() {
 template <typename T>
 void laplacian_pyramid_module<T>::fprop(state<T> &in, state<T> &out) {
   fprop(in, outs);
-  out.f.clear();
+  out.x.clear();
   for (uint i = 0; i < outs.dim(0); ++i)
-    out.f.push_back(new idx<T>(outs.mget(i)));
+    out.x.push_back(new idx<T>(outs.mget(i)));
   // adding zero borders if defined
   if (zpad) {
     zpad->fprop(out, zpad_out);
-    out.f.clear();
-    out.f.push_back_new(zpad_out);
+    out.x.clear();
+    out.x.push_back_new(zpad_out);
   }
   this->copy_outputs(out);
 }

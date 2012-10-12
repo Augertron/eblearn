@@ -72,7 +72,7 @@ rect<T> jitter::get_rect(const rect<T> &r, float ratio) {
 
 // constructors & initializations //////////////////////////////////////////////
 
-template <class Tdata>
+template <typename Tdata>
 dataset<Tdata>::dataset(const char *name_, const char *inroot_) {
   // initialize members
   allocated = false;
@@ -148,13 +148,13 @@ dataset<Tdata>::dataset(const char *name_, const char *inroot_) {
 #endif
 }
 
-template <class Tdata>
+template <typename Tdata>
 dataset<Tdata>::~dataset() {
   for (uint i = 0; i < ppmods.size(); ++i)
     delete ppmods[i];
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::alloc(intg max) {
   // save maximum number of samples if specified
   if (max > 0) {
@@ -182,7 +182,7 @@ bool dataset<Tdata>::alloc(intg max) {
 
 // data extraction /////////////////////////////////////////////////////////////
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::extract() {
   // extract
 #ifdef __BOOST__
@@ -197,13 +197,13 @@ bool dataset<Tdata>::extract() {
   for (directory_iterator itr(inroot); itr != end_itr; itr++) {
 #if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
     if (is_directory(itr->status())
-        && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+            && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
       process_dir(itr->path().string(), extension, itr->leaf());
       found = true;
     }
 #else
     if (is_directory(itr->status())
-        && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
+            && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
       process_dir(itr->path().string(), extension, itr->path().filename());
       found = true;
     }
@@ -223,7 +223,7 @@ bool dataset<Tdata>::extract() {
   return true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::extract_statistics() {
   eblerror("not implemented");
 }
@@ -231,7 +231,7 @@ void dataset<Tdata>::extract_statistics() {
 ////////////////////////////////////////////////////////////////
 // data
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::split_max_and_save(const char *name1, const char *name2,
                                         intg max, const std::string &outroot) {
   dataset<Tdata> ds1(name1);
@@ -249,7 +249,7 @@ bool dataset<Tdata>::split_max_and_save(const char *name1, const char *name2,
   return ret1 || ret2;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::split_max(dataset<Tdata> &ds1, dataset<Tdata> &ds2,
                                intg max) {
   std::cout << "Splitting \"" << name << "\" into datasets \"";
@@ -271,36 +271,38 @@ void dataset<Tdata>::split_max(dataset<Tdata> &ds1, dataset<Tdata> &ds2,
   split(ds1, ds2);
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::shuffle() {
   std::cout << "Shuffling dataset \"" << name << "\"." << std::endl;
   dynamic_init_drand(); // initialize random seed
-  idx_shuffle_together(data, labels, 0);
+  idx<int64> offsets = data.get_offsets();
+  if (offsets.order() != data.order())
+    idx_shuffle_together(data, labels, 0);
+  else
+    idx_shuffle_together(data, offsets, labels, 0);
 }
 
-////////////////////////////////////////////////////////////////
-// data preprocessing
+// data preprocessing //////////////////////////////////////////////////////////
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_planar_loading() {
   std::cout << "Inputs are loaded as planar." << std::endl;
   load_planar = true;
 }
 
-////////////////////////////////////////////////////////////////
-// accessors
+// accessors ///////////////////////////////////////////////////////////////////
 
-template <class Tdata>
+template <typename Tdata>
 const idxdim& dataset<Tdata>::get_sample_outdim() {
   return outdims;
 }
 
-template <class Tdata>
+template <typename Tdata>
 intg dataset<Tdata>::size() {
   return data_cnt;
 }
 
-template <class Tdata>
+template <typename Tdata>
 t_label dataset<Tdata>::get_label_from_class(const std::string &class_name) {
   t_label label = 0;
   std::vector<std::string>::iterator res;
@@ -313,7 +315,7 @@ t_label dataset<Tdata>::get_label_from_class(const std::string &class_name) {
   return label;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_display(bool display_) {
 #ifdef __GUI__
   if (display_) {
@@ -324,7 +326,7 @@ void dataset<Tdata>::set_display(bool display_) {
 #endif /* __GUI__ */
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_sleepdisplay(uint delay) {
   if (delay > 0) {
     std::cout << "Enabling sleeping display for " << delay << "ms." << std::endl;
@@ -333,7 +335,7 @@ void dataset<Tdata>::set_sleepdisplay(uint delay) {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::
 set_preprocessing(std::vector<resizepp_module<Tdata>*> &p){
   if (p.size() == 0) {
@@ -360,18 +362,18 @@ set_preprocessing(std::vector<resizepp_module<Tdata>*> &p){
   do_preprocessing = true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::full(t_label label) {
   if (!total_samples) // we did not count samples, no opinion
     return false;
   if ((max_data_set && (data_cnt >= max_data)) ||
-      ((data.order() > 0) && (data_cnt >= data.dim(0))))
+          ((data.order() > 0) && (data_cnt >= data.dim(0))))
     return true;
   if (!scale_mode) {
     if (label == -42) // excluded class
       return true;
     if (max_per_class_set && (label >= 0) &&
-        (add_tally.get(label) >= max_per_class.get(label)))
+            (add_tally.get(label) >= max_per_class.get(label)))
       return true;
   }
   return false;
@@ -380,7 +382,7 @@ bool dataset<Tdata>::full(t_label label) {
 ////////////////////////////////////////////////////////////////
 // print methods
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::print_classes() {
   std::cout << nclasses << " classe";
   if (nclasses > 1) std::cout << "s";
@@ -393,7 +395,7 @@ void dataset<Tdata>::print_classes() {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::print_stats() {
   compute_stats();
   // print stats
@@ -414,7 +416,7 @@ void dataset<Tdata>::print_stats() {
 ////////////////////////////////////////////////////////////////
 // I/O
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::load(const std::string &root) {
   std::string fname;
   std::string root1 = root;
@@ -447,8 +449,11 @@ bool dataset<Tdata>::load(const std::string &root) {
   fname = root1; fname += classes_fname;
   if (loading_warning(classidx, fname))
     set_classes(classidx, false);
-  else
+  else {
+    // if not allocated, assign index as class names
+    set_index_classes();
     nclasses = idx_max(labels) + 1;
+  }
   // load classpairs
   classpairs = idx<t_label>(1,1);
   fname = root1; fname += classpairs_fname;
@@ -469,7 +474,7 @@ bool dataset<Tdata>::load(const std::string &root) {
   return true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::save(const std::string &root, bool save_data) {
   if (!allocated && !strcmp(save_mode.c_str(), DATASET_SAVE))
     return false;
@@ -511,8 +516,8 @@ bool dataset<Tdata>::save(const std::string &root, bool save_data) {
       jitts = jitts.narrow(0, data_cnt, 0);
   }
   // switch between saving modes
-  if (!strcmp(save_mode.c_str(), DATASET_SAVE) ||
-      !strcmp(save_mode.c_str(), DYNSET_SAVE)) { // dataset mode
+  if (!strcmp(save_mode.c_str(), DATASET_SAVE)
+          || !strcmp(save_mode.c_str(), DYNSET_SAVE)) { // dataset mode
     std::cout << "Saving dataset " << name << " in " << root << "/";
     std::cout << name << "_*" << MATRIX_EXTENSION << std::endl;
     // save data
@@ -527,7 +532,8 @@ bool dataset<Tdata>::save(const std::string &root, bool save_data) {
 
         // save from dynamic to static
         if (images_list.size() == 0 && dataset_loaded == true) {
-          if (data.order() != 1) eblerror("In dataset mode, multiscale not supported");
+          if (data.true_order() != 1)
+            eblerror("In dataset mode, multiscale not supported");
           if (!save_matrix<Tdata>(data, fname)) {
             std::cerr << "error: failed to save " << fname << std::endl;
             return false;
@@ -539,7 +545,8 @@ bool dataset<Tdata>::save(const std::string &root, bool save_data) {
             return false;
           } else std::cout << "Saved " << fname << std::endl;
         }
-      } else if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) { // compile data file from existing files
+      } else if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) {
+        // compile data file from existing files
         if (images_list.size() > 0) {
           std::cout << "Saving dynamic dataset from a list of "
                     << images_list.size() << " samples." << std::endl;
@@ -621,7 +628,7 @@ bool dataset<Tdata>::save(const std::string &root, bool save_data) {
 ////////////////////////////////////////////////////////////////
 // allocation
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::allocate(intg n, idxdim &d) {
   // allocate only once
   //if (allocated)
@@ -675,7 +682,7 @@ bool dataset<Tdata>::allocate(intg n, idxdim &d) {
 ////////////////////////////////////////////////////////////////
 // data
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
                                const t_label label,
                                const std::string *class_name,
@@ -699,7 +706,7 @@ bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
       eblthrow("dataset has not been allocated, cannot add data.");
     // check that input is bigger than minimum dimensions allowed
     if ((dat.dim(0) < mindims.dim(0))
-        || (r && (r->height < mindims.dim(0)))
+            || (r && (r->height < mindims.dim(0)))
         || (dat.dim(1) < mindims.dim(1))
         || (r && (r->width < mindims.dim(1)))) {
       std::string err;
@@ -713,7 +720,7 @@ bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
     }
     // check that input is smaller than maximum dimensions allowed
     if (maxdims_set && r && (r->height > maxdims.dim(0)
-                             || r->width > maxdims.dim(1))) {
+            || r->width > maxdims.dim(1))) {
       std::string err;
       err << "not adding " << *class_name << " from "
           << (filename?filename:"")
@@ -723,7 +730,7 @@ bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
     }
     // check that class exists (may not exist if excluded)
     if (classes.size() > 0 &&
-        find(classes.begin(), classes.end(), *class_name) == classes.end())
+            find(classes.begin(), classes.end(), *class_name) == classes.end())
       eblthrow("not adding " << *class_name << " from "
                << (filename?filename:"") << ", this class is excluded.");
     // check that this class is included
@@ -850,13 +857,11 @@ bool dataset<Tdata>::add_mdata(midx<Tdata> &original_sample,
   } eblcatchwarn_extra(return false;);
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::add_data2(midx<Tdata> &sample, t_label label,
                                const std::string *class_name,
                                const char *filename, const jitter *jitt,
                                idx<t_jitter> *js) {
-  add_label(label, class_name, filename, jitt, js);
-  std::cout << std::endl;
   // check for dimensions
   idx<Tdata> sample0 = sample.mget(0);
   if (!sample0.same_dim(outdims) && !no_outdims) {
@@ -884,73 +889,74 @@ void dataset<Tdata>::add_data2(midx<Tdata> &sample, t_label label,
     // 		 << sample0.get_idxdim() << " in " << filename);
   }
   // put sample's channels dimensions first, if interleaved.
-  if (interleaved_input)
-    sample.shift_dim_internal(2, 0);
+  if (interleaved_input) sample.shift_dim_internal(2, 0);
   // if save_mode is dataset, cpy to dataset, otherwise save individual file
-  //     if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
-  //       // assign sample to big matrix
-  //       midx<Tdata> tgt = data.select(0, data_cnt);
-  //       for (uint i = 0; i < sample.dim(0); ++i) {
-  // 	idx<Tdata> tmp = sample.get(i);
-  // 	tgt.set(tmp, i);
-  //       }
-  //       // copy label
-  //       labels.set(label, data_cnt);
-  //       // copy jitt if present
-  //       if (jitters.order() > 0 && js)
-  // 	jitters.set(*js, data_cnt);
-  //     } else {
-  std::string format = save_mode;
-  if (!strcmp(save_mode.c_str(), DYNSET_SAVE)
-      || !strcmp(save_mode.c_str(), DATASET_SAVE))
-    format = "mat"; // force mat format for dynamic set
-  std::string fname_tmp, fname;
-  fname_tmp << outtmp << "/" << get_class_string(label) << "/";
-  if (individual_save) mkdir_full(fname_tmp.c_str());
-  // save image
-  fname_tmp << get_class_string(label) << "_" << data_cnt;
-  fname << fname_tmp << "." << format;
-  //       // scale image to 0 255 if preprocessed
-  //       if (strcmp(ppconv_type.c_str(), "RGB")) {
-  // 	idx_addc(tmp, (Tdata) 1.0, tmp);
-  // 	idx_dotc(tmp, (Tdata) 127.5, tmp);
-  //       }
-  if (individual_save) {
-    if (separate_layers_save && sample.dim(0) > 1) {
-      for (uint i = 0; i < sample.dim(0); ++i) {
-        std::string fname2;
-        idx<Tdata> sample2 = sample.mget(i);
-        fname2 << fname_tmp << "_" << i << "." << format;
-        save_image(fname2, sample2, format.c_str());
-        std::cout << "  saved " << fname2 << " (" << sample2 << ")" << std::endl;
-      }
-    } else if (sample.dim(0) == 1) {
-      idx<Tdata> tmp = sample.mget(0);
-      if (!strcmp(format.c_str(), "mat"))
-        save_matrix(tmp, fname);
-      else {
-        tmp = tmp.shift_dim(0, 2);
-        save_image(fname, tmp, format.c_str());
-      }
-      std::cout << "  saved " << fname << " (" << sample << ")" << std::endl;
-    } else {
-      if (!strcmp(format.c_str(), "mat")) {
-        save_matrices(sample, fname);
-        std::cout << "  saved " << fname << " (" << sample << ")" << std::endl;
-      } else
-        eblerror("cannot save multi-layer image into format " << format);
+  if (!strcmp(save_mode.c_str(), DATASET_SAVE)) { // dataset mode
+    // assign sample to big matrix
+    for (uint i = 0; i < sample.dim(0); ++i) {
+      idx<Tdata> tmp = sample.mget(i);
+      data.mset(tmp, data_cnt, i);
     }
+    // copy label
+    labels.set(label, data_cnt);
+    // copy jitt if present
+    if (jitters.order() > 0 && js) jitters.mset(*js, data_cnt);
+    // declare that data is being loaded
+    dataset_loaded = true;
+  } else {
+    std::string format = save_mode;
+    if (!strcmp(save_mode.c_str(), DYNSET_SAVE)
+            || !strcmp(save_mode.c_str(), DATASET_SAVE))
+      format = "mat"; // force mat format for dynamic set
+    std::string fname_tmp, fname;
+    fname_tmp << outtmp << "/" << get_class_string(label) << "/";
+    if (individual_save) mkdir_full(fname_tmp.c_str());
+    // save image
+    fname_tmp << get_class_string(label) << "_" << data_cnt;
+    fname << fname_tmp << "." << format;
+    //       // scale image to 0 255 if preprocessed
+    //       if (strcmp(ppconv_type.c_str(), "RGB")) {
+    // 	idx_addc(tmp, (Tdata) 1.0, tmp);
+    // 	idx_dotc(tmp, (Tdata) 127.5, tmp);
+    //       }
+    if (individual_save) {
+      if (separate_layers_save && sample.dim(0) > 1) {
+        for (uint i = 0; i < sample.dim(0); ++i) {
+          std::string fname2;
+          idx<Tdata> sample2 = sample.mget(i);
+          fname2 << fname_tmp << "_" << i << "." << format;
+          save_image(fname2, sample2, format.c_str());
+          std::cout << "  saved " << fname2 << " (" << sample2 << ")" << std::endl;
+        }
+      } else if (sample.dim(0) == 1) {
+        idx<Tdata> tmp = sample.mget(0);
+        if (!strcmp(format.c_str(), "mat"))
+          save_matrix(tmp, fname);
+        else {
+          tmp = tmp.shift_dim(0, 2);
+          save_image(fname, tmp, format.c_str());
+        }
+        std::cout << "  saved " << fname << " (" << sample << ")" << std::endl;
+      } else {
+        if (!strcmp(format.c_str(), "mat")) {
+          save_matrices(sample, fname);
+          std::cout << "  saved " << fname << " (" << sample << ")" << std::endl;
+        } else
+          eblerror("cannot save multi-layer image into format " << format);
+      }
+    }
+    //      if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) {
+    if (individual_save) // keep new path
+      images_list.push_back(fname); // add image to files list
+    else // keep original path
+      images_list.push_back(filename); // add image to files list
+    //  }
   }
-  //      if (!strcmp(save_mode.c_str(), DYNSET_SAVE)) {
-  if (individual_save) // keep new path
-    images_list.push_back(fname); // add image to files list
-  else // keep original path
-    images_list.push_back(filename); // add image to files list
-  //  }
-  //}
+  add_label(label, class_name, filename, jitt, js);
+  std::cout << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::add_label(t_label label, const std::string *class_name,
                                const char *filename, const jitter *jitt,
                                idx<t_jitter> *js) {
@@ -966,17 +972,19 @@ void dataset<Tdata>::add_label(t_label label, const std::string *class_name,
   // increase counter for that class
   add_tally.set(add_tally.get(label) + 1, label);
   // print info
-  std::cout << data_cnt+1 << " / " << total_samples << ": add ";
-  std::cout << (filename ? filename : "sample" );
-  if (class_name)
-    std::cout << " as " << *class_name;
-  std::cout << " (" << label << ")";
-  //    std::cout << " eta: " << xtimer.eta(processed_cnt, total_samples);
-  std::cout << " eta: " << xtimer.eta(data_cnt+1, total_samples);
-  std::cout << " elapsed: " << xtimer.elapsed();
-  if (jitt)
-    std::cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ","
-              << jitt->r << ")";
+  if (data_cnt % 50 == 0) {
+    std::cout << data_cnt+1 << " / " << total_samples << ": add "
+              << (filename ? filename : "sample" );
+    if (class_name)
+      std::cout << " as " << *class_name;
+    std::cout << " (" << label << ")";
+    //    std::cout << " eta: " << xtimer.eta(processed_cnt, total_samples);
+    std::cout << " eta: " << xtimer.eta(data_cnt+1, total_samples);
+    std::cout << " elapsed: " << xtimer.elapsed();
+    if (jitt)
+      std::cout << " (jitter " << jitt->h << "," << jitt->w << "," << jitt->s << ","
+                << jitt->r << ")";
+  }
   // copy label
   if (labels.dim(0) > data_cnt)
     labels.set(label, data_cnt);
@@ -984,7 +992,7 @@ void dataset<Tdata>::add_label(t_label label, const std::string *class_name,
   data_cnt++;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::display_added(midx<Tdata> &added, idx<Tdata> &original,
                                    const std::string *class_name,
                                    const char *filename,
@@ -1181,7 +1189,7 @@ void dataset<Tdata>::display_added(midx<Tdata> &added, idx<Tdata> &original,
 #endif
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_unique_label(const std::string &class_name) {
   // allocate labels matrix based on images list size
   if (labels.order() != 1 && images_list.size() > 0)
@@ -1191,13 +1199,13 @@ void dataset<Tdata>::set_unique_label(const std::string &class_name) {
   add_class(class_name);
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::clear_classes() {
   nclasses = 0;
   classes.clear();
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::add_class(const std::string &class_name, bool sort) {
   std::vector<std::string>::iterator res;
   std::string name = class_name;
@@ -1214,7 +1222,7 @@ bool dataset<Tdata>::add_class(const std::string &class_name, bool sort) {
   return true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_classes(idx<ubyte> &classidx, bool sort) {
   // add classes to each dataset
   std::string s;
@@ -1228,7 +1236,7 @@ void dataset<Tdata>::set_classes(idx<ubyte> &classidx, bool sort) {
   idx_fill(max_per_class, (std::numeric_limits<intg>::max)());
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_outdims(const idxdim &d) {
   no_outdims = false;
   outdims = d;
@@ -1248,7 +1256,7 @@ void dataset<Tdata>::set_outdims(const idxdim &d) {
   std::cout << "Setting target dimensions to " << outdims << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_outdir(const char *s, const char *tmp) {
   outdir = s;
   if (tmp)
@@ -1259,20 +1267,20 @@ void dataset<Tdata>::set_outdir(const char *s, const char *tmp) {
   std::cout << "Setting temporary output directory to " << outtmp << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_mindims(const idxdim &d) {
   std::cout << "Setting minimum input dimensions to " << d << std::endl;
   mindims = d;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_maxdims(const idxdim &d) {
   std::cout << "Setting maximum input dimensions to " << d << std::endl;
   maxdims = d;
   maxdims_set = true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_scales(const std::vector<double> &sc, const std::string &od) {
   scales = sc;
   scale_mode = true;
@@ -1283,7 +1291,7 @@ void dataset<Tdata>::set_scales(const std::vector<double> &sc, const std::string
   std::cout << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_fovea(const std::vector<double> &sc) {
   fovea = sc;
   std::cout << "Enabling fovea mode with scales: " << fovea << std::endl;
@@ -1294,7 +1302,7 @@ void dataset<Tdata>::set_fovea(const std::vector<double> &sc) {
   set_outdims(outdims);
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_max_per_class(intg max) {
   if (max < 0)
     eblerror("cannot set max_per_class to < 0");
@@ -1307,7 +1315,7 @@ void dataset<Tdata>::set_max_per_class(intg max) {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_max_data(intg max) {
   if (max < 0)
     eblerror("cannot set max_data to < 0");
@@ -1318,13 +1326,13 @@ void dataset<Tdata>::set_max_data(intg max) {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_image_pattern(const std::string &p) {
   extension = p;
   std::cout << "Setting image pattern to " << extension << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_exclude(const std::vector<std::string> &ex) {
   if (ex.size()) {
     std::cout << "Excluded class(es): ";
@@ -1337,7 +1345,7 @@ void dataset<Tdata>::set_exclude(const std::vector<std::string> &ex) {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_include(const std::vector<std::string> &inc) {
   if (inc.size()) {
     std::cout << "Included class(es): ";
@@ -1350,27 +1358,27 @@ void dataset<Tdata>::set_include(const std::vector<std::string> &inc) {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_save(const std::string &s) {
   save_mode = s;
   std::cout << "Setting saving mode to: " << save_mode << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_individual_save(bool b) {
   individual_save = b;
   std::cout << (individual_save ? "Enabling" : "Disabling")
             << " individual sample saving." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_separate_layers_save(bool b) {
   separate_layers_save = b;
   std::cout << (separate_layers_save ? "Enabling" : "Disabling")
             << " saving sample layers separately." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_name(const std::string &s) {
   name = s;
   build_fname(name, DATA_NAME, data_fname);
@@ -1383,34 +1391,34 @@ void dataset<Tdata>::set_name(const std::string &s) {
   std::cout << "Setting dataset name to: " << name << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_label(const std::string &s) {
   force_label = s;
   //add_class(force_label);
   std::cout << "Forcing label for all samples to: " << s << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_bbox_woverh(float factor) {
   bbox_woverh = factor;
   std::cout << "Forcing width to be h * " << bbox_woverh << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_nopadded(bool nopadded_) {
   nopadded = nopadded_;
   if (nopadded)
     std::cout << "Ignoring samples that have padding areas, i.e. too"
               << " small for target size." << std::endl;
 }
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_videobox(uint nframes, uint stride) {
   do_videobox = true;
   videobox_nframes = nframes;
   videobox_stride = stride;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::
 set_jitter(uint tjitter_step_, uint tjitter_hmin_, uint tjitter_hmax_,
            uint tjitter_wmin_, uint tjitter_wmax_, uint scale_steps,
@@ -1443,20 +1451,20 @@ set_jitter(uint tjitter_step_, uint tjitter_hmin_, uint tjitter_hmax_,
             << "/scale/orientation" << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_minvisibility(float minvis) {
   std::cout << "Setting minimum visibility ratio (visible bbox overlap with "
             << "original bbox) to " << minvis << std::endl;
   minvisibility = minvis;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::set_wmirror() {
   wmirror = true;
   std::cout << "Adding vertical-axis mirror." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::save_display(const std::string &dir, uint h, uint w) {
 #ifdef __GUI__
   bsave_display = true;
@@ -1472,25 +1480,25 @@ void dataset<Tdata>::save_display(const std::string &dir, uint h, uint w) {
 #endif
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::use_pose() {
   usepose = true;
   std::cout << "Using pose to separate classes." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::use_parts() {
   useparts = true;
   std::cout << "Extracting parts." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::use_parts_only() {
   usepartsonly = true;
   std::cout << "Extracting parts only." << std::endl;
 }
 
-template <class Tdata>
+template <typename Tdata>
 intg dataset<Tdata>::count_total() {
   // count samples
   this->count_samples();
@@ -1509,7 +1517,7 @@ intg dataset<Tdata>::count_total() {
   return total_samples;
 }
 
-template <class Tdata>
+template <typename Tdata>
 intg dataset<Tdata>::count_samples() {
 #ifdef __BOOST__
   std::cout << "Counting number of samples in " << inroot << " ..." << std::endl;
@@ -1524,7 +1532,7 @@ intg dataset<Tdata>::count_samples() {
   for (directory_iterator itr(inroot); itr != end_itr; itr++) {
 #if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
     if (is_directory(itr->status())
-        && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+            && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
       // ignore excluded classes and use included if defined
       if (included(itr->leaf())) {
         dirs.push_back(itr->leaf());
@@ -1534,7 +1542,7 @@ intg dataset<Tdata>::count_samples() {
     }
 #else
     if (is_directory(itr->status())
-        && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
+            && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
       // ignore excluded classes and use included if defined
       if (included(itr->path().filename())) {
         dirs.push_back(itr->path().filename().c_str());
@@ -1555,7 +1563,7 @@ intg dataset<Tdata>::count_samples() {
   return total_samples;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
   // data already preprocessed
   ds1.do_preprocessing = false;
@@ -1571,7 +1579,7 @@ void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
   std::cout << "Input data samples: " << data << std::endl;
   // alloc each dataset
   if (!ds1.allocate(data.dim(0), outdims) ||
-      !ds2.allocate(data.dim(0), outdims))
+          !ds2.allocate(data.dim(0), outdims))
     eblerror("Failed to allocate new datasets");
   // add samples 1st dataset, if not add to 2nd.
   // if 1st has reached max per class, it will return false upon addition
@@ -1650,7 +1658,7 @@ void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
   ds2.print_stats();
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::merge_and_save(const char *name1, const char *name2,
                                     const std::string &outroot) {
   dataset<Tdata> ds1(name1), ds2(name2);
@@ -1744,7 +1752,7 @@ void dataset<Tdata>::merge_and_save(const char *name1, const char *name2,
   save(outroot, false);
 }
 
-template <class Tdata> template <class Toriginal>
+template <typename Tdata> template <class Toriginal>
 bool dataset<Tdata>::save_scales(idx<Toriginal> &dat, const std::string &filename){
   // copy data into target type
   idxdim d(dat);
@@ -1769,7 +1777,7 @@ bool dataset<Tdata>::save_scales(idx<Toriginal> &dat, const std::string &filenam
   return true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::included(t_label &lab) {
   if (classes.size() == 0) return false;
   if ((size_t) lab >= classes.size()) return false;
@@ -1778,7 +1786,7 @@ bool dataset<Tdata>::included(t_label &lab) {
   return true;
 }
 
-template <class Tdata>
+template <typename Tdata>
 bool dataset<Tdata>::included(const std::string &class_name) {
   return // is not excluded
       find(exclude.begin(), exclude.end(), class_name) == exclude.end()
@@ -1791,7 +1799,7 @@ bool dataset<Tdata>::included(const std::string &class_name) {
 ////////////////////////////////////////////////////////////////
 // data preprocessing
 
-template <class Tdata>
+template <typename Tdata>
 midx<Tdata> dataset<Tdata>::
 preprocess_data(midx<Tdata> &dat, const std::string *class_name,
                 const char *filename, const rect<int> *r, double scale,
@@ -1870,7 +1878,7 @@ preprocess_data(midx<Tdata> &dat, const std::string *class_name,
 ////////////////////////////////////////////////////////////////
 // Helper functions
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::compute_stats() {
   // collect stats
   if (nclasses > 0) {
@@ -1883,7 +1891,7 @@ void dataset<Tdata>::compute_stats() {
   }
 }
 
-template <class Tdata>
+template <typename Tdata>
 idx<ubyte> dataset<Tdata>::
 build_classes_idx(std::vector<std::string> &classes) {
   // determine max length of strings
@@ -1903,14 +1911,26 @@ build_classes_idx(std::vector<std::string> &classes) {
   return classes_idx;
 }
 
-template <class Tdata>
+template <typename Tdata>
+void dataset<Tdata>::set_index_classes() {
+  classes.clear();
+  std::ostringstream o;
+  int imax = (int) idx_max(labels);
+  for (int i = 0; i <= imax; ++i) {
+    o << i;
+    classes.push_back(o.str());
+    o.str("");
+  }
+}
+
+template <typename Tdata>
 std::string& dataset<Tdata>::get_class_string(t_label id) {
   if (((int) id < 0) || ((uint) id >= classes.size()))
     eblerror("trying to access a class with wrong id.");
   return classes[id];
 }
 
-template <class Tdata>
+template <typename Tdata>
 t_label dataset<Tdata>::get_class_id(const std::string &name) {
   std::vector<std::string>::iterator res;
   res = find(classes.begin(), classes.end(), name);
@@ -1920,7 +1940,7 @@ t_label dataset<Tdata>::get_class_id(const std::string &name) {
 }
 
 // Recursively goes through dir, looking for files matching extension ext.
-template <class Tdata>
+template <typename Tdata>
 uint dataset<Tdata>::count_matches(const std::string &dir,
                                    const std::string &pattern) {
   uint total = 0;
@@ -1945,7 +1965,7 @@ uint dataset<Tdata>::count_matches(const std::string &dir,
   return total;
 }
 
-template <class Tdata>
+template <typename Tdata>
 void dataset<Tdata>::process_dir(const std::string &dir,
                                  const std::string &ext,
                                  const std::string &class_name_) {
@@ -1993,7 +2013,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
 #endif /* __BOOST__ */
   }
 
-  template <class Tdata>
+  template <typename Tdata>
       void dataset<Tdata>::load_data(const std::string &fname) {
     load_img.clear();
     if (has_multiple_matrices(fname.c_str())) {
@@ -2007,7 +2027,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
       load_img.shift_dim_internal(0, 2);
   }
 
-  template <class Tdata>
+  template <typename Tdata>
       void dataset<Tdata>::compute_random_jitter() {
     // compute all possible jitters
     random_jitter.clear();

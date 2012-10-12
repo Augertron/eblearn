@@ -360,8 +360,9 @@ bool save_matrix(midx<T> m, const std::string &filename) {
     return false;
   }
   // determine matrices dims
-  if (m.order() != 1) eblerror("expected order 1");
-  if (m.dim(0) < 1) eblerror("expected atleast 1 sample");
+  if (m.true_order() != 1) eblerror("expected order 1");
+  m.remove_trailing_dims();
+  if (m.dim(0) < 1) eblerror("expected at least 1 sample");
   idxdim alld(m.dim(0));
   idx<T> e = m.mget(0);
   if (e.order() != 3) eblerror("expected only 3 channels");

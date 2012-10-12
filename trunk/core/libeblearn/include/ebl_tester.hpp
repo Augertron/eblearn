@@ -59,9 +59,9 @@ test_jacobian(module_1_1<T>  &module, state<T> &in, state<T> &out) {
   // EDEBUG("in: " << in.str() << std::endl << " out: "
   // << out.str() << std::endl );
   get_jacobian_fprop(module, in, out, jac_fprop);
-  in.resize_b();
-  out.resize_b();
-  in.zero_b();
+  in.resize_dx();
+  out.resize_dx();
+  in.zero_dx();
   get_jacobian_bprop(module, in, out, jac_bprop);
   // EDEBUG(" jac_fprop: " << jac_fprop.str() << std::endl
   //       << " jac_bprop " << jac_bprop.str() << std::endl);
@@ -82,9 +82,9 @@ test_jacobian_param(parameter<T> &p, module_1_1<T> &module,
   idx_random(p, rrange_min, rrange_max); // randomize input for fprop
   idx_random(in, rrange_min, rrange_max);
   get_jacobian_fprop_param(p, module, in, out, jac_pfprop);
-  in.resize_b();
-  out.resize_b();
-  in.zero_b();
+  in.resize_dx();
+  out.resize_dx();
+  in.zero_dx();
   get_jacobian_bprop_param(p, module, in, out, jac_pbprop);
   return get_errs(jac_pfprop, jac_pbprop);
 }
@@ -102,12 +102,12 @@ test_hessian(module_1_1<T>  &module, state<T> &in, state<T> &out) {
   out.zero_all();
   idx_random(in, rrange_min, rrange_max); // randomize input for fprop
   get_hessian_fprop(module, in, out, hes_fprop);
-  in.resize_b();
-  in.resize_bb();
-  out.resize_b();
-  out.resize_bb();
-  in.zero_b();
-  in.zero_bb();
+  in.resize_dx();
+  in.resize_ddx();
+  out.resize_dx();
+  out.resize_ddx();
+  in.zero_dx();
+  in.zero_ddx();
   get_hessian_bprop(module, in, out, hes_bprop);
   return get_errs(hes_fprop, hes_bprop);
 }
@@ -126,12 +126,12 @@ test_hessian_param(parameter<T> &p, module_1_1<T> &module,
   idx_random(p, rrange_min, rrange_max); // randomize input for fprop
   idx_random(in, rrange_min, rrange_max);
   get_hessian_fprop_param(p, module, in, out, hes_pfprop);
-  in.resize_b();
-  in.resize_bb();
-  out.resize_b();
-  out.resize_bb();
-  in.zero_b();
-  in.zero_bb();
+  in.resize_dx();
+  in.resize_ddx();
+  out.resize_dx();
+  out.resize_ddx();
+  in.zero_dx();
+  in.zero_ddx();
   get_hessian_bprop_param(p, module, in, out, hes_pbprop);
   return get_errs(hes_pfprop, hes_pbprop);
 }
@@ -251,18 +251,18 @@ template <class T>
 void module_tester<T>::
 get_jacobian_bprop(module_1_1<T> &module, state<T> &in, state<T> &out,
                    idx<T>& jac) {
-  in.resize_b();
-  out.resize_b();
+  in.resize_dx();
+  out.resize_dx();
   jac.resize(in.nelements(), out.nelements());
   idx_clear(jac);
   int cnt = 0;
-  idx_aloop1(dx, out.b[0],T) {
-    idx_clear(out.b[0]);
-    idx_clear(in.b[0]);
+  idx_aloop1(dx, out.dx[0],T) {
+    idx_clear(out.dx[0]);
+    idx_clear(in.dx[0]);
     *dx = (T) 1.0;
     module.bprop(in, out);
     idx<T> j = jac.select(1, cnt);
-    idx_copy(in.b[0], j);
+    idx_copy(in.dx[0], j);
     cnt++;
   }
   //cout << "jac bprop: " << (T) jac.gget() << endl;
@@ -336,23 +336,23 @@ template <class T>
 void module_tester<T>::
 get_hessian_bprop(module_1_1<T> &module, state<T> &in,
                   state<T> &out, idx<T>& jac) {
-  in.resize_bb();
-  out.resize_bb();
+  in.resize_ddx();
+  out.resize_ddx();
   jac.resize(in.nelements(), out.nelements());
   idx_clear(jac);
   //     module.fprop(in, out);
   //     module.bprop(in, out);
   //     module.bbprop(in, out);
-  //     idx_copy(in.bb[0], jac);
+  //     idx_copy(in.ddx[0], jac);
 
   int cnt = 0;
-  idx_aloop1(ddx, out.bb[0],T) {
-    idx_clear(out.bb[0]);
-    idx_clear(in.bb[0]);
+  idx_aloop1(ddx, out.ddx[0],T) {
+    idx_clear(out.ddx[0]);
+    idx_clear(in.ddx[0]);
     //      *ddx = 1.0;
     module.bbprop(in, out);
     idx<T> j = jac.select(1, cnt);
-    idx_copy(in.bb[0], j);
+    idx_copy(in.ddx[0], j);
     cnt++;
   }
 }
@@ -429,19 +429,19 @@ void Jacobian_tester<T>::test(module_1_1<T> &module) {
 
   // creation of jac_fprop
   module.fprop(in, out);
-  in.resize_b();
-  out.resize_b();
+  in.resize_dx();
+  out.resize_dx();
   int cnt = 0;
   { idx_bloop1(o, out, T)
     { idx_bloop1(oo, o, T)
       { idx_bloop1(ooo, oo, T)
         {
-          out.zero_b();
-          in.zero_b();
+          out.zero_dx();
+          in.zero_dx();
           ooo.set(1);
           module.bprop(in, out);
           idx<T> bla = jac_bprop.select(1, cnt);
-          idx_copy(in.b[0], bla);
+          idx_copy(in.dx[0], bla);
           cnt++;
         }
       }
@@ -507,11 +507,11 @@ void Bbprop_tester<T>::test(module_1_1<T> &module){
   }
 
   module.fprop(in, out);
-  in.resize_b();
-  out.resize_b();
+  in.resize_dx();
+  out.resize_dx();
   module.bprop(in, out);
-  in.resize_bb();
-  out.resize_bb();
+  in.resize_ddx();
+  out.resize_ddx();
   module.bbprop(in, out);
 
   // used to store the bbprop calculated via perturbation
@@ -552,7 +552,7 @@ void Bbprop_tester<T>::test(module_1_1<T> &module){
   }
 
   // comparison
-  printf("bbprop error: %8.7e \n", idx_sqrdist(in.bb[0], bbprop_p));
+  printf("bbprop error: %8.7e \n", idx_sqrdist(in.ddx[0], bbprop_p));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -612,7 +612,7 @@ void Bprop_tester<T>::test(module_1_1<T> &module){
     }
   }
 
-  printf("Bprop error : %8.7e \n", idx_sqrdist(in.b[0], bprop_p));
+  printf("Bprop error : %8.7e \n", idx_sqrdist(in.dx[0], bprop_p));
 }
 
 } // end namespace ebl

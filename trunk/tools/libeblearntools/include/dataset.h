@@ -119,16 +119,13 @@ private:
 //! compile all samples into one dataset matrix, formatted for learning.
 template <class Tdata> class dataset {
  public:
-
-  ////////////////////////////////////////////////////////////////
-  // constructors/allocation
+  // constructors/allocation   /////////////////////////////////////////////////
 
   //! Initialize the dataset's name and other internal variables, but does
   //! not allocate data matrices, user must call alloc for that effect.
   //! outdims are the target output dimensions of each sample.
   //! inroot is the root directory where to extract data.
   dataset(const char *name, const char *inroot = NULL);
-
   //! Destructor.
   virtual ~dataset();
 
@@ -138,8 +135,7 @@ template <class Tdata> class dataset {
   //! to max samples (or counted samples if less).
   bool alloc(intg max = 0);
 
-  ////////////////////////////////////////////////////////////////
-  // data manipulation
+  // data manipulation   ///////////////////////////////////////////////////////
 
   //! Extract data from files into dataset.
   virtual bool extract();
@@ -162,14 +158,12 @@ template <class Tdata> class dataset {
   //! Set a unique label 'class_name' to all samples.
   virtual void set_unique_label(const std::string &class_name);
 
-  ////////////////////////////////////////////////////////////////
-  // data preprocessing
+  // data preprocessing ////////////////////////////////////////////////////////
 
   //! Input is loaded as planar (channels in first dimension).
   void set_planar_loading();
 
-  ////////////////////////////////////////////////////////////////
-  // accessors
+  // accessors ////////////////////////////////////////////////////////////////
 
   //! Get sample dimensions
   const idxdim &get_sample_outdim();
@@ -299,6 +293,8 @@ template <class Tdata> class dataset {
 
   //! Returns a matrix of class names based on the classes vector
   static idx<ubyte> build_classes_idx(std::vector<std::string> &classes);
+  //! Resets internal classes names as indices between 0 and idx_max(labels).
+  void set_index_classes();
 
  protected:
 

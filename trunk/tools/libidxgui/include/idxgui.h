@@ -221,8 +221,10 @@ class idxgui : public QThread, public ostringstream {
   EXPORT void set_bg_colors(unsigned char r, unsigned char g,
                             unsigned char b);
 
-  //! Set size of font.
+  //! Set size of font for current window.
   EXPORT void set_font_size(int sz);
+  //! Set size of font for all windows.
+  EXPORT void set_global_font_size(int sz);
 
   //! set the << operator to output text on both std::cout and the current
   //! window.
@@ -311,6 +313,7 @@ class idxgui : public QThread, public ostringstream {
   EXPORT void gui_set_bg_colors(unsigned char r, unsigned char g,
                                 unsigned char b);
   EXPORT void gui_set_font_size(int);
+  EXPORT void gui_set_global_font_size(int);
   EXPORT void gui_set_silent(const std::string *filename);
   EXPORT void gui_set_wupdate(bool update);
   EXPORT void gui_freeze_style(bool freeze);

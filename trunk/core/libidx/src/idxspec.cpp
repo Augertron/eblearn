@@ -241,6 +241,12 @@ bool idxspec::contiguousp() const {
   return r;
 }
 
+intg idxspec::true_order() const {
+  intg order = 0;
+  for(int i = 0; i < ndim; i++) if (dim[i] > 1) order = i + 1;
+  return order;
+}
+
 ////////////////////////////////////////////////////////////////
 // private methods
 

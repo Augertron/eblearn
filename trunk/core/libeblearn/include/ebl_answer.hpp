@@ -78,7 +78,7 @@ bbprop_ds1(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
 template <typename T, typename Tds1, typename Tds2>
 void answer_module<T,Tds1,Tds2>::
 fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
-  if (out.f.size() == 0) out.add_f(new idx<T>());
+  if (out.x.size() == 0) out.add_x(new idx<T>());
   ds.fprop_label_net(out);
 }
 
@@ -324,7 +324,7 @@ fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   for (uint i = 0; i < dt.order(); ++i)
     d.setdim(i, dt.dim(i));
   // resize out if necessary
-  if (out.f.size() == 0) out.add_f(new idx<T>(d));
+  if (out.x.size() == 0) out.add_x(new idx<T>(d));
   idx<T> outx = out;
   if (resize_output) {
     if (outx.get_idxdim() != d) {
@@ -482,7 +482,7 @@ template <typename T, typename Tds1, typename Tds2>
 void scalerclass_answer<T,Tds1,Tds2>::
 fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // if out has the wrong order, allocate.
-  if (out.f.size() == 0) out.add_f(new idx<T>());
+  if (out.x.size() == 0) out.add_x(new idx<T>());
   if (out.order() != ds.sample_dims().order()) {
     idxdim d = ds.sample_dims();
     d.setdims(1);
@@ -494,7 +494,7 @@ fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
     out_class.resize(target.get_idxdim());
   // fprop regular target
   state<T> mout_class;
-  mout_class.f.push_back(out_class);
+  mout_class.add_x(out_class);
   class_answer<T,Tds1,Tds2>::fprop_ds2(ds, mout_class);
   uint jitt_offset = out_class.dim(0);
   // get jitter info
@@ -768,7 +768,7 @@ void regression_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T, typename Tds1, typename Tds2>
 void regression_answer<T,Tds1,Tds2>::
 fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
-  if (out.f.size() == 0) out.add_f(new idx<T>());
+  if (out.x.size() == 0) out.add_x(new idx<T>());
   ds.fprop_label_net(out);
 }
 
@@ -893,13 +893,13 @@ template <typename T, typename Tds1, typename Tds2>
 void trainable_module<T,Tds1,Tds2>::
 bprop(state<T> &in1, state<T> &in2, state<T> &energy) {
   // resize backward if necessary
-  DEBUG_CHECK_B(in1); // in debug mode, check backward tensors are allocated
-  out1.resize_b();
-  out2.resize_b();
+  DEBUG_CHECK_DX(in1); // in debug mode, check backward tensors are allocated
+  out1.resize_dx();
+  out2.resize_dx();
   // clear buffers
-  out1.zero_b();
-  out2.zero_b();
-  mod1.zero_b(); // recursively resize and zero out all mod1 states
+  out1.zero_dx();
+  out2.zero_dx();
+  mod1.zero_dx(); // recursively resize and zero out all mod1 states
   // bprop
   energy_mod.bprop(out1, out2, energy);
   mod1.bprop(in1, out1);
@@ -909,13 +909,13 @@ template <typename T, typename Tds1, typename Tds2>
 void trainable_module<T,Tds1,Tds2>::
 bbprop(state<T> &in1, state<T> &in2, state<T> &energy) {
   // resize backward if necessary
-  DEBUG_CHECK_BB(in1); // in debug mode, check backward tensors are allocated
-  out1.resize_bb();
-  out2.resize_bb();
+  DEBUG_CHECK_DDX(in1); // in debug mode, check backward tensors are allocated
+  out1.resize_ddx();
+  out2.resize_ddx();
   // clear buffers
-  out1.zero_bb();
-  out2.zero_bb();
-  mod1.zero_b(); // recursively resize and zero out all mod1 states
+  out1.zero_ddx();
+  out2.zero_ddx();
+  mod1.zero_dx(); // recursively resize and zero out all mod1 states
   // bprop
   energy_mod.bbprop(out1, out2, energy);
   mod1.bbprop(in1, out1);
@@ -957,14 +957,14 @@ void trainable_module<T,Tds1,Tds2>::
 bprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
   TIMING2("until beginning of bprop");
   // resize backward if necessary
-  in1.resize_b(); // TODO: backprop into input seems a waste here
-  out1.resize_b();
-  out2.resize_b();
+  in1.resize_dx(); // TODO: backprop into input seems a waste here
+  out1.resize_dx();
+  out2.resize_dx();
   // clear buffers
-  in1.zero_b();
-  out1.zero_b();
-  out2.zero_b();
-  mod1.zero_b(); // recursively resize and zero out all mod1 states
+  in1.zero_dx();
+  out1.zero_dx();
+  out2.zero_dx();
+  mod1.zero_dx(); // recursively resize and zero out all mod1 states
   // bprop
   energy_mod.bprop(out1, out2, energy);
   mod1.bprop(in1, out1);
@@ -977,14 +977,14 @@ void trainable_module<T,Tds1,Tds2>::
 bbprop(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &energy) {
   TIMING2("until beginning of bbprop");
   // resize backward if necessary
-  in1.resize_bb(); // TODO: backprop into input seems a waste here
-  out1.resize_bb();
-  out2.resize_bb();
+  in1.resize_ddx(); // TODO: backprop into input seems a waste here
+  out1.resize_ddx();
+  out2.resize_ddx();
   // clear buffers
-  in1.zero_bb();
-  out1.zero_bb();
-  out2.zero_bb();
-  mod1.zero_bb(); // recursively resize and zero out all mod1 states
+  in1.zero_ddx();
+  out1.zero_ddx();
+  out2.zero_ddx();
+  mod1.zero_ddx(); // recursively resize and zero out all mod1 states
   // bbprop
   energy_mod.bbprop(out1, out2, energy);
   mod1.bbprop(in1, out1);

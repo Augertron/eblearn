@@ -89,12 +89,9 @@ namespace ebl {
     age = a;
     confidence = co->confidence;
     total_energy += energy;
-    if (crrct == 1)
-      total_correct++;
-    else if (crrct == 0)
-      total_punt++;
-    else if (crrct == -1)
-      total_error++;
+    if (crrct == 1) total_correct++;
+    else if (crrct == 0) total_punt++;
+    else if (crrct == -1) total_error++;
     size++;
     return (char) crrct;
   }
@@ -103,10 +100,8 @@ namespace ebl {
     age = age_;
     confidence = 0; // TODO? co->confidence;
     total_energy += energy;
-    if (correct)
-      total_correct++;
-    else
-      total_error++;
+    if (correct) total_correct++;
+    else total_error++;
     size++;
   }
 

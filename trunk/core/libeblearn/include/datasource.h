@@ -163,10 +163,8 @@ template<typename T, typename Tdata> class datasource {
   //!   (class, confidence, etc).
   //! \param target The target answer, i.e. the groundtruth equivalent of
   //!    'estimates'.
-  virtual void set_sample_energy(double e, bool correct,
-                                 idx<T> &raw_outputs,
-                                 idx<T> &answers,
-                                 idx<T> &target);
+  virtual void set_sample_energy(double e, bool correct, idx<T> &raw_outputs,
+                                 idx<T> &answers, idx<T> &target);
   //! If 'keep' is true, then we keep for each sample the 'raw_outputs',
   //! the 'answers' and the 'target' of the model (see set_sample_energy()).
   //! This may be expensive in memory.
@@ -187,6 +185,8 @@ template<typename T, typename Tdata> class datasource {
   //! This is activated by default.
   //! This is used only by next_train(), not by next().
   virtual void set_shuffle_passes(bool activate);
+  //! Add a feature dimension with size 1 in front of data.
+  virtual void add_features_dimension();
 
   //! Activate or deactivate weighing of samples based on classification
   //! results. Wrong answers give a higher probability for a sample
@@ -288,71 +288,72 @@ template<typename T, typename Tdata> class datasource {
 
   // members /////////////////////////////////////////////////////////////////
  public:
-  T		bias;
-  T		coeff;
+  T                   bias;
+  T                   coeff;
   // data
-  idx<Tdata>		data;	// samples
-  midx<Tdata>		datas;	// samples (multi-matrix).
-  idx<double>		probas;	//!< sample probabilities
+  idx<Tdata>	      data;             // samples
+  midx<Tdata>	      datas;            // samples (multi-matrix).
+  idx<double>	      probas;           //!< sample probabilities
+  bool                add_features_dimension_;
   // predictions
-  idx<double>		energies;	//!< sample energies
-  idx<ubyte>		correct; //!< sample correctness
-  idx<T>		raw_outputs; //!< The raw outputs for each sample.
-  idx<T>		answers; //!< all answers
-  idx<T>	        targets;	//!< all targets
+  idx<double>	      energies;         //!< sample energies
+  idx<ubyte>	      correct;          //!< sample correctness
+  idx<ubyte>	      incorrect;          //!< sample correctness
+  idx<T>	      raw_outputs;      //!< The raw outputs for each sample.
+  idx<T>	      answers;          //!< all answers
+  idx<T>	      targets;          //!< all targets
   // picking /////////////////////////////////////////////////////////////////
   idx<uint>           pick_count;	//!< count pickings.
-  bool                count_pickings; //!< Count which samples are picked.
+  bool                count_pickings;   //!< Count which samples are picked.
   bool                count_pickings_save;
-  unsigned int	height;
-  unsigned int	width;
-  std::string		_name;
+  unsigned int        height;
+  unsigned int        width;
+  std::string	      _name;
  protected:
-  std::vector<intg>        counts; // # of samples / class
-  std::map<uint,intg>      picksmap;
-  bool                multimat; //!< True if data is a multi-matrix matrix.
-  bool                bkeep_outputs; //!< Keep model outputs for each sample.
+  std::vector<intg>   counts;           // # of samples / class
+  std::map<uint,intg> picksmap;
+  bool                multimat;         //!< True if data is a multi-matrix matrix.
+  bool                bkeep_outputs;    //!< Keep model outputs for each sample.
   ////////////////////////////////////////////////////////////////////////////
   // (unbalanced) iterating indices
-  intg                it; //!< Index of current sample in data matrix.
-  intg                it_test; //!< Current test index in data matrix.
-  intg                it_train; //!< Current train index in vector 'indices'.
-  idx<intg>           indices; //!< Vector of indices to the data matrix.
+  intg                it;               //!< Index of current sample in data matrix.
+  intg                it_test;          //!< Current test index in data matrix.
+  intg                it_train;         //!< Current train index in vector 'indices'.
+  idx<intg>           indices;          //!< Vector of indices to the data matrix.
   ////////////////////////////////////////////////////////////////////////////
   // state saving
-  bool                state_saved; //!< State has been saved or not.
-  intg                it_saved; //!< Saving current iterator it.
-  intg                it_test_saved; //!< Saving current test iterator.
-  intg                it_train_saved; //!< Saving current train iterator.
-  idx<intg>           indices_saved; //!< Saving sample indices.
+  bool                state_saved;      //!< State has been saved or not.
+  intg                it_saved;         //!< Saving current iterator it.
+  intg                it_test_saved;    //!< Saving current test iterator.
+  intg                it_train_saved;   //!< Saving current train iterator.
+  idx<intg>           indices_saved;    //!< Saving sample indices.
   intg                epoch_cnt_saved;
-  intg                epoch_pick_cnt_saved;	//!< # pickings
-  std::vector<intg>        epoch_done_counters_saved;
+  intg                epoch_pick_cnt_saved; //!< # pickings
+  std::vector<intg>   epoch_done_counters_saved;
   ////////////////////////////////////////////////////////////////////////////
   // features switches
-  bool                shuffle_passes; //!< Shuffle at end of each pass.
-  bool                test_set; //!< This set is a test set or not.
-  ////////////////////////////////////////////////////////////////////////////
-  // epoch variables
-  std::vector<intg>        epoch_done_counters;
+  bool                shuffle_passes;   //!< Shuffle at end of each pass.
+  bool                test_set;         //!< This set is a test set or not.
+  // epoch variables ///////////////////////////////////////////////////////////
+  std::vector<intg>   epoch_done_counters;
   intg                epoch_sz;
   intg                epoch_cnt;
   intg                epoch_pick_cnt;	//!< # pickings
   uint                epoch_show;	// show modulo
   intg                epoch_show_printed;
-  uint                epoch_mode; //!< 0: fixed number, 1: all at least once
+  uint                epoch_mode;       //!< 0: fixed number, 1: all at least once
   timer               epoch_timer;
   timer               test_timer;
   uint                not_picked;
-  bool                hardest_focus; //!< Focus training on hardest samples.
-  bool                _ignore_correct; //!< Do not train on correct samples.
+  bool                hardest_focus;    //!< Focus training on hardest samples.
+  bool                _ignore_correct;  //!< Do not train on correct samples.
   ////////////////////////////////////////////////////////////////////////////
   // sample picking with probabilities
-  bool                weigh_samples; //!< Use probas to pick samples.
-  bool                perclass_norm; //!< Normalize probas per class.
+  bool                weigh_samples;    //!< Use probas to pick samples.
+  bool                perclass_norm;    //!< Normalize probas per class.
   double              sample_min_proba; //!< Minimum proba of each sample.
-  idxdim              sampledims; //!< Dimensions of a data sample.
-  mfidxdim            samplemfdims; //!< Dimensions of a data sample.
+  idxdim              sampledims;       //!< Dimensions of a data sample.
+  mfidxdim            samplemfdims;     //!< Dimensions of a data sample.
 };
 
 // labeled_datasource //////////////////////////////////////////////////////////
@@ -443,8 +444,21 @@ class labeled_datasource : public datasource<T, Tdata> {
   virtual void set_label_coeff(T coeff);
   //! Returns true if this dataset contains scale information.
   virtual bool has_scales();
+  //! Remember if sample was correctly classified.
+  virtual void set_sample_correctness(bool correct);
 
-  // friends //////////////////////////////////////////////////////////////
+  // export ////////////////////////////////////////////////////////////////////
+
+  //! Save correct subset of this dataset as a new dataset whose name
+  //! and path start with prefix.
+  //! The correctness information can be set via the set_correctness() method.
+  virtual void save_correct(const char *prefix);
+  //! Save incorrect subset of this dataset as a new dataset whose name
+  //! and path start with prefix.
+  //! The correctness information can be set via the set_correctness() method.
+  virtual void save_incorrect(const char *prefix);
+
+  // friends ///////////////////////////////////////////////////////////////////
   template <typename T1, typename T2, typename T3>
   friend class labeled_datasource_gui;
   template <typename T1, typename T2, typename T3>
@@ -462,20 +476,22 @@ class labeled_datasource : public datasource<T, Tdata> {
  protected:
   using datasource<T,Tdata>::_name;
   // data
-  T		label_bias;
-  T		label_coeff;
+  T	      label_bias;
+  T	      label_coeff;
   using datasource<T,Tdata>::data;
-  idx<Tlabel>	labels;		// labels
-  idx<intg>	scales;		// scales
-  midx<float> jitters;	//!< Jitter information.
-  bool        scales_loaded; //!< Scales info was loaded or not.
+  using datasource<T,Tdata>::correct;
+  using datasource<T,Tdata>::incorrect;
+  idx<Tlabel> labels;                   // labels
+  idx<intg>   scales;                   // scales
+  midx<float> jitters;                  //!< Jitter information.
+  bool        scales_loaded;            //!< Scales info was loaded or not.
   // iterating
   using datasource<T,Tdata>::it;
   using datasource<T,Tdata>::epoch_sz;
   // dimensions
   using datasource<T,Tdata>::sampledims;
-  idxdim      jitters_maxdim; //!< Maximum dimensions in jitters matrices.
-  idxdim      labeldims;	//!< Dimensions of a label.
+  idxdim      jitters_maxdim;           //!< Maximum dimensions in jitters matrices.
+  idxdim      labeldims;                //!< Dimensions of a label.
   using datasource<T,Tdata>::multimat;
 };
 

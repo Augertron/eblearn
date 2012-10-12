@@ -94,9 +94,9 @@ LINEAR_MODULE_GUI(display_bbprop, bbprop, bb)
     h0 += (uint) (std::max((uint) 10, (uint) (mk.dim(0) * zoom + 1)));	\
   }
 
-CONVOLUTION_MODULE_GUI(display_fprop, fprop, f)
-CONVOLUTION_MODULE_GUI(display_bprop, bprop, b)
-CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, bb)
+CONVOLUTION_MODULE_GUI(display_fprop, fprop, x)
+CONVOLUTION_MODULE_GUI(display_bprop, bprop, dx)
+CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, ddx)
 
 // subsampling_module //////////////////////////////////////////////////////////
 
@@ -134,9 +134,9 @@ CONVOLUTION_MODULE_GUI(display_bbprop, bbprop, bb)
     h0 += 45;								\
   }
 
-SUBSAMPLING_MODULE_GUI(display_fprop, fprop, f)
-SUBSAMPLING_MODULE_GUI(display_bprop, bprop, b)
-SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, bb)
+SUBSAMPLING_MODULE_GUI(display_fprop, fprop, x)
+SUBSAMPLING_MODULE_GUI(display_bprop, bprop, dx)
+SUBSAMPLING_MODULE_GUI(display_bbprop, bbprop, ddx)
 
 }
 
