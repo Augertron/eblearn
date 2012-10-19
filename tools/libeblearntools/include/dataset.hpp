@@ -48,11 +48,11 @@
 #include "tools_utils.h"
 
 #ifdef __BOOST__
-#define BOOST_FILESYSTEM_VERSION 2
+#ifndef BOOST_FILESYSTEM_VERSION
+#define BOOST_FILESYSTEM_VERSION 3
+#endif
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
-using namespace boost::filesystem;
-using namespace boost;
 #endif
 
 namespace ebl {
@@ -188,23 +188,23 @@ bool dataset<Tdata>::extract() {
 #ifdef __BOOST__
   if (!allocated && !scale_mode && !strcmp(save_mode.c_str(), DATASET_SAVE))
     return false;
-  cmatch what;
-  regex hidden_dir(".svn");
+  boost::cmatch what;
+  boost::regex hidden_dir(".svn");
   bool found = false;
   xtimer.start(); // start timing extraction
   processed_cnt = 0;
-  directory_iterator end_itr; // default construction yields past-the-end
-  for (directory_iterator itr(inroot); itr != end_itr; itr++) {
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
-    if (is_directory(itr->status())
-            && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
-      process_dir(itr->path().string(), extension, itr->leaf());
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+  for (  boost::filesystem::directory_iterator itr(inroot); itr != end_itr; itr++) {
+#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 3
+    if (boost::filesystem::is_directory(itr->status())
+        && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
+      process_dir(itr->path().string(), extension, itr->path().filename().string());
       found = true;
     }
 #else
-    if (is_directory(itr->status())
-            && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
-      process_dir(itr->path().string(), extension, itr->path().filename());
+    if (boost::filesystem::is_directory(itr->status())
+        && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
+      process_dir(itr->path().string(), extension, itr->path().filename().string());
       found = true;
     }
 #endif
@@ -1522,29 +1522,29 @@ intg dataset<Tdata>::count_samples() {
 #ifdef __BOOST__
   std::cout << "Counting number of samples in " << inroot << " ..." << std::endl;
   total_samples = 0;
-  regex hidden_dir(".svn");
-  cmatch what;
-  directory_iterator end_itr; // default construction yields past-the-end
-  path p(inroot);
+  boost::regex hidden_dir(".svn");
+  boost::cmatch what;
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+  boost::filesystem::path p(inroot);
   if (!exists(p)) eblthrow("path " << inroot << " does not exist.");
   // loop over all directories
   std::vector<std::string> dirs;
-  for (directory_iterator itr(inroot); itr != end_itr; itr++) {
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
-    if (is_directory(itr->status())
-            && !regex_match(itr->leaf().c_str(), what, hidden_dir)) {
+  for (boost::filesystem::directory_iterator itr(inroot); itr != end_itr; itr++) {
+#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 3
+    if (boost::filesystem::is_directory(itr->status())
+            && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
       // ignore excluded classes and use included if defined
-      if (included(itr->leaf())) {
-        dirs.push_back(itr->leaf());
+      if (included(itr->path().filename().string())) {
+        dirs.push_back(itr->path().filename().string());
         // recursively search each directory
         total_samples += count_matches(itr->path().string(), extension);
       }
     }
 #else
-    if (is_directory(itr->status())
-            && !regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
+    if (boost::filesystem::is_directory(itr->status())
+            && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
       // ignore excluded classes and use included if defined
-      if (included(itr->path().filename())) {
+      if (included(itr->path().filename().string())) {
         dirs.push_back(itr->path().filename().c_str());
         // recursively search each directory
         total_samples += count_matches(itr->path().string(), extension);
@@ -1945,20 +1945,16 @@ uint dataset<Tdata>::count_matches(const std::string &dir,
                                    const std::string &pattern) {
   uint total = 0;
 #ifdef __BOOST__
-  regex eExt(pattern);
-  cmatch what;
-  path p(dir);
+  boost::regex eExt(pattern);
+  boost::cmatch what;
+  boost::filesystem::path p(dir);
   if (!exists(p))
     return 0;
-  directory_iterator end_itr; // default construction yields past-the-end
-  for (directory_iterator itr(p); itr != end_itr; ++itr) {
-    if (is_directory(itr->status()))
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+  for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
+    if (boost::filesystem::is_directory(itr->status()))
       total += count_matches(itr->path().string(), pattern);
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
-    else if (regex_match(itr->leaf().c_str(), what, eExt))
-#else
-    else if (regex_match(itr->path().filename().c_str(), what, eExt))
-#endif
+    else if (boost::regex_match(itr->path().filename().c_str(), what, eExt))
       total++;
   }
 #endif /* __BOOST__ */
@@ -1972,20 +1968,16 @@ void dataset<Tdata>::process_dir(const std::string &dir,
 #ifdef __BOOST__
   std::string class_name = class_name_;
   t_label label = get_label_from_class(class_name);
-  cmatch what;
-  regex r(ext);
-  path p(dir);
+  boost::cmatch what;
+  boost::regex r(ext);
+  boost::filesystem::path p(dir);
   if (!exists(p))
     return ;
-  directory_iterator end_itr; // default construction yields past-the-end
-  for (directory_iterator itr(p); itr != end_itr; ++itr) {
-    if (is_directory(itr->status()))
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+  for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
+    if (boost::filesystem::is_directory(itr->status()))
       process_dir(itr->path().string(), ext, class_name);
-#if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 2
-    else if (regex_match(itr->leaf().c_str(), what, r)) {
-#else
-      else if (regex_match(itr->path().filename().c_str(), what, r)) {
-#endif
+    else if (boost::regex_match(itr->path().filename().c_str(), what, r)) {
 	try {
 	  processed_cnt++;
 	  // if full for this class, skip this directory
@@ -1995,7 +1987,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
 	  load_data(itr->path().string());
 	  // add sample data
           // 	  if (scale_mode) // saving image at different scales
-          // 	    save_scales(load_img, itr->leaf());
+          // 	    save_scales(load_img, itr->path().filename());
           // 	  else // adding data to dataset
 	  this->add_mdata(load_img, label, &class_name,
                           itr->path().string().c_str());

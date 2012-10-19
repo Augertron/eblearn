@@ -39,11 +39,11 @@
 #include "tools_utils.h"
 
 #ifdef __BOOST__
-#define BOOST_FILESYSTEM_VERSION 2
+#ifndef BOOST_FILESYSTEM_VERSION
+#define BOOST_FILESYSTEM_VERSION 3
+#endif
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
-using namespace boost::filesystem;
-using namespace boost;
 #endif
 
 namespace ebl {
@@ -102,7 +102,7 @@ bool pascal_dataset<Tdata>::extract() {
   std::cout << "Extracting samples from PASCAL files into dataset..."
             << std::endl;
   // adding data to dataset using all xml files in annroot
-  path p(annroot);
+  boost::filesystem::path p(annroot);
   if (!exists(p))
     eblerror("Annotation path " << annroot << " does not exist.");
   xtimer.start();
@@ -180,8 +180,8 @@ intg pascal_dataset<Tdata>::count_samples() {
   total_ignored = 0;
   total_samples = 0;
   std::string xmlpath;
-  path p(annroot);
-  if (!exists(p))
+  boost::filesystem::path p(annroot);
+  if (!boost::filesystem::exists(p))
     eblthrow("Annotation path " << annroot << " does not exist.");
   std::cout << "Counting number of samples in " << annroot << " ..."
             << std::endl;
@@ -538,7 +538,7 @@ remove_jitter_matches(const std::vector<object*> &objs,
 template <class Tdata>
 void pascal_dataset<Tdata>::extract_statistics() {
 #ifdef __BOOST__
-  path p(annroot);
+  boost::filesystem::path p(annroot);
   if (!exists(p))
     eblerror("Annotation path " << annroot << " does not exist.");
   // find all xml files recursively

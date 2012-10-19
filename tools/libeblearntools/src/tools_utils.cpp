@@ -38,13 +38,10 @@
 #include "libidx.h"
 
 #ifdef __BOOST__
-#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 #include <boost/exception/all.hpp>
 #include <boost/exception/diagnostic_information.hpp>
-using namespace boost::filesystem;
-using namespace boost;
 #endif
 
 using namespace std;
@@ -69,28 +66,28 @@ files_list *find_files(const std::string &dir, const char *pattern,
 #else
   if (sort && randomize)
     eblerror("it makes no sense to sort and randomize at the same time");
-  cmatch what;
-  regex r(pattern);
-  path p(dir);
+  boost::cmatch what;
+  boost::regex r(pattern);
+  boost::filesystem::path p(dir);
   if (!exists(p))
     return NULL; // return if invalid directory
   // allocate fl if null
   if (!fl)
     fl = new files_list();
-  directory_iterator end_itr; // default construction yields past-the-end
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
   // first process all elements of current directory
-  for (directory_iterator itr(p); itr != end_itr; ++itr) {
-    if (!is_directory(itr->status()) &&
-        regex_match(itr->leaf().c_str(), what, r)) {
+  for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
+    if (!boost::filesystem::is_directory(itr->status()) &&
+        boost::regex_match(itr->path().filename().c_str(), what, r)) {
       // found an match, add it to the list
       fl->push_back(pair<std::string,std::string>(itr->path().branch_path().string(),
-                                                  itr->leaf()));
+                                                  itr->path().filename().string()));
     }
   }
   // then explore subdirectories
   if (recursive) {
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (is_directory(itr->status()))
+    for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (boost::filesystem::is_directory(itr->status()))
         find_files(itr->path().string(), pattern, fl, sort,
                    recursive, false);
     }
@@ -125,22 +122,22 @@ std::list<std::string> *find_fullfiles(const std::string &dir, const char *patte
 #ifndef __BOOST__
   eblerror("boost not installed, install and recompile");
 #else
-  cmatch what;
-  regex r(pattern);
-  path p(dir);
-  if (!exists(p))
+  boost::cmatch what;
+  boost::regex r(pattern);
+  boost::filesystem::path p(dir);
+  if (!boost::filesystem::exists(p))
     return NULL; // return if invalid directory
   // allocate fl if null
   if (!fl)
     fl = new std::list<std::string>();
-  directory_iterator end_itr; // default construction yields past-the-end
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
   // first process all elements of current directory
-  for (directory_iterator itr(p); itr != end_itr; ++itr) {
+  for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
     try {
       bool match;
       // apply pattern on full name or leaf only
       if (fullpattern) match = regex_match(itr->path().string().c_str(), what, r);
-      else match = regex_match(itr->leaf().c_str(), what, r);
+      else match = regex_match(itr->path().filename().c_str(), what, r);
       if ((finddirs || !is_directory(itr->status())) && match) {
         // found an match, add it to the list
         fl->push_back(itr->path().string());
@@ -149,9 +146,9 @@ std::list<std::string> *find_fullfiles(const std::string &dir, const char *patte
   }
   // then explore subdirectories
   if (recursive) {
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
+    for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
       try {
-        if (is_directory(itr->status()))
+        if (boost::filesystem::is_directory(itr->status()))
           find_fullfiles(itr->path().string(), pattern, fl, sorted,
                          recursive, randomize, finddirs, fullpattern);
       } catch(boost::exception &e) { eblwarn(boost::diagnostic_information(e));}
@@ -184,16 +181,16 @@ uint count_files(const std::string &dir, const char *pattern) {
 #ifndef __BOOST__
   eblerror("boost not installed, install and recompile");
 #else
-  cmatch what;
-  regex r(pattern);
-  path p(dir);
+  boost::cmatch what;
+  boost::regex r(pattern);
+  boost::filesystem::path p(dir);
   if (!exists(p))
     return 0; // return if invalid directory
-  directory_iterator end_itr; // default construction yields past-the-end
-  for (directory_iterator itr(p); itr != end_itr; ++itr) {
-    if (is_directory(itr->status()))
+  boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+  for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
+    if (boost::filesystem::is_directory(itr->status()))
       total += count_files(itr->path().string(), pattern);
-    else if (regex_match(itr->leaf().c_str(), what, r)) {
+    else if (boost::regex_match(itr->path().filename().c_str(), what, r)) {
       // found file matching pattern, increment counter
       total++;
     }
@@ -571,9 +568,9 @@ std::vector<double> string_to_doublevector(const char *s_) {
 bool tar(const std::string &dir, const std::string &tgtdir) {
 #ifdef __BOOST__
   std::string cmd;
-  path p(dir);
-  cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.leaf()
-      << ".tgz " << p.leaf();// << " 2> /dev/null";
+  boost::filesystem::path p(dir);
+  cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.filename().string()
+      << ".tgz " << p.filename().string();// << " 2> /dev/null";
   int ret = std::system(cmd.c_str());
   if (ret < 0) {
     cerr << "tar failed." << endl;
@@ -595,7 +592,7 @@ bool tar_pattern(const std::string &dir, const std::string &tgtdir,
   }
   // tar them
   std::string cmd;
-  path p(dir);
+  boost::filesystem::path p(dir);
   cmd << "tar czf " << tgtdir << "/" << tgtfilename << " ";
   for (std::list<std::string>::iterator i = files->begin();
        i != files->end(); ++i) {

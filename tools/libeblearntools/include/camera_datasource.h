@@ -39,11 +39,11 @@
 #include "ebl_logger.h"
 
 #ifdef __BOOST__
-#define BOOST_FILESYSTEM_VERSION 2
+#ifndef BOOST_FILESYSTEM_VERSION
+#define BOOST_FILESYSTEM_VERSION 3
+#endif
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
-using namespace boost::filesystem;
-using namespace boost;
 #endif
 
 namespace ebl {
