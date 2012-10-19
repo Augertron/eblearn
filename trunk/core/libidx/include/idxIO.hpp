@@ -137,11 +137,9 @@ void read_cast_matrix(FILE *fp, idx<T2> &out) {
 
 template <typename T>
 void read_matrix_body(FILE *fp, idx<T> &m) {
-  int res;
   idx_aloop1(i, m, T) {
-    res = fread(&(*i), sizeof (T), 1, fp);
+    fread(&(*i), sizeof (T), 1, fp);
   }
-  res = 0; // just to avoid warning
 }
 
 // loading ///////////////////////////////////////////////////////////////////
@@ -344,10 +342,8 @@ template <typename T> bool save_matrix(idx<T>& m, FILE *fp) {
     if (fwrite(&v, sizeof (int), 1, fp) != 1) return false;
   }
   // write body
-  int res;
   idx_aloop1(k, m, T)
-      res = fwrite(&(*k), sizeof (T), 1, fp);
-  res = 0; // just to avoid compilation warning
+    fwrite(&(*k), sizeof (T), 1, fp);
   return true;
 }
 
