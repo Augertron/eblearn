@@ -34,11 +34,9 @@
 #include "tools_utils.h"
 
 #ifdef __BOOST__
-#define BOOST_FILESYSTEM_VERSION 2
+#define BOOST_FILESYSTEM_VERSION 3
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
-using namespace boost::filesystem;
-using namespace boost;
 #endif
 
 using namespace std;
