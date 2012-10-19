@@ -67,9 +67,6 @@ int train(configuration &conf, string &conffname) {
     if (conf.exists("meta_conf_shortname"))
       shortname = conf.get_string("meta_conf_shortname");
     bool test_only = conf.exists_true("test_only");
-    uint original_tests = 1; // number of tests to run initially
-    if (test_only) // in testing mode only, allow several tests for averaging
-      original_tests = conf.get_uint("test_only");
     uint              ipp_cores     = 1;
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
     ipp_init(ipp_cores); // limit IPP (if available) to 1 core

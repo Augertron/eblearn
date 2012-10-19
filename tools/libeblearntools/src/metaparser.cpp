@@ -1088,7 +1088,6 @@ namespace ebl {
                                varmaplist *best_common, int *maxiter_common) {
     ostringstream cmd;
     std::string tmpfile = "report.tmp";
-    int res;
     std::string extension = "pdf"; // plots extension
     std::string job = "job";
     if (conf.exists("meta_job_var")) job = conf.get_string("meta_job_var");
@@ -1103,9 +1102,8 @@ namespace ebl {
       // write body of email
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
-      res = std::system(cmd.str().c_str());
-      res = 42; // to avoid warning
-		// print summary infos
+      std::system(cmd.str().c_str());
+      // print summary infos
       cmd.str("");
       cmd << "echo \"Iteration: " << maxiter << endl;
       cmd << "Jobs running: " << nrunning << endl;
@@ -1117,7 +1115,7 @@ namespace ebl {
           << " days)" << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
-      res = std::system(cmd.str().c_str());
+      std::system(cmd.str().c_str());
       // print best results at any iteration
       std::list<std::string> keys =
         string_to_stringlist(conf.get_string("meta_minimize"));
@@ -1126,9 +1124,9 @@ namespace ebl {
         cmd << "echo \"Best " << best.size() << " results at iteration "
             << maxiter << ":" << endl;
         cmd << pairtree::flat_to_string(&best, &keys) << "\"";
-        res = std::system(cmd.str().c_str()); // print on screen
+        std::system(cmd.str().c_str()); // print on screen
         cmd << " >> " << tmpfile;
-        res = std::system(cmd.str().c_str());
+        std::system(cmd.str().c_str());
       }
       // print best results at maximum common iter
       if (best_common && maxiter_common && best_common->size() > 0) {
@@ -1136,18 +1134,18 @@ namespace ebl {
         cmd << "echo \"Best " << best_common->size() << " results at iteration "
             << *maxiter_common << " (maximum common iteration):" << endl;
         cmd << pairtree::flat_to_string(best_common, &keys) << "\"";
-        res = std::system(cmd.str().c_str()); // print on screen
+        std::system(cmd.str().c_str()); // print on screen
         cmd << " >> " << tmpfile;
-        res = std::system(cmd.str().c_str());
+        std::system(cmd.str().c_str());
       }
       // print best of each job
       if (besteach) {
         cmd.str("");
         cmd << "echo \"Best result of each job at iteration " << maxiter << ":"
             << endl << pairtree::flat_to_string(besteach, &keys) << "\"";
-        res = std::system(cmd.str().c_str()); // print on screen
+        std::system(cmd.str().c_str()); // print on screen
         cmd << " >> " << tmpfile;
-        res = std::system(cmd.str().c_str());
+        std::system(cmd.str().c_str());
         // write plots of best of each job for given plot axis
         if (conf.exists("meta_plot_keys")) {
           pairtree p;
@@ -1165,16 +1163,16 @@ namespace ebl {
         cmd.str("");
         cmd << "echo \"Errors / Warnings:\"";
         cmd << " >> " << tmpfile;
-        res = std::system(cmd.str().c_str());
+        std::system(cmd.str().c_str());
         for (std::list<std::string>::iterator ierr = errlogs->begin();
              ierr != errlogs->end(); ++ierr) {
           cmd.str("");
           cmd << "echo \"\n" << *ierr << ":\"";
           cmd << " >> " << tmpfile;
-          res = std::system(cmd.str().c_str());
+          std::system(cmd.str().c_str());
           cmd.str("");
           cmd << "cat " << *ierr << " >> " << tmpfile;
-          res = std::system(cmd.str().c_str());
+          std::system(cmd.str().c_str());
         }
       }
       // print jobs infos
@@ -1183,17 +1181,17 @@ namespace ebl {
       cmd << jobs_info << endl;
       cout << cmd.str();
       cmd << "\" >> " << tmpfile;
-      res = std::system(cmd.str().c_str());
+      std::system(cmd.str().c_str());
       // create plot files
       write_plots(conf, dir.c_str());
       // print metaconf
       cmd.str("");
       cmd << "echo \"\nMeta Configuration (" << conf_fullfname << "):\""
           << " >> " << tmpfile;
-      res = std::system(cmd.str().c_str());
+      std::system(cmd.str().c_str());
       cmd.str("");
       cmd << "cat " << conf_fullfname << " >> " << tmpfile;
-      res = std::system(cmd.str().c_str());
+      std::system(cmd.str().c_str());
       // create command
       cmd.str("");
       cmd << "cat " << tmpfile << " | mutt " << conf.get_string("meta_email");
@@ -1220,7 +1218,7 @@ namespace ebl {
       cout << "Sending email report to " << conf.get_string("meta_email")
            << ":" << endl;
       cout << cmd.str() << endl;
-      res = std::system(cmd.str().c_str());
+      std::system(cmd.str().c_str());
     }
   }
 
