@@ -303,7 +303,7 @@ int display(list<string>::iterator &ifname,
     gui << at(h, w) << "y/t: show more/less images on height axis"; h += hstep;
     gui << at(h, w) << "0,1,2: show channel 0, 1 or 2 only"; h += hstep;
     gui << at(h, w) << "9: show alls channels"; h += hstep;
-    gui << at(h, w) << "h: help"; h += hstep;
+    gui << at(h, w) << "h: help";
   }
   // update title
   string title;

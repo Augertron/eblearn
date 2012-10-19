@@ -85,7 +85,7 @@ namespace ebl {
   }
 
   idx<ubyte> pnm_read(FILE *fp, idx<ubyte> *out_) {
-    int type, vmax;
+    int type, vmax = 0;
     size_t expected_size, read_size;
     idxdim dims = read_pnm_header(fp, type, vmax);
     idx<ubyte> out;

@@ -298,7 +298,6 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 	  if (skipped) cnt++; // a new skipped frame was received
 	  // save bounding boxes
 	  if (updated) {
-	    updated = false;
 	    idxdim d(detframe);
 	    if (boot.activated()) bb.clear();
 	    if (bbsaving != bbox_none) {

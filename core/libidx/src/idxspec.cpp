@@ -159,7 +159,7 @@ void idxspec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3,
   } else { if (ndimset) { DIMS_ERROR(-2); } }
   if (s0>=0) {
     if (!ndimset) { setndim(1); ndimset = true; }
-    dim[0] = s0; mod[0] = md; md *= s0;
+    dim[0] = s0; mod[0] = md;
   } else { if (ndimset) { DIMS_ERROR(-1); } }
   if (!ndimset) { setndim(0); }
 }
@@ -180,7 +180,7 @@ void idxspec::init_spec(intg o, intg s0, intg s1, intg s2, intg s3,
     case 4: dim[3] = s3; mod[3] = md; md *= s3; if (s3 < 0) DIMS_ERROR(-4);
     case 3: dim[2] = s2; mod[2] = md; md *= s2; if (s2 < 0) DIMS_ERROR(-3);
     case 2: dim[1] = s1; mod[1] = md; md *= s1; if (s1 < 0) DIMS_ERROR(-2);
-    case 1: dim[0] = s0; mod[0] = md; md *= s0; if (s0 < 0) DIMS_ERROR(-1);
+    case 1: dim[0] = s0; mod[0] = md;  if (s0 < 0) DIMS_ERROR(-1);
   }
 }
 

@@ -63,7 +63,7 @@ void detector_test::test_face() {
 
     // tests
     CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // 16 faces to be found
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 7.47,
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 7.89,
     				 bboxes[0].confidence, .01);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0].class_id);
   }
