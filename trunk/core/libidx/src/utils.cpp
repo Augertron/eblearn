@@ -646,7 +646,6 @@ std::string timer::elapsed(long seconds) {
   div = mod / SECMIN; mod = mod % SECMIN;
   if (div > 0 || pretty) {
     sout << (int) div << "m ";
-    pretty = true;
   }
   sout << (int) mod << "s";
   return sout;
@@ -691,7 +690,6 @@ std::string timer::elapsed_ms(long milliseconds) {
   div = mod / 1000; mod = mod % 1000;
   if (div > 0 || pretty) {
     sout << (int) div << "s ";
-    pretty = true;
   }
   sout << (int) mod << "ms";
   return sout;

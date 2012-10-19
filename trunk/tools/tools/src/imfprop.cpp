@@ -78,9 +78,8 @@ int main(int argc, char **argv) { // regular main without gui
     timer textraction, gtimer;
     gtimer.start(); // total running time
     configuration conf(argv[1]); // configuration file
-    bool extract_train = conf.exists("train");
     idxdim dims;
-    intg outsize = 0, nsamples = 0;
+    intg nsamples = 0;
     string outdir = conf.get_string("out");
     // output synchronization
     bool sync = !conf.exists_false("sync_outputs");
@@ -89,7 +88,6 @@ int main(int argc, char **argv) { // regular main without gui
     mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
     ostream &mout = sync ? mutout : cout;
     ostream &merr = sync ? muterr : cerr;
-    bool              silent        = conf.exists_true("silent");
     uint              ipp_cores     = 1;
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
     ipp_init(ipp_cores); // limit IPP (if available) to 1 core
@@ -124,7 +122,6 @@ int main(int argc, char **argv) { // regular main without gui
 	 conf.get_uint("input_video_max_duration"));
     } else eblerror("unknown camera type, set \"camera\" in your .conf");
     dims = idxdim(3, height, width);
-    nsamples = cam->size();
 
     // extraction //////////////////////////////////////////////////////////////
     // now do training iterations
@@ -179,13 +176,11 @@ int main(int argc, char **argv) { // regular main without gui
 	  continue ;
 	finished = false; // a thread is not finished
 	string processed_fname;
-	uint processed_id = 0;
 
 	// retrieve new data if present
 	updated = (*ithreads)->dumped();
 	// deal with processed frame 
 	if (updated) {
-	  updated = false;
 	  cnt++;
 	  // output info
 	  mout << "i=" << cnt << " processing=" << tpass.elapsed_ms()

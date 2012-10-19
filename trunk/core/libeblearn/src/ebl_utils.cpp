@@ -208,7 +208,6 @@ namespace ebl {
 	table1 = concat_tables(table1, t5);
       else {
 	table1 = t5;
-	t1_defined = true;
       }
     }
     return table1;
@@ -282,18 +281,18 @@ namespace ebl {
         eblwarn(" Wrong file format, expected number");
       inputs.push_back(scanint);
       // cout << scanint << " "<<endl;
-      ret = fscanf (fp, "%c", &scanchar);
+      fscanf (fp, "%c", &scanchar);
       if (scanchar != ',')
         eblwarn(" Wrong file format, expected a comma character ");
       // scanchar = fscan_char(fp);
       // cout << scanchar << " "<<endl;
       // scanint = fscan_int(fp);
-      ret = fscanf (fp, "%d", &scanint);
+      fscanf (fp, "%d", &scanint);
       if (scanint < 0)
         eblwarn(" Wrong file format, expected number");
       outputs.push_back(scanint);
       // cout << scanint << " "<<endl;
-      ret = fscanf (fp, "%c", &scanchar);
+      fscanf (fp, "%c", &scanchar);
       if (scanchar != ';')
         eblwarn(" Wrong file format, expected a semicolon character ");
       // scanchar = fscan_char(fp);

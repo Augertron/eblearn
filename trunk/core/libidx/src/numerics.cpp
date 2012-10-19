@@ -308,7 +308,7 @@ int choose(int n, int k) {
 		eblerror("n choose k: k must be <= n");
 	}
 	int nk = n - k;
-	int nf, kf, nkf;
+	int nf = 1, kf = 1, nkf = 1;
 	int f = 1, i = 1;
 	while ((n > 0) || (k > 0) || (nk > 0)) {
 		f *= i++;
