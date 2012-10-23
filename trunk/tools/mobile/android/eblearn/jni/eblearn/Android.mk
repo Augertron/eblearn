@@ -14,12 +14,13 @@ LOCAL_C_INCLUDES := $(CORE)/libeblearn/include/ \
 LOCAL_SRC_FILES  := \
 	       	    $(SRC)/bbox.cpp \
 	       	    $(SRC)/nms.cpp \
-	       	    $(SRC)/ebl_arch.cpp \
 		    $(SRC)/ebl_logger.cpp \
-		    $(SRC)/ebl_states.cpp \
+		    $(SRC)/ebl_module.cpp \
 		    $(SRC)/ebl_utils.cpp \
+		    $(SRC)/ebl_parameters.cpp \
 		    entries.cpp
 
+	       	    #$(SRC)/ebl_arch.cpp \
 		    #$(SRC)/ebl_tester.cpp \
 		    #$(SRC)/ebl_trainer.cpp \
 		    #$(SRC)/ebl_machines.cpp \
