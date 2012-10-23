@@ -36,9 +36,8 @@
 #include "libidx.h"
 #include "libeblearn.h"
 
-INIT_DUMP()
-
 using namespace ebl;
+using namespace std;
 
 extern "C" {
 
@@ -157,23 +156,23 @@ extern "C" {
     idxdim kerd;
     double sigma_scale = 3;
     t_confidence tconf = confidence_max;
-    answer_module<t_net, t_net, t_net, fstate_idx<t_net> > *ans = 
-      new class_answer<t_net,t_net,t_net, fstate_idx<t_net> >
+    answer_module<t_net, t_net, t_net> *ans = 
+      new class_answer<t_net,t_net,t_net>
       (noutputs, factor, binary, (t_confidence) tconf, btanh, "class_answer", 
        force, single, &kerd, sigma_scale);
 
     // create preprocessing
-    module_1_1<t_net,fstate_idx<t_net> > *chanmodule = NULL;
-    resizepp_module<t_net,fstate_idx<t_net> > *ppmodule = NULL;
+    module_1_1<t_net> *chanmodule = NULL;
+    resizepp_module<t_net> *ppmodule = NULL;
     bool globn = false; // global normalization
     idxdim norm_dim(norm_size,norm_size);
     t_norm mode = WSTD_NORM;
     double eps = NORM_EPSILON, eps2 = 0;
     if (im.dim(2) == 1) // grayscale input
-      chanmodule = new y_to_yp_module<t_net,fstate_idx<t_net> >(norm_dim, mirror, 
+      chanmodule = new y_to_yp_module<t_net>(norm_dim, mirror, 
 					      mode, globn, eps, eps2);
     else if (im.dim(2) == 3) // color input
-      chanmodule = new rgb_to_yn_module<t_net,fstate_idx<t_net> >(norm_dim, mirror, mode, 
+      chanmodule = new rgb_to_yn_module<t_net>(norm_dim, mirror, mode, 
 						globn, eps, eps2);
     else {
       cerr << "image format not supported: " << im << endl;
@@ -182,23 +181,23 @@ extern "C" {
     idxdim d(net_ih, net_iw);
     uint resize_type = MEAN_RESIZE;
     bool keep_aspect_ratio = true;
-    ppmodule = new resizepp_module<t_net, fstate_idx<t_net> >(d, resize_type, 
+    ppmodule = new resizepp_module<t_net>(d, resize_type, 
 							      chanmodule, true,
 					       NULL, keep_aspect_ratio);
 
     // create network
-    parameter<t_net, fstate_idx<t_net> > theparam;
+    parameter<t_net> theparam;
     // build net
-    lenet_cscsc<t_net, fstate_idx<t_net> >
+    lenet_cscsc<t_net>
       net(theparam, net_ih, net_iw, net_c1h, net_c1w, net_s1h, net_s1w, net_c2h,
 	  net_c2w, net_s2h, net_s2w, noutputs, absnorm, color, mirror, use_tanh,
 	  use_shrink);
     // load net
     theparam.load_x(weights);
     // build detector
-    detector<t_net, fstate_idx<t_net> > detect(net, sclasses, NULL, ppmodule);
+    detector<t_net> detect(net, sclasses, NULL, ppmodule);
     detect.set_resolutions(scaling, max_scale, min_scale);
-    fstate_idx<t_net> input(1,1,1), output(1,1,1);
+    state<t_net> input(1,1,1), output(1,1,1);
     // detect.set_mem_optimization(input, output);
     detect.set_max_resolution(input_max);
     // TODO: change pruning to nms calls
