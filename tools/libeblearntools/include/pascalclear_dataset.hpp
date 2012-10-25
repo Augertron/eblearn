@@ -83,7 +83,7 @@ namespace ebl {
     boost::filesystem3::directory_iterator end_itr; // default construction yields past-the-end
     for (boost::filesystem3::directory_iterator itr(p); itr != end_itr; ++itr) {
       if (!boost::filesystem3::is_directory(itr->status()) &&
-	  boost::regex_match(itr->leaf().c_str(), what, eExt)) {
+	  boost::regex_match(itr->path().filename().c_str(), what, eExt)) {
 	this->process_xml(itr->path().string());
 	if (this->full()) //max_data_set && (data_cnt >= max_data))
 	  break ;
