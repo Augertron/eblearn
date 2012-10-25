@@ -112,6 +112,7 @@ clean:
 	rm -rf build
 	rm -rf ../core/build
 	rm -rf bin/*
+	rm -rf ../bin/*
 	rm -rf lib/*
 	rm -rf ../doc/documentation/libeblearn_html
 	rm -rf ../doc/documentation/libeblearngui_html
