@@ -73,17 +73,17 @@ namespace ebl {
     std::cout << "Clearing objects from original pascal images..." << std::endl;
     mkdir_full(outdir);
     // adding data to dataset using all xml files in annroot
-    regex eExt(XML_PATTERN);
-    cmatch what;
-    path p(annroot);
+    boost::regex eExt(XML_PATTERN);
+    boost::cmatch what;
+    boost::filesystem3::path p(annroot);
     if (!exists(p)) {
       std::cerr << "path " << annroot << " does not exist." << std::endl;
       return false;
     }
-    directory_iterator end_itr; // default construction yields past-the-end
-    for (directory_iterator itr(p); itr != end_itr; ++itr) {
-      if (!is_directory(itr->status()) &&
-	  regex_match(itr->leaf().c_str(), what, eExt)) {
+    boost::filesystem3::directory_iterator end_itr; // default construction yields past-the-end
+    for (boost::filesystem3::directory_iterator itr(p); itr != end_itr; ++itr) {
+      if (!boost::filesystem3::is_directory(itr->status()) &&
+	  boost::regex_match(itr->leaf().c_str(), what, eExt)) {
 	this->process_xml(itr->path().string());
 	if (this->full()) //max_data_set && (data_cnt >= max_data))
 	  break ;
