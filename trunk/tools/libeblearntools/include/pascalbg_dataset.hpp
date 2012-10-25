@@ -80,7 +80,7 @@ bool pascalbg_dataset<Tdata>::extract() {
 #ifdef __XML__
   std::cout << "Extracting samples from files into dataset..." << std::endl;
   // adding data to dataset using all xml files in annroot
-  path p(annroot);
+  boost::filesystem3::path p(annroot);
   if (!exists(p))
     eblerror("Annotation path " << annroot << " does not exist.");
   xtimer.start();
