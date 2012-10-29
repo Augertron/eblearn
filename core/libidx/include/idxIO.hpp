@@ -137,8 +137,9 @@ void read_cast_matrix(FILE *fp, idx<T2> &out) {
 
 template <typename T>
 void read_matrix_body(FILE *fp, idx<T> &m) {
+  size_t ret = 0;
   idx_aloop1(i, m, T) {
-    fread(&(*i), sizeof (T), 1, fp);
+    ret = fread(&(*i), sizeof (T), 1, fp);
   }
 }
 
@@ -182,7 +183,8 @@ void load_matrix(idx<T>& m, const std::string &filename) {
   load_matrix(m, filename.c_str());
 }
 
-template <typename T> void load_matrix(idx<T>& m, const char *filename) {
+template <typename T>
+void load_matrix(idx<T>& m, const char *filename) {
   // open file
   FILE *fp = fopen(filename, "rb");
   if (!fp)
@@ -295,8 +297,7 @@ midx<T> load_matrices(const std::string &filename, bool ondemand){
   }
 }
 
-////////////////////////////////////////////////////////////////
-// saving
+// saving //////////////////////////////////////////////////////////////////////
 
 template <typename T>
 bool save_matrix(idx<T>& m, const std::string &filename) {
@@ -462,8 +463,8 @@ bool save_matrices(midx<T>& m, const std::string &filename) {
   }
   ret = save_matrix(offsets, fp);
   if (!ret) {
-    std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
-              << std::endl;
+    std::cerr << "failed to write matrix " << offsets << " to "
+	      << filename << "." << std::endl;
     fclose(fp);
     return false;
   }
@@ -525,8 +526,8 @@ bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename) {
   // save offsets matrix first
   bool ret = save_matrix(offsets, fp);
   if (!ret) {
-    std::cerr << "failed to write matrix " << offsets << " to " << filename << "."
-              << std::endl;
+    std::cerr << "failed to write matrix " << offsets << " to "
+	      << filename << "." << std::endl;
     fclose(fp);
     return false;
   }
@@ -553,8 +554,8 @@ bool save_matrices(midx<T>& m1, midx<T> &m2, const std::string &filename) {
         idx<T> e = m->mget(k);
         ret = save_matrix(e, fp);
         if (!ret) {
-          std::cerr << "failed to write matrix " << e << " to " << filename << "."
-                    << std::endl;
+          std::cerr << "failed to write matrix " << e << " to " <<
+	    filename << "." << std::endl;
           fclose(fp);
           return false;
         }

@@ -212,6 +212,7 @@ bool save_matrices(std::list<std::string> &fnames, const std::string &filename);
 template <typename T>
 bool save_matrix(std::list<std::string> &fnames, const std::string &filename);
 
+ 
 // to string saving ////////////////////////////////////////////////////////////
 
 //! Saves matrix 'm' to a string and returns it.
@@ -219,7 +220,8 @@ template <typename T> std::string save_matrix_to_string(idx<T>& m);
 //! Saves matrices of 'v' to a string and returns it.
 template <typename T> std::string save_matrices_to_string(svector<idx<T> >& v);
 //! Saves matrices of 'l' to a string and returns it.
-template <typename T> std::string save_matrices_to_string(std::list<idx<T>*>& l);
+template <typename T>
+  std::string save_matrices_to_string(std::list<idx<T>*>& l);
 //! Saves matrices of 'm' to a string and returns it.
 template <typename T> std::string save_matrices_to_string(midx<T>& m);
 

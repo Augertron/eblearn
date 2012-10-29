@@ -269,7 +269,7 @@ void datasource<T,Tdata>::set_epoch_mode(uint mode) {
   std::cout << _name << ": Setting epoch mode to " << epoch_mode;
   switch (epoch_mode) {
     case 0: std::cout << " (fixed number of samples)" << std::endl; break ;
-    case 1: std::cout << " (see all samples at least once)" << std::endl; break ;
+    case 1: std::cout << " (see all samples at least once)" << std::endl;break ;
     default: eblerror("unknown mode");
   }
 }
@@ -292,6 +292,9 @@ void datasource<T,Tdata>::fprop1_data(idx<T> &out) {
   // bias and scaling
   if (bias != 0.0) idx_addc(out, bias, out);
   if (coeff != 1.0) idx_dotc(out, coeff, out);
+#ifdef __DEBUG__
+  if (out.nelements() < 50) out.print();
+#endif
 }
 
 template <typename T, typename Tdata>

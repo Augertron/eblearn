@@ -250,6 +250,22 @@ namespace ebl {
 	    / (float) ((class_totals[i]==0)?1:class_totals[i]) << "% ";
 	}
       }
+      std::cout << std::endl << "success per class: ";
+      for (uint i = 0; i < class_errors.size(); ++i) {
+	if (class_totals[i] > 0) {
+	  // number of samples for this class
+	  std::cout << (ds_is_test ? "test_" : "");
+	  if (lblstr && lblstr->size() > i)
+	    std::cout << *((*lblstr)[i]); else std::cout << i;
+	  std::cout << "_samples=" << class_totals[i] << " ";
+	  // percentage of error for this class
+	  std::cout << (ds_is_test ? "test_" : "");
+	  if (lblstr && lblstr->size() > i)
+	    std::cout << *((*lblstr)[i]); else std::cout << i;
+	  std::cout << "_success=" << 100-(class_errors[i] * 100.0
+	   / (float) ((class_totals[i]==0)?1:class_totals[i])) << "% ";
+	}
+      }
     } else {
       if (size > 0) {
 	std::cout << (ds_is_test ? "test_":"") << "correct="

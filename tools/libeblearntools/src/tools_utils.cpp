@@ -80,8 +80,9 @@ files_list *find_files(const std::string &dir, const char *pattern,
     if (!boost::filesystem::is_directory(itr->status()) &&
         boost::regex_match(itr->path().filename().c_str(), what, r)) {
       // found an match, add it to the list
-      fl->push_back(pair<std::string,std::string>(itr->path().branch_path().string(),
-                                                  itr->path().filename().string()));
+      fl->push_back(pair<std::string,std::string>
+		    (itr->path().branch_path().string(),
+		     itr->path().filename().c_str()));
     }
   }
   // then explore subdirectories
@@ -569,8 +570,9 @@ bool tar(const std::string &dir, const std::string &tgtdir) {
 #ifdef __BOOST__
   std::string cmd;
   boost::filesystem::path p(dir);
-  cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/" << p.filename().string()
-      << ".tgz " << p.filename().string();// << " 2> /dev/null";
+  cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/"
+      << p.filename().c_str()
+      << ".tgz " << p.filename().c_str();// << " 2> /dev/null";
   int ret = std::system(cmd.c_str());
   if (ret < 0) {
     cerr << "tar failed." << endl;

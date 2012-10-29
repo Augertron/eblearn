@@ -297,7 +297,7 @@ namespace ebl {
       line = cont.substr(0, line_end);
       // check if there's still anything left
       // this check is needed when confs end without a new line
-      if (line_end + 1 < cont.size())
+      if (line_end + 1 < (int) cont.size())
         cont = cont.substr(line_end + 1);
       else
         done = true;
