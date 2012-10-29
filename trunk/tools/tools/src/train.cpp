@@ -258,32 +258,34 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __LINUX__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
-  string conffname = argv[1];
-  if (!file_exists(conffname.c_str()))
-    eblerror("configuration file not found: " << conffname);
-  configuration conf(conffname, true, true, false); // configuration file
-  if (conf.exists_true("fixed_randomization"))
-    cout << "Using fixed seed: " << fixed_init_drand() << endl;
-  else
-    cout << "Using random seed: " << dynamic_init_drand(argc, argv) << endl;
-  // set current directory
-  string curdir;
-  curdir << dirname(argv[1]) << "/";
-  cout << "Setting conf directory to: " << curdir << endl;
-  conf.set("current_dir", curdir.c_str());
-  conf.set("run_type", "train"); // tell conf that we are in train mode
-  conf.resolve();
-  if (conf.exists_true("show_conf")) conf.pretty();
-  const char *precision = "double";
-  if (conf.exists("training_precision"))
-    precision = conf.get_cstring("training_precision");
-  cout << "Training precision: " << precision << endl;
-  // train
-  if (!strcmp(precision, "float"))
-    return select_data_type<float>(conf, conffname);
-  else if (!strcmp(precision, "double"))
-    return select_data_type<double>(conf, conffname);
-  else eblerror("unknown training precision " << precision);
+  try {
+    string conffname = argv[1];
+    if (!file_exists(conffname.c_str()))
+      eblerror("configuration file not found: " << conffname);
+    configuration conf(conffname, true, true, false); // configuration file
+    if (conf.exists_true("fixed_randomization"))
+      cout << "Using fixed seed: " << fixed_init_drand() << endl;
+    else
+      cout << "Using random seed: " << dynamic_init_drand(argc, argv) << endl;
+    // set current directory
+    string curdir;
+    curdir << dirname(argv[1]) << "/";
+    cout << "Setting conf directory to: " << curdir << endl;
+    conf.set("current_dir", curdir.c_str());
+    conf.set("run_type", "train"); // tell conf that we are in train mode
+    conf.resolve();
+    if (conf.exists_true("show_conf")) conf.pretty();
+    const char *precision = "double";
+    if (conf.exists("training_precision"))
+      precision = conf.get_cstring("training_precision");
+    cout << "Training precision: " << precision << endl;
+    // train
+    if (!strcmp(precision, "float"))
+      return select_data_type<float>(conf, conffname);
+    else if (!strcmp(precision, "double"))
+      return select_data_type<double>(conf, conffname);
+    else eblerror("unknown training precision " << precision);
+  } eblcatcherror();
 #ifdef __GPROF__
   ProfilerStop();
 #endif

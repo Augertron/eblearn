@@ -198,7 +198,7 @@ bool dataset<Tdata>::extract() {
 #if !defined(BOOST_FILESYSTEM_VERSION) || BOOST_FILESYSTEM_VERSION == 3
     if (boost::filesystem::is_directory(itr->status())
         && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
-      process_dir(itr->path().string(), extension, itr->path().filename().string());
+      process_dir(itr->path().string(), extension, itr->path().filename().c_str());
       found = true;
     }
 #else
@@ -1241,14 +1241,16 @@ void dataset<Tdata>::set_outdims(const idxdim &d) {
   no_outdims = false;
   outdims = d;
   uint featdims = 0;
-  if (interleaved_input || (outdims.order() == 2)) {
-    height = outdims.dim(0);
-    width = outdims.dim(1);
-    featdims = 2;
-  } else {
-    height = outdims.dim(1);
-    width = outdims.dim(2);
-    featdims = 0;
+  if (outdims.order() > 1) {
+    if (interleaved_input || (outdims.order() == 2)) {
+      height = outdims.dim(0);
+      width = outdims.dim(1);
+      featdims = 2;
+    } else {
+      height = outdims.dim(1);
+      width = outdims.dim(2);
+      featdims = 0;
+    }
   }
   // update outdims' feature size with fovea factor
   if (outdims.order() > 0 && fovea.size() > 0)
@@ -1534,8 +1536,8 @@ intg dataset<Tdata>::count_samples() {
     if (boost::filesystem::is_directory(itr->status())
             && !boost::regex_match(itr->path().filename().c_str(), what, hidden_dir)) {
       // ignore excluded classes and use included if defined
-      if (included(itr->path().filename().string())) {
-        dirs.push_back(itr->path().filename().string());
+      if (included(itr->path().filename().c_str())) {
+        dirs.push_back(itr->path().filename().c_str());
         // recursively search each directory
         total_samples += count_matches(itr->path().string(), extension);
       }
@@ -1579,12 +1581,12 @@ void dataset<Tdata>::split(dataset<Tdata> &ds1, dataset<Tdata> &ds2) {
   std::cout << "Input data samples: " << data << std::endl;
   // alloc each dataset
   if (!ds1.allocate(data.dim(0), outdims) ||
-          !ds2.allocate(data.dim(0), outdims))
+      !ds2.allocate(data.dim(0), outdims))
     eblerror("Failed to allocate new datasets");
   // add samples 1st dataset, if not add to 2nd.
   // if 1st has reached max per class, it will return false upon addition
-  std::cout << "Adding data to \"" << ds1.name << "\" and \"" << ds2.name << "\".";
-  std::cout << std::endl;
+  std::cout << "Adding data to \"" << ds1.name << "\" and \""
+	    << ds2.name << "\"." << std::endl;
   // using the shuffle() method is a problem with big datasets because
   // it requires allocation of an extra dataset.
   // instead, we use a random list of indices to assign the first random
@@ -2071,7 +2073,7 @@ void dataset<Tdata>::process_dir(const std::string &dir,
 
   //! required datasets, throw error.
   template <typename T>
-      bool loading_error(midx<T> &mat, std::string &fname) {
+  bool loading_error(midx<T> &mat, std::string &fname) {
     try {
       // in multi-matrix files, samples are separate
       if (has_multiple_matrices(fname.c_str()))

@@ -1102,7 +1102,7 @@ namespace ebl {
       // write body of email
       cmd.str("");
       cmd << "rm -f " << tmpfile; // remove tmp file first
-      std::system(cmd.str().c_str());
+      int ret = std::system(cmd.str().c_str());
       // print summary infos
       cmd.str("");
       cmd << "echo \"Iteration: " << maxiter << endl;

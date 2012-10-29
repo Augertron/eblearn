@@ -286,6 +286,11 @@ EXPORT std::string filename(const char *s);
 //! Execute command 'cmd' and return the resulting string.
 EXPORT std::string system_to_string(const std::string &cmd);
 
+//! Loads a matrix from a csv file.
+template <typename T>
+  idx<T> load_csv_matrix(const char *filename, bool ignore_first_line = false,
+			 bool ignore_missing_value_lines = true);
+ 
 } // end namespace ebl
 
 #include "tools_utils.hpp"

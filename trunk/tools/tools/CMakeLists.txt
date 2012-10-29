@@ -247,6 +247,13 @@ ELSE (MATIO_FOUND)
   MESSAGE("__ WARNING: Not generating ebl2matlab because MATIO was not found")
 ENDIF (MATIO_FOUND)
 
+# compile executable: mconvert
+################################################################################
+set(MCONVERT "mconvert${NAME_EXTRA}")
+add_executable(${MCONVERT} src/mconvert.cpp)
+# link executable with external libraries
+target_link_libraries (${MCONVERT} idx eblearntools)
+
 # compile executable: videoffinder
 ################################################################################
 # IF (OpenCV_FOUND) #-------------------------------------------------------------

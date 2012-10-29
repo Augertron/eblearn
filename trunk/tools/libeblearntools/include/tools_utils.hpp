@@ -105,6 +105,103 @@ namespace ebl {
     return (T) string_to_double(s_);
   }
 
+////////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
+		       bool ignore_missing_value_lines) {
+  char sep = ',';
+  T default_value = 0;
+  // open file
+  FILE *fp = fopen(filename, "rb");
+  if (!fp) eblthrow("load_csv_matrix failed to open " << filename);
+  // read it
+  idx<T> m;
+  char *ret = NULL, buf[4096];
+  intg line = 0;
+  intg n = 1;
+  intg i = 0, j = 0;
+  // figure out geometry
+  try {
+    while ((ret = fgets(buf, 4096, fp))) {
+      if (line == 0 && ignore_first_line) {
+	line++;
+	continue ;
+      }
+      if (line == 1) {
+	std::string s = buf;
+	size_t pos = 0;
+	size_t len = s.size();
+	while (pos < len && ((pos = s.find(sep, pos)) != std::string::npos)) {
+	  n++;
+	  pos++;
+	}
+      }
+      line++;
+      i++;
+    }
+    EDEBUG("found a " << i << "x" << n << " matrix");
+    m = idx<T>(i, n);
+    idx_clear(m);
+    fseek(fp, 0, SEEK_SET); // reset fp to beginning
+    i = 0;
+    line = 0;
+    while ((ret = fgets(buf, 4096, fp))) {
+      if (line == 0 && ignore_first_line) {
+	line++;
+	continue ;
+      }
+      std::string s = buf, tmp;
+      size_t pos0 = 0;
+      size_t pos1 = 0;
+      size_t len = s.size();
+      bool missing = false;
+      j = 0;
+      while (pos0 < len && ((pos1 = s.find(sep, pos0)) != std::string::npos)) {
+	if (pos1 - pos0 == 0) {
+	  eblwarn("no value at position " << i << ", " << j << ", setting to "
+		  << default_value);
+	  m.set(default_value, i, j);
+	  missing = true;
+	} else {
+	  tmp = s.substr(pos0, pos1-pos0);
+	  EDEBUG("string to double from: " << tmp);
+	  try {
+	    m.set((T) string_to_double(tmp), i, j);
+	  } eblcatchwarn_extra(missing = true;);
+	}
+	j++;
+	pos0 = pos1 + 1;
+      }
+      if (len - pos0 - 1 == 0) {
+	eblwarn("no value at position " << i << ", " << j << ", setting to "
+		<< default_value);
+	m.set(default_value, i, j);
+	missing = true;
+      } else {
+	tmp = s.substr(pos0, len-pos0);
+	EDEBUG("string to double from: " << tmp);
+	try {
+	  m.set((T) string_to_double(tmp), i, j);
+	} eblcatchwarn_extra(missing = true;);
+      }
+      idx<T> mtmp = m.select(0, i);
+      EDEBUG("row: " << mtmp.str());
+      if (n != m.dim(1))
+	eblerror("expected " << m.dim(1) << " values but found " << n);
+      line++;
+      if (missing && ignore_missing_value_lines) {
+	eblwarn("ignoring line " << i
+		<< " because it contains a missing value");
+	m = m.narrow(0, m.dim(0) - 1, 0);
+      } else
+	i++;
+    }    
+    fclose(fp);
+  } catch(eblexception &e) { eblthrow(" while loading " << filename) }
+  return m;
+}
+
 } // end namespace ebl
 
 #endif /* TOOLS_UTILS_HPP_ */
