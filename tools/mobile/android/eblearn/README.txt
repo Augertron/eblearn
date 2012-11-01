@@ -11,6 +11,7 @@ How to compile idx/eblearn demo on android:
   - export your NDK root to ANDKROOT
   - export your SDK root to ASDKROOT
   - export your signing keystore root to AKEYSROOT (and create it)
+  (http://developer.android.com/tools/publishing/app-signing.html)
   - add SDK tools to your PATH:
     export PATH=$PATH:$ASDKROOT/tools
 
@@ -25,6 +26,11 @@ How to compile idx/eblearn demo on android:
 
 5- Create build file:
   - make create
+  You might have to modify the create: line in Makefile to add a target.
+  For example, you might have to modify
+      ${atools}/android update project -p `pwd`
+  to
+      ${atools}/android update project -p `pwd` --target 1
   
 6- Compile:
   - make
