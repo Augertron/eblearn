@@ -40,13 +40,16 @@
 #include "bbox.h"
 
 namespace ebl {
+//! \defgroup network_modules The modules made for stacking into a network.
 
 // linear_module ///////////////////////////////////////////////////////////////
 
-//! This module applies a linears combination of the input <in>
+//! This module applies a linear combination of the input <in>
 //! with its internal weight matrix w and puts the result in the output.
 //! This module has a replicable order of 1, if the input has a bigger order,
 //! use the replicable version of this module: linear_module_replicable.
+//! \brief Module: \f$\vec{out} = W \vec{in}\f$.
+//! \ingroup network_modules
 template <typename T> class linear_module: public module_1_1<T> {
  public:
   //! Constructor.
@@ -92,14 +95,20 @@ template <typename T> class linear_module: public module_1_1<T> {
   state<T> w;
 };
 
-//! The replicable version of linear_module.
-//! If the input has a bigger order than the replicable_order() of
-//! linear_module, then this module loops on extra dimensions until
-//! it reaches the replicable order, and then calls the base module
-//! linear_module.
-//! For example, if the base module works on an order of 1, an input with
-//! dimensions <42x9x9> will produce a 9x9 grid where each box contains
-//! the output of the processing of each <42> slice.
+/**
+ The replicable version of linear_module.
+ If the input has a bigger order than the replicable_order() of
+ linear_module, then this module loops on extra dimensions until
+ it reaches the replicable order, and then calls the base module
+ linear_module.
+ For example, if the base module works on an order of 1, an input with
+ dimensions <42x9x9> will produce a 9x9 grid where each box contains
+ the output of the processing of each <42> slice.
+ \brief Module: \f$\vec{out}_i = W \vec{in}_i
+                   \;\;\forall i = (i_2, i_3, ..., i_{k+1});
+                   \vec{in} \in R^{m\times k+1}\f$
+ \ingroup network_modules
+ */
 DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
                               linear_module, T,
                               (parameter<T> *p, intg in, intg out,
@@ -108,19 +117,30 @@ DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
 
 // convolution_module //////////////////////////////////////////////////////////
 
-//! This module applies 2D convolutions on dimensions 1 and 2
-//! (0 contains different layers of information).
-//! This module has a replicable order of 3, if the input has a bigger order,
-//! use the replicable version of this module:
-//! convolution_module_replicable.
+/**
+ * This module applies 2D convolutions on dimensions 1 and 2
+ * (0 contains different layers of information).
+ * This module has a replicable order of 3, if the input has a bigger order,
+ * use the replicable version of this module:
+ * convolution_module_replicable.
+ * \ingroup network_modules
+ * \brief Module: \f$ \vec{out}_i = (K \otimes \vec{in}_i)(::s,::s) \;\; \forall i = 1 ... m\f$,
+ * \f$ \vec{in} \in R^{m\times m_1 \times  m_2}, s\in N \f$
+ */
 template <typename T> class convolution_module : public module_1_1<T> {
  public:
   //! Constructor.
   //! \param p is used to store all parametric variables in a single place.
   //!        If p is null, a local buffer will be used.
-  //! \param ker The convolution kernel sizes.
+  //! \param ker The convolution kernel sizes. (\f$a \times b\f$)
   //! \param stride The convolution strides.
+  //!        stride.dim(0) is used for dimension  1, stride.dim(1) for dimension
+  //!        2. Strides must divide input dimensions with no reminder unless
+  //!        crop is true.
   //! \param table is the convolution connection table.
+  //!        This means a \f$ n \times 2 \f$ integer idx, where table[i,0] is
+  //!        the source field and table[i,1] is the destinataion connection.
+  //!  
   //! \param crop If true, crop input when it does not match with the kernel.
   //!          This allows to feed any input size to this module.
   convolution_module(parameter<T> *p, idxdim &ker, idxdim &stride,
