@@ -39,40 +39,53 @@
 
 namespace ebl {
 
+//! \defgroup index_operations Index Operations.
+//! The different operations you can do with raw indices of different orders.
+
 // idx_copy //////////////////////////////////////////////////////////////////
 
 //! Generic copy of 'src' to 'dst'.
-// TODO-0: using slow idx_copy version, others are bugged, debug
+//! \ingroup index_operations
+//! \TODO-0: using slow idx_copy version, others are bugged, debug
 template <typename T1, typename T2> void idx_copy(const idx<T1> &src, idx<T2> &dst);
 //! copy, specialized float32 version
+//! \ingroup index_operations
 template <> void idx_copy(const idx<float32> &src, idx<float32> &dst);
 //! copy, specialized float64 version
+//! \ingroup index_operations
 template <> void idx_copy(const idx<float64> &src, idx<float64> &dst);
 //! Generic copy, returns the copied idx
+//! \ingroup index_operations
 template <typename T1, typename T2> idx<T1> idx_copy(const idx<T2> &src);
 //! Generic copy, returns the copied idx
+//! \ingroup index_operations
 template <typename T> idx<T> idx_copy(const idx<T> &src);
 
 //template <typename T> void idx_copy(idx<T> &src, idx<T> &dst);
 
 //! copy src into dst but prevent under and overflow if values in src
 //! are bigger than maximum and minimum values of type T1.
-//! Caution: note that this is slower than a reguler idx_copy.
+//! \note Caution: note that this is slower than a reguler idx_copy.
+//! \ingroup index_operations
 template <typename T1, typename T2>
 void idx_copy_clip(const idx<T1> &src, idx<T2> &dst);
 
 // idx_clear /////////////////////////////////////////////////////////////////
 
 //! Fill this idx with zeros.
+//! \ingroup index_operations
 template <typename T> void idx_clear(idx<T> &inp);
 
 // idx_fill //////////////////////////////////////////////////////////////////
 
 //! Fill this idx with v, v is cast with saturation
+//! \ingroup index_operations
 template <typename T, typename T2> inline void idx_fill(idx<T> & inp, T2 v);
 //! Fill this idx with v.
+//! \ingroup index_operations
 template <typename T> void idx_fill(idx<T> &inp, T v);
 //! Fill this idx with index of each element.
+//! \ingroup index_operations
 template <typename T> void idx_fill_index(idx<T> &inp);
 
 // idx_shuffle_* /////////////////////////////////////////////////////////////
@@ -81,8 +94,9 @@ template <typename T> void idx_fill_index(idx<T> &inp);
 //! if <out> is not null, then the shuffled version of <in> is put directly
 //! into <out> (faster), otherwise a temporary copy of <in> is used
 //! and copied back into in (slower).
-//! Warning: this function assumes that drand is already initialized
+//! \warning Warning: this function assumes that drand is already initialized
 //! (with dynamic_init_drand())
+//! \ingroup index_operations
 template <typename T>
 void idx_shuffle(idx<T> &in, intg d = 0, idx<T> *out = NULL);
 //! shuffle elements order of dimension d simultaneously of <in1> and <in2>.
@@ -91,7 +105,7 @@ void idx_shuffle(idx<T> &in, intg d = 0, idx<T> *out = NULL);
 //! if <out> is not null, then the shuffled version of <in> is put directly
 //! into <out> (faster), otherwise a temporary copy of <in> is used
 //! and copied back into in (slower).
-//! Warning: this function assumes that drand is already initialized
+//! \warning Warning: this function assumes that drand is already initialized
 //! (with dynamic_init_drand())
 template <typename T1, typename T2>
 void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, intg d,
@@ -103,7 +117,7 @@ void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, intg d,
 //! if <out> is not null, then the shuffled version of <in> is put directly
 //! into <out> (faster), otherwise a temporary copy of <in> is used
 //! and copied back into in (slower).
-//! Warning: this function assumes that drand is already initialized
+//! \warning Warning: this function assumes that drand is already initialized
 //! (with dynamic_init_drand())
 template <typename T1, typename T2, typename T3>
 void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, idx<T3> &in3,
@@ -543,7 +557,11 @@ template <typename T> void idx_m2dotm3(idx<T> &a, idx<T> &x, idx<T> &y);
 
 // m4dotm2 ///////////////////////////////////////////////////////////////////
 
-//! 4-tensor by 2-matrix multiplication R_ij = sum_kl M1_ijkl * M2_kl
+//! 4-tensor by 2-matrix (pointwise) multiplication
+//! \f$R_{ij} = \sum_{kl} M1_{ijkl} * M2_{kl} \f$.
+//! \param i1 the first tensor, \f$ a \times b \times c \times d\f$.
+//! \param i2 the second tensor, \f$ c \times d \f$.
+//! \param o1 the output, \f$ a \times b\f$
 template <typename T> void idx_m4dotm2(idx<T> &i1, idx<T> &i2, idx<T> &o1);
 
 //! 4-tensor by 2-matrix multiplication with accumulation
