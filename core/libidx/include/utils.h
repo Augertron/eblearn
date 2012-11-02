@@ -202,11 +202,11 @@ extern EXPORT uint debug_resizing_cnt; // # of resizing
   uint debug_resizing_cnt;
 
 #define TIMING(s, t) {                                          \
-    std::cout << s << ": " << t.elapsed_ms() << std::endl;      \
+    eblprint( s << ": " << t.elapsed_ms() << std::endl);	\
     t.restart();                                                \
   }
 #define TIMINGACC(s, t) {                                       \
-    std::cout << s << ": " << t.accumulated_ms() << std::endl;  \
+    eblprint( s << ": " << t.accumulated_ms() << std::endl);	\
     t.restart();                                                \
   }
 #define TIMING_ACCSTART(t) t.start();
@@ -228,7 +228,7 @@ extern EXPORT uint debug_resizing_cnt; // # of resizing
   debug_resizing_cnt = 0;
 #define TIMING_RESIZING(s)						\
   TIMINGACC(s, debug_timer_resizing);					\
-  std::cout << s << ": number of resizings: " << debug_resizing_cnt <<std::endl;
+  eblprint( s << ": number of resizings: " << debug_resizing_cnt <<std::endl);
 
 #else
 #define INIT_TIMING()

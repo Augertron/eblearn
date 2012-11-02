@@ -161,7 +161,7 @@ bool mkdir_full(const char *dir) {
   // 	   << ") failed to create directory " << dir;
   //       return false;
   //     }
-  //     cout << "mkdir ret: " << ret << endl;
+  //     eblprint("mkdir ret: " << ret << std::endl);
   //     return true;
 #endif
 }
@@ -609,7 +609,7 @@ std::string timer::accumulated_ms() {
 }
 
 void timer::pretty_secs(long seconds) {
-  std::cout << elapsed(seconds);
+  eblprint( elapsed(seconds));
 }
 
 // second equivalences
@@ -725,7 +725,7 @@ std::string timer::eta(uint n, uint total) {
 
 int pid() {
 #ifdef __WINDOWS__
-  cerr << "pid() not implemented for Windows" << endl;
+  eblwarn( "pid() not implemented for Windows" << endl);
   return 0;
 #else
   return (int) getpid();

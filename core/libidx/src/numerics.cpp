@@ -304,7 +304,7 @@ double gaussian(double x, double m, double sigma) {
 
 int choose(int n, int k) {
 	if (k > n) {
-		std::cerr << "n choose k with n = " << n << " and k = " << k << std::endl;
+          eblwarn( "n choose k with n = " << n << " and k = " << k << std::endl);
 		eblerror("n choose k: k must be <= n");
 	}
 	int nk = n - k;

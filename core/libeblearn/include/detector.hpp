@@ -71,37 +71,35 @@ detector<T>::detector(module_1_1<T> &thenet_, std::vector<std::string> &labels_,
                  dynamic_cast<scalerclass_answer<T>*>(answer)))
     scaler_mode = true;
   if (answer)
-    mout << "Using answer module: " << answer->describe() << std::endl;
+    eblprinto(mout,  "Using answer module: " << answer->describe() << std::endl);
   // look for resize module in network
   if (!resizepp) {
     resizepp = arch_find(&thenet, resizepp);
-    if (resizepp) mout << "Found a resizepp module in network: "
-                       << resizepp->describe() << std::endl;
-    else mout << "No resizepp module found in network." << std::endl;
+    if (resizepp) eblprinto(mout, "Found a resizepp module in network: "
+                            << resizepp->describe() << std::endl);
+    else eblprinto(mout, "No resizepp module found in network." << std::endl);
   }
   // set default resizing module
   if (!resizepp) {
     resizepp = new resizepp_module<T>;
     resizepp->set_name("detector resizpp");
-    std::cout << "Using default resizing module: " << resizepp->describe()
-              << std::endl;
+    eblprint( "Using default resizing module: " << resizepp->describe()
+              << std::endl);
     resizepp_delete = true;
     resizepp_outside = true;
   }
   labels = labels_;
-  mout << "Classes labels: " << labels << std::endl;
-  // #ifdef __ANDROID__ // TODO: temporary
-  //     bgclass = 0;
-  // #else
-  //#endif
-  // initilizations
+
+  eblprinto(mout, "Classes labels: " << labels << std::endl);
+  // initializations
   save_max_per_frame = limits<uint>::max();
   diverse_ordering = false;
   // cut network up to first resizepp module
   thenet_nopp = arch_narrow(&thenet, resizepp, false, true);
   // infer network stride
   netstrides = network_strides(*thenet_nopp, 3);
-  std::cout << "network strides: " << netstrides << std::endl;
+  eblprint("network strides: "<< netstrides.dim(0) << "x"
+           << netstrides.dim(1) << std::endl);
   // set outpout streams of network
   thenet.set_output_streams(o, e);
   update_merge_alignment();
@@ -122,19 +120,19 @@ void detector<T>::set_scaling_original() {
 template <typename T>
 void detector<T>::set_scaling_type(t_scaling type) {
   restype = type;
-  mout << "Setting scaling to type " << type << " (";
+  eblprinto(mout, "Setting scaling to type " << type << " (");
   switch (restype) {
-    case MANUAL: mout << "MANUAL"; break ;
-    case SCALES: mout << "SCALES"; break ;
-    case NSCALES: mout << "NSCALES"; break ;
-    case SCALES_STEP: mout << "SCALES_STEP"; break ;
-    case ORIGINAL: mout << "ORIGINAL"; break ;
-    case NETWORK: mout << "NETWORK"; break ;
-    case SCALES_STEP_UP: mout << "SCALES_STEP_UP"; break ;
+  case MANUAL: eblprinto(mout, "MANUAL"); break ;
+  case SCALES: eblprinto(mout, "SCALES"); break ;
+  case NSCALES: eblprinto(mout, "NSCALES"); break ;
+  case SCALES_STEP: eblprinto(mout, "SCALES_STEP"); break ;
+  case ORIGINAL: eblprinto(mout, "ORIGINAL"); break ;
+  case NETWORK: eblprinto(mout, "NETWORK"); break ;
+  case SCALES_STEP_UP: eblprinto(mout, "SCALES_STEP_UP"); break ;
     default:
       eblerror("unknown type");
   }
-  mout << ")" << std::endl;
+  eblprinto(mout, ")" << std::endl);
 }
 
 template <typename T>
@@ -156,7 +154,7 @@ void detector<T>::set_resolutions(const std::vector<midxdim> &scales_) {
       d.insert_dim(0, 1);
     }
   }
-  mout << "Using manual scales specification: " << manual_scales << std::endl;
+  eblprinto(mout, "Using manual scales specification: " << manual_scales << std::endl);
 }
 
 template <typename T>
@@ -186,9 +184,9 @@ void detector<T>::set_resolutions(double scales_step_,
   scales_step = scales_step_;
   max_scale = max_scale_;
   min_scale = min_scale_;
-  mout << "Multi resolution scales: step factor " << scales_step
+  eblprinto(mout, "Multi resolution scales: step factor " << scales_step
        << ", min/max resolution factor " << min_scale << ", " << max_scale
-       << std::endl;
+            << std::endl);
 }
 
 template <typename T>
@@ -200,9 +198,9 @@ void detector<T>::set_zpads(float hzpad_, float wzpad_) {
     else get_netdim(3);
     hzpad = (uint) (hzpad_ * netdim.dim(1));
     wzpad = (uint) (wzpad_ * netdim.dim(2));
-    mout << "Adding zero padding on input (on each side): hpad: "
+    eblprinto(mout, "Adding zero padding on input (on each side): hpad: "
          << hzpad << " wpad: " << wzpad << " (" << hzpad_ << ","
-         << wzpad_ << " * " << netdim << ")" << std::endl;
+              << wzpad_ << " * " << netdim << ")" << std::endl);
     set_zpads_size(hzpad, wzpad);
   }
 }
@@ -213,8 +211,8 @@ void detector<T>::set_zpads_size(uint hzpad_, uint wzpad_) {
   hzpad = hzpad_;
   wzpad = wzpad_;
   resizepp->set_zpads(hzpad, wzpad);
-  mout << "Setting zero padding on inputs to: " << hzpad << "x"
-       << wzpad << "x" << hzpad << "x" << wzpad << std::endl;
+  eblprinto(mout, "Setting zero padding on inputs to: " << hzpad << "x"
+            << wzpad << "x" << hzpad << "x" << wzpad << std::endl);
 }
 
 template <typename T>
@@ -235,11 +233,11 @@ void detector<T>::set_bgclass(const char *bg) {
     name = "bg"; // default name
   bgclass = get_class_id(name);
   if (bgclass != -1) {
-    mout << "Background class is \"" << name << "\" with id " << bgclass;
-    mout << "." << std::endl;
+    eblprinto(mout, "Background class is \"" << name << "\" with id " << bgclass
+              << "." << std::endl);
   } else if (bg)
-    merr << "warning: background class \"" << bg << "\" not found."
-         << std::endl;
+    eblprinto(merr, "warning: background class \"" << bg << "\" not found."
+              << std::endl);
 }
 
 // TODO: handle more than 1 class
@@ -252,11 +250,11 @@ bool detector<T>::set_mask_class(const char *mask) {
   name = mask;
   mask_class = get_class_id(name);
   if (mask_class != -1) {
-    mout << "Mask class is \"" << name << "\" with id " << mask_class;
-    mout << "." << std::endl;
+    eblprinto(mout, "Mask class is \"" << name << "\" with id " << mask_class <<
+              "." << std::endl);
     return true;
   }
-  merr << "warning: mask class \"" << mask << "\" not found." << std::endl;
+  eblprinto(merr, "warning: mask class \"" << mask << "\" not found." << std::endl);
   return false;
 }
 
@@ -269,27 +267,28 @@ template <typename T>
 void detector<T>::set_max_resolution(uint max_size_) {
   uint mzpad = std::max(hzpad * 2, wzpad * 2);
   max_size = max_size_ + mzpad;
-  mout << "Setting maximum input height or width to "
-       << max_size << " (" << max_size_ << " + " << mzpad << ")" << std::endl;
+  eblprinto(mout, "Setting maximum input height or width to "
+            << max_size << " (" << max_size_ << " + " << mzpad << ")" << std::endl);
 }
 
 template <typename T>
 void detector<T>::set_min_resolution(uint min_size_) {
-  mout << "Setting minimum input size to " << min_size_ << "x"
-       << min_size_ << "." << std::endl;
+  eblprinto(mout, "Setting minimum input size to " << min_size_ << "x"
+            << min_size_ << "." << std::endl);
   min_size = min_size_;
 }
 
 template <typename T>
 void detector<T>::set_raw_thresholds(std::vector<float> &t) {
-  mout << "Using multiple thresholds for raw bbox extractions: " << t << std::endl;
+  eblprinto(mout, "Using multiple thresholds for raw bbox extractions: "
+            << t << std::endl);
   raw_thresholds = t;
 }
 
 template <typename T>
 void detector<T>::set_outputs_threshold(T t, T new_val) {
-  mout << "Setting raw outputs threshold to " << t
-       << ", replacing values below with " << new_val << std::endl;
+  eblprinto(mout, "Setting raw outputs threshold to " << t
+            << ", replacing values below with " << new_val << std::endl);
   outputs_threshold = t;
   outputs_threshold_val = new_val;
 }
@@ -327,15 +326,15 @@ set_nms(t_nms type, float pre_threshold_, float post_threshold_,
     default: // unknown
       eblerror("unknown type of nms " << type);
   }
-  mout << "Non-maximum suppression (nms): "
-       << (pnms ? pnms->describe() : "none") << std::endl;
+  eblprinto(mout, "Non-maximum suppression (nms): "
+            << (pnms ? pnms->describe() : "none") << std::endl);
 }
 
 template <typename T>
 void detector<T>::set_scaler_mode(bool set) {
   scaler_mode = set;
-  mout << "Scaler mode is "
-       << (scaler_mode ? "enabled" : "disabled") << "." << std::endl;
+  eblprinto(mout, "Scaler mode is "
+            << (scaler_mode ? "enabled" : "disabled") << "." << std::endl);
 }
 
 template <typename T>
@@ -343,7 +342,7 @@ void detector<T>::set_netdim(idxdim &d) {
   netdim = d;
   netdim.insert_dim(0, 1);
   netdim_fixed = true;
-  mout << "Manually setting network's minimum input to " << d << std::endl;
+  eblprinto(mout, "Manually setting network's minimum input to " << d << std::endl);
 }
 
 template <typename T>
@@ -385,26 +384,26 @@ void detector<T>::set_ignore_outsiders() {
 
 template <typename T>
 void detector<T>::set_corners_inference(uint type) {
-  mout << "Setting corners inference type to " << type << std::endl;
+  eblprinto(mout, "Setting corners inference type to " << type << std::endl);
   corners_inference = type;
 }
 
 template <typename T>
 void detector<T>::set_bbox_decision(uint type) {
   bbox_decision = type;
-  mout << "Setting bbox decision type to " << type << std::endl;
+  eblprinto(mout, "Setting bbox decision type to " << type << std::endl);
 }
 
 template <typename T>
 void detector<T>::set_bbox_scalings(mfidxdim &scalings) {
   bbox_scalings = scalings;
-  mout << "Setting bbox scalings to " << bbox_scalings << std::endl;
+  eblprinto(mout, "Setting bbox scalings to " << bbox_scalings << std::endl);
 }
 
 template <typename T>
 void detector<T>::set_input_gain(double gain) {
   input_gain = (T) gain;
-  mout << "Setting input gain to " << gain << std::endl;
+  eblprinto(mout, "Setting input gain to " << gain << std::endl);
 }
 
 // initialization //////////////////////////////////////////////////////////////
@@ -469,54 +468,59 @@ compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
   // fill scales based on scaling type
   scales.clear();
   if (!silent)
-    mout << "Scales: input: " << indim << " min: " << netdim
-         << " max: " << maxdim << std::endl
-         << "Scaling type " << type << ": ";
+    eblprinto(mout, "Scales: input: " << indim << " min: " << netdim
+              << " max: " << maxdim << std::endl
+              << "Scaling type " << type << ": ");
   switch (type) {
     case ORIGINAL:
-      if (!silent) mout << "1 scale only, the image's original scale." << std::endl;
+      if (!silent) eblprinto(mout, "1 scale only, the image's original scale."
+                             << std::endl);
       scales.push_back(indim);
       break ;
     case MANUAL:
       if (!silent)
-	mout << "Manual specification of each scale size";
+	eblprinto(mout, "Manual specification of each scale size");
       if (frame_id >= 0) {
 	uint sc = std::min((uint)frame_id, (uint)manual_scales.size());
 	scales = manual_scales[sc];
-	if (!silent) mout << " for image " << frame_id << " from scales set "
-			  << sc << ":" << scales << std::endl;
+	if (!silent) eblprinto(mout, " for image "
+                               << frame_id << " from scales set "
+                               << sc << ":" << scales << std::endl);
       } else {
 	scales = manual_scales[0];
-	if (!silent) mout << " to: " << std::endl;
+	if (!silent) eblprinto(mout, " to: " << std::endl);
       }
       break ;
     case SCALES:
       if (!silent)
-	mout << "Manual specification of each scale factor applied to "
-	     << "original dimensions." << std::endl;
+	eblprinto(mout, "Manual specification of each scale factor applied to "
+                  << "original dimensions." << std::endl);
       compute_resolutions(scales, indim, scale_factors);
       break ;
     case NSCALES: // n scale between min and max resolutions
       if (!silent)
-	mout << nscales << " scales between min (" << netdim
-	     << ") and max (" << maxdim << ") scales." << std::endl;
+	eblprinto(mout, nscales << " scales between min (" << netdim
+                  << ") and max (" << maxdim << ") scales." << std::endl);
       compute_resolutions(scales, netdim, maxdim, nscales);
       break ;
     case SCALES_STEP: // step fixed amount from scale from max down to min
       if (!silent)
-	mout << "Scale step of " << scales_step << " from max (" << maxdim
-	     << ") down to min (" << mindim << ") scale." << std::endl;
+	eblprinto(mout, "Scale step of " << scales_step
+                  << " from max (" << maxdim
+                  << ") down to min (" << mindim << ") scale." << std::endl);
       compute_resolutions(scales, mindim, maxdim, scales_step);
       break ;
     case SCALES_STEP_UP: // step fixed amount from scale min up to max
       if (!silent)
-	mout << "Scale step of " << scales_step << " from min (" << mindim
-	     << ") up to max (" << maxdim << ") scale." << std::endl;
+	eblprinto(mout, "Scale step of " << scales_step
+                  << " from min (" << mindim
+                  << ") up to max (" << maxdim << ") scale." << std::endl);
       compute_resolutions_up(scales, indim, mindim, maxdim, scales_step);
       break ;
     case NETWORK:
       if (!silent)
-	mout << "Resize all inputs to network's minimal size" << std::endl;
+	eblprinto(mout, "Resize all inputs to network's minimal size"
+                  << std::endl);
       scales.push_back(netdim);
       break ;
     default: eblerror("unknown scaling mode");
@@ -524,10 +528,10 @@ compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
   // remove pad from target scales
   if (scale_remove_pad) {
     for (uint i = 0; i < scales.size(); ++i) {
-      std::cout << "removing pad from " << scales[i] << ": ";
+      eblprint( "removing pad from " << scales[i] << ": ");
       scales[i].setdim(1, scales[i].dim(1) - 74);
       scales[i].setdim(2, scales[i].dim(2) - 46);
-      std::cout << scales[i] << std::endl;
+      eblprint( scales[i] << std::endl);
     }
   }
   // limit scales with max_size
@@ -535,8 +539,8 @@ compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
     idxdim d = *i;
     if (max_size > 0 && (d.dim(1) > max_size || d.dim(2) > max_size)) {
       scales.erase(i);
-      mout << "removing scale " << d << " because of max size " << max_size
-           << std::endl;
+      eblprinto(mout, "removing scale " << d << " because of max size "
+                << max_size << std::endl);
     } else i++;
   }
   // // transform scales to be network sizes compatible
@@ -547,11 +551,11 @@ compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
     original_bboxes.push_back(bb);
   EDEBUG("original boxes: " << original_bboxes);
   // print scales
-  mout << "Detection initialized to ";
-  if (adapt_scales) mout << "(network-adapted scales) ";
-  if (scales.size() == 0) mout << "0 resolutions." << std::endl;
-  else mout << scales.size() << " input resolutions: " << scales;
-  mout << std::endl;
+  eblprinto(mout, "Detection initialized to ");
+  if (adapt_scales) eblprinto(mout, "(network-adapted scales) ");
+  if (scales.size() == 0) eblprinto(mout, "0 resolutions." << std::endl);
+  else eblprinto(mout, scales.size() << " input resolutions: " << scales);
+  eblprinto(mout, std::endl);
   if (scales.size() == 0)
     eblthrow("0 resolutions to compute in " << frame_name);
 }
@@ -672,9 +676,9 @@ void detector<T>::network_compatible_sizes(midxdim &sizes) {
     fidxdim sz = sizes[i];
     mfidxdim msz;
     msz.push_back_new(sz);
-    std::cout << "original sz: " << msz;
+    eblprint( "original sz: " << msz);
     mfidxdim r = thenet.fprop_size(msz);
-    std::cout << " sz2: " << msz << " returned: " << r << std::endl;
+    eblprint( " sz2: " << msz << " returned: " << r << std::endl);
   }
 }
 
@@ -687,7 +691,7 @@ void detector<T>::set_smoothing(uint type, double sigma, idxdim *kerd,
   smoothing_type = type;
   idx<T> ker;
   switch (smoothing_type) {
-    case 0: mout << "Outputs smoothing disabled." << std::endl; break ;
+  case 0: eblprinto(mout, "Outputs smoothing disabled." << std::endl); break ;
     case 1:
       ker = idx<T>(3, 3);
       ker.set(.3, 0, 0);
@@ -708,14 +712,14 @@ void detector<T>::set_smoothing(uint type, double sigma, idxdim *kerd,
             create_mexican_hat2<T>(kerd->dim(0), kerd->dim(1), sigma,
                                    sigma_scale);
       else smoothing_kernel = create_mexican_hat2<T>(9, 9, sigma, sigma_scale);
-      mout << "Mexican hat sigma: " << sigma
-	   << " scale: " << sigma_scale << std::endl;
+      eblprinto(mout, "Mexican hat sigma: " << sigma
+                << " scale: " << sigma_scale << std::endl);
       break ;
     default:
       eblerror("Unknown smoothing type " << type);
   }
   if (smoothing_type > 0) {
-    mout << "Smoothing outputs with kernel: " << std::endl;
+    eblprinto(mout, "Smoothing outputs with kernel: " << std::endl);
     smoothing_kernel.print();
   }
 }
@@ -764,11 +768,12 @@ void detector<T>::update_merge_alignment() {
   std::vector<flat_merge_module<T>*> mergers =
       arch_find_all(&thenet, merger);
   if (mergers.size() > 0) {
-    mout << "Found merging module(s) in network: " << mergers << std::endl;
+    eblprinto(mout, "Found merging module(s) in network: "
+              << mergers << std::endl);
     for (uint i = 0; i < mergers.size(); ++i)
-      mout << mergers[i]->describe()<< std::endl;
+      eblprinto(mout, mergers[i]->describe()<< std::endl);
   } else {
-    mout << "No merging module found in network." << std::endl;
+    eblprinto(mout, "No merging module found in network." << std::endl);
     return ;
   }
   // align for each merger module
@@ -780,7 +785,8 @@ void detector<T>::update_merge_alignment() {
     if (!merger_net || !merger_net_included)
       eblerror("failed to narrow network up to " << merger);
     EDEBUG("network narrowed up to merger module: " << merger->name());
-    mout << "Aligning merging centers on top left image origin." << std::endl;
+    eblprinto(mout, "Aligning merging centers on top left image origin."
+              << std::endl);
     //    for (uint i = 0; i < merger->get_ninputs(); ++i) {
     fidxdim c(1, 1, 1), f(1, 1, 1), f2(1, 1, 1), c0, c1;
     mfidxdim m(c), m0, m0m, m1, paddings; //(merger->get_ninputs());
@@ -900,11 +906,14 @@ void detector<T>::update_merge_alignment() {
       // 	     stride.dim(0) * hc / hs, stride.dim(1) * wc / ws);
       // fidxdim pads(stride.dim(0) * hc / hs, stride.dim(1) * wc / ws, 0, 0);
       // 	paddings.push_back_new(pads);
-      mout << merger->name() << "'s input " << i << " must be padded/narrowed with "
-           << offs << " to recenter " << p0 << " (center " << hc << "x" << wc
-           << "), (output stride is " << hs << "x" << ws << ")" << std::endl;
+      eblprinto(mout, merger->name() << "'s input " << i
+                << " must be padded/narrowed with "
+                << offs << " to recenter " << p0 << " (center "
+                << hc << "x" << wc
+                << "), (output stride is " << hs << "x" << ws << ")"
+                << std::endl);
     }
-    // std::cout << "merge paddings: " << paddings << std::endl;
+    // eblprint( "merge paddings: " << paddings << std::endl);
     merger->set_offsets(alloff);
     merger->set_strides(allstrides);
   }
@@ -1118,8 +1127,8 @@ void detector<T>::extract_bboxes(T threshold, bboxes &bbs) {
       answers[scale].x.push_back_new(out.x[0]);
 
       idx<T> tmp = outx.select(0, 1);
-      // std::cout << "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
-      //      << " max " << idx_max(tmp) << std::endl;
+      // eblprint( "out " << o << " threshold " << thresh << " min " << idx_min(tmp)
+      //      << " max " << idx_max(tmp) << std::endl);
 
       // loop on width
       idx_eloop1(ro, out, T) {
@@ -1294,7 +1303,7 @@ bboxes& detector<T>::fprop(idx<Tin> &img, const char *frame_name,
   fprop_nms(raw_bboxes, pruned_bboxes);
   TIMING1("bbox nms");
   // print results
-  if (!silent) mout << "found " << pruned_bboxes.pretty(&labels);
+  if (!silent) eblprinto(mout, "found " << pruned_bboxes.pretty(&labels));
   // save positive response input windows in save mode
   if (save_mode) save_bboxes(pruned_bboxes, save_dir, frame_name);
   // backward connections
@@ -1368,8 +1377,9 @@ save_bboxes(bboxes &boxes, const std::string &dir, const char *frame_name) {
     try {
       // save preprocessed image as lush mat
       if (save_matrices(sample, fname.str()))
-        mout << "saved " << fname.str() << ": " << sample << " (confidence "
-             << bb.confidence << ")" << std::endl;
+        eblprinto(mout, "saved " << fname.str() << ": "
+                  << sample << " (confidence "
+                  << bb.confidence << ")" << std::endl);
     } catch(eblexception &e) {};
     // ///////////////////////////////////////////////////////////////////////
     // // original
@@ -1414,9 +1424,9 @@ template <typename T>
 void detector<T>::add_class(const char *name) {
   if (!name)
     eblerror("cannot add empty class name");
-  mout << "Adding class " << name << std::endl;
+  eblprinto(mout, "Adding class " << name << std::endl);
   labels.push_back(name);
-  mout << "New class list is: " << labels << std::endl;
+  eblprinto(mout, "New class list is: " << labels << std::endl);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1439,11 +1449,12 @@ std::string& detector<T>::set_save(const std::string &directory, uint nmax,
   // save_dir += tstamp();
   diverse_ordering = diverse;
   save_max_per_frame = nmax;
-  mout << "Enabling saving of detected regions into: ";
-  mout << save_dir << std::endl;
-  mout << "Saving at most " << save_max_per_frame << " positive windows"
-       << (diverse_ordering ? " and ordering them by diversity." : ".")
-       << std::endl;
+  eblprinto(mout, "Enabling saving of detected regions into: ");
+  eblprinto(mout, save_dir << std::endl);
+  eblprinto(mout, "Saving at most " << save_max_per_frame
+            << " positive windows"
+            << (diverse_ordering ? " and ordering them by diversity." : ".")
+            << std::endl);
   return save_dir;
 }
 
@@ -1666,8 +1677,8 @@ void detector<T>::multi_res_fprop() {
         idx<T> &o = out.x[0];
         fname << "_" << o << ".mat";
         save_matrix(o, fname);
-        mout << "Saved " << fname << " (" << o << ", min: " << idx_min(o)
-             << ", max: " << idx_max(o) << ")" << std::endl;
+        eblprinto(mout, "Saved " << fname << " (" << o << ", min: " << idx_min(o)
+                  << ", max: " << idx_max(o) << ")" << std::endl);
       } else {
         // TODO: write code to save multi-state x components
       }
@@ -1693,7 +1704,7 @@ void detector<T>::multi_res_fprop() {
       // output = tmp;
     }
   }
-  if (!silent) mout << "net_processing=" << t.elapsed_ms() << std::endl;
+  if (!silent) eblprinto(mout, "net_processing=" << t.elapsed_ms() << std::endl);
 }
 
 } // end namespace ebl

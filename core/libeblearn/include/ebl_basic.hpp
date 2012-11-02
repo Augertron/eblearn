@@ -494,10 +494,10 @@ bool convolution_module<T>::resize_output(idx<T> &in, idx<T> &out,
              << " in dimension 0 but found: " << in);
   if (!warnings_shown && (in.dim(0) > tablemax + 1)) {
     warnings_shown = true;
-    std::cerr << "warning: convolution connection table is not using all inputs "
+    eblwarn( "warning: convolution connection table is not using all inputs "
               << "in layer " << this->name() << " the maximum input index used by "
               << "the table is " << tablemax << " but the input is "
-              << in << std::endl;
+             << in << std::endl);
   }
   // check sizes
   if (!crop && (((in.dim(1) - (ki - si)) % si != 0) ||
@@ -507,8 +507,8 @@ bool convolution_module<T>::resize_output(idx<T> &in, idx<T> &out,
   if ((stride.dim(0) != 1) || (stride.dim(1) != 1)) {
     use_ipp = false;
     if (!ipp_err_printed) {
-      // std::cerr << "Warning: not using IPP in " << this->name()
-      //      << " because stride > 1 not implemented for IPP" << std::endl;
+      // eblwarn( "Warning: not using IPP in " << this->name()
+      //      << " because stride > 1 not implemented for IPP" << std::endl);
       ipp_err_printed = true;
     }
   } else use_ipp = true;
@@ -1250,7 +1250,7 @@ void mirrorpad_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   idxdim d(input.dim(0), input.dim(1) + top + bottom,
            input.dim(2) + left + right);
   if (&in == &out) { // same buffers, use a temporary copy
-    std::cout << "TEMPORARY COPY!!!!!!!!!!!!!" << std::endl;
+    eblprint( "TEMPORARY COPY!!!!!!!!!!!!!" << std::endl);
     // FIXME
     input = idx<T>(input.get_idxdim());
     idx_copy(input, input); // only copy forward
@@ -1438,14 +1438,14 @@ template <typename T>
 void range_lut_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   this->resize_output(in, out); // resize out iff necessary
   idx_aloop2(inx, in, T, outx, out, T) {
-    //      std::cout << "v0: " << *inx;
+    //      eblprint( "v0: " << *inx);
     idx_bloop1(vr, value_range, T) {
       if (*inx < vr.get(1)) {
         *outx = vr.get(0);
         break ;
       }
     }
-    //      std::cout << " v1: " << *outx << std::endl;
+    //      eblprint( " v1: " << *outx << std::endl);
   }
 }
 
@@ -1607,10 +1607,10 @@ void back_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   this->resize_output(in, out); // resize (iff necessary)
   // copy input to s0
   idx_copy(in, *s0);
-  std::cout << "back: mins: so: " << idx_min(*s0) << " s1: " << idx_min(*s1) << " s2: "
-            << idx_min(*s2) << std::endl;
-  std::cout << "back: maxs: so: " << idx_max(*s0) << " s1: " << idx_max(*s1) << " s2: "
-            << idx_max(*s2) << std::endl;
+  eblprint( "back: mins: so: " << idx_min(*s0) << " s1: " << idx_min(*s1) << " s2: "
+            << idx_min(*s2) << std::endl);
+  eblprint( "back: maxs: so: " << idx_max(*s0) << " s1: " << idx_max(*s1) << " s2: "
+            << idx_max(*s2) << std::endl);
   // put max of all buffers in output
   //     idx_aloop3(x0, *s0, T, x1, *s1, T, o, out, T) {
   //       *o = std::max(*x0, *x1);
@@ -1623,7 +1623,7 @@ void back_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T>
 void back_module<T>::bb(std::vector<bbox*> &boxes) {
-  std::cout << "back: " << boxes.size() << " boxes" << std::endl;
+    eblprint( "back: " << boxes.size() << " boxes" << std::endl);
   // shift internal buffers and clear first one
   idx_copy(*s1, *s2);
   idx_fill(*s1, (T)BACK_MIN);
@@ -1653,8 +1653,8 @@ void back_module<T>::bb(std::vector<bbox*> &boxes) {
   }
   // shift buffers for horizontal motion
   int wshift = (int) (.02 * width);
-  std::cout << "back: shift by " << wshift << " pixels (width: "
-            << width << ")" << std::endl;
+  eblprint( "back: shift by " << wshift << " pixels (width: "
+            << width << ")" << std::endl);
   idx<T> tmp(s1->get_idxdim());
   idx_fill(tmp, (T)BACK_MIN);
   idx<T> shifted = tmp.narrow(2, width - wshift, wshift);
@@ -1682,7 +1682,7 @@ bool back_module<T>::resize_output(idx<T> &in, idx<T> &out, idxdim *ignore) {
     out.resize(d);
   }
   if (!s0 || s0->get_idxdim() != d) {
-    std::cout << "back: resizing internal buffers to " << d << std::endl;
+    eblprint( "back: resizing internal buffers to " << d << std::endl);
     if (s0) s0->resize(d); else s0 = new idx<T>(d);
     if (s1) s1->resize(d); else s1 = new idx<T>(d);
     if (s2) s2->resize(d); else s2 = new idx<T>(d);
@@ -1697,8 +1697,8 @@ bool back_module<T>::resize_output(idx<T> &in, idx<T> &out, idxdim *ignore) {
 template <typename T>
 fidxdim back_module<T>::bprop1_size(const fidxdim &osize) {
   pixel_size = osize;
-  std::cout << "back_module: 1 output pixel corresponds here to " << pixel_size
-            << std::endl;
+  eblprint( "back_module: 1 output pixel corresponds here to " << pixel_size
+            << std::endl);
   return osize;
 }
 
@@ -1724,7 +1724,7 @@ template <typename T>
 void printer_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   T max = idx_max(in);
   T min = idx_min(in);
-  std::cout << "min: "<< min << "\tmax: "<< max << std::endl;
+  eblprint( "min: "<< min << "\tmax: "<< max << std::endl);
   idx_copy(in, out);
 }
 
@@ -1735,7 +1735,7 @@ void printer_module<T>::bprop1(state<T> &in, state<T> &out) {
   // backprop
   T max = idx_max(out.dx[0]);
   T min = idx_min(out.dx[0]);
-  std::cout << "min: "<< min << "\tmax: "<< max << std::endl;
+  eblprint( "min: "<< min << "\tmax: "<< max << std::endl);
   idx_copy(out.dx[0], in.dx[0]);
 }
 
@@ -1746,7 +1746,7 @@ void printer_module<T>::bbprop1(state<T> &in, state<T> &out) {
   // backprop
   T max = idx_max(out.ddx[0]);
   T min = idx_min(out.ddx[0]);
-  std::cout << "min: "<< min << "\tmax: "<< max << std::endl;
+  eblprint( "min: "<< min << "\tmax: "<< max << std::endl);
   idx_copy(out.ddx[0], in.ddx[0]);
 }
 

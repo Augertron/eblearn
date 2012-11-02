@@ -47,7 +47,7 @@ supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, ddparameter<T> &p)
   energy.resize_ddx();
   energy.dx[0].set(1.0); // d(E)/dE is always 1
   energy.ddx[0].set(0.0); // dd(E)/dE is always 0
-  std::cout << "Training with: " << m.describe() << std::endl;
+  eblprint( "Training with: " << m.describe() << std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -106,8 +106,8 @@ test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
   uint ntest = ds.size();
   if (max_test > 0) { // limit the number of tests
     ntest = std::min(ntest, max_test);
-    std::cout << "Limiting the number of tested samples to " << ntest
-              << std::endl;
+    eblprint( "Limiting the number of tested samples to " << ntest
+              << std::endl);
   }
   // TODO: simplify this
   std::vector<std::string*> lblstr;
@@ -136,7 +136,7 @@ test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
   } while (ds.next() && i++ < ntest);
   ds.normalize_all_probas();
   log.display(iteration, ds.name(), &lblstr, ds.is_test());
-  std::cout << std::endl;
+  eblprint( std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -144,14 +144,14 @@ void supervised_trainer<T, Tdata, Tlabel>::
 train(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
       gd_param &gdp, int niter, infer_param &infp,
       intg hessian_period, intg nhessian, double mu) {
-  std::cout << "training on " << niter * ds.get_epoch_size();
+  eblprint( "training on " << niter * ds.get_epoch_size());
   if (nhessian == 0) {
-    std::cout << " samples and disabling 2nd order derivative calculation" << std::endl;
+    eblprint( " samples and disabling 2nd order derivative calculation" << std::endl);
     param.set_epsilon(1.0);
   } else {
-    std::cout << " samples and recomputing 2nd order "
+    eblprint( " samples and recomputing 2nd order "
               << "derivatives on " << nhessian << " samples after every "
-              << hessian_period << " trained samples..." << std::endl;
+              << hessian_period << " trained samples..." << std::endl);
   }
   timer t;
   init(ds, &log);
@@ -187,23 +187,23 @@ train(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
       if (gdp.anneal_period > 0 && ((age - 1) % gdp.anneal_period) == 0) {
         gdp.eta = gdp.eta /
 	    (1 + ((age / gdp.anneal_period) * gdp.anneal_value));
-        std::cout << "age: " << age << " updated eta=" << gdp.eta << std::endl;
+        eblprint( "age: " << age << " updated eta=" << gdp.eta << std::endl);
       }
       update_progress(); // tell the outside world we're still running
     }
     ds.normalize_all_probas();
-    std::cout << "epoch_count=" << ds.get_epoch_count() << std::endl;
-    std::cout << "training_time="; t.pretty_elapsed();
-    std::cout << std::endl;
+    eblprint( "epoch_count=" << ds.get_epoch_count() << std::endl);
+    eblprint( "training_time="; t.pretty_elapsed());
+    eblprint( std::endl);
     // report accuracy on trained sample
     if (test_running) {
-      std::cout << "Training running test:" << std::endl;
+      eblprint( "Training running test:" << std::endl);
       // TODO: simplify this
       class_datasource<T,Tdata,Tlabel> *cds =
 	  dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
       log.display(iteration, ds.name(), cds ? cds->lblstr : NULL,
                   ds.is_test());
-      std::cout << std::endl;
+      eblprint( std::endl);
     }
   }
 }
@@ -212,8 +212,8 @@ template <typename T, typename Tdata, typename Tlabel>
 void supervised_trainer<T,Tdata,Tlabel>::
 compute_diaghessian(labeled_datasource<T,Tdata,Tlabel> &ds, intg niter,
                     double mu) {
-  std::cout << "computing 2nd order derivatives on " << niter << " samples..."
-            << std::endl << "parameters: " << param.info() << std::endl;
+  eblprint( "computing 2nd order derivatives on " << niter << " samples..."
+            << std::endl << "parameters: " << param.info() << std::endl);
   timer t;
   t.start();
   //     init(ds, NULL);
@@ -238,16 +238,16 @@ compute_diaghessian(labeled_datasource<T,Tdata,Tlabel> &ds, intg niter,
   }
   ds.restore_state(); // set ds state back
   param.compute_epsilons(mu);
-  std::cout << "diaghessian inf: " << idx_min(param.epsilons);
-  std::cout << " sup: " << idx_max(param.epsilons);
-  std::cout << " diaghessian_minutes=" << t.elapsed_minutes() << std::endl;
+  eblprint( "diaghessian inf: " << idx_min(param.epsilons));
+  eblprint( " sup: " << idx_max(param.epsilons));
+  eblprint( " diaghessian_minutes=" << t.elapsed_minutes() << std::endl);
 }
 
 // accessors /////////////////////////////////////////////////////////////////
 
 template <typename T, typename Tdata, typename Tlabel>
 void supervised_trainer<T, Tdata, Tlabel>::set_iteration(int i) {
-  std::cout << "Setting iteration id to " << i << std::endl;
+  eblprint( "Setting iteration id to " << i << std::endl);
   iteration = i;
 }
 
@@ -262,8 +262,8 @@ pretty(labeled_datasource<T, Tdata, Tlabel> &ds) {
   if (!prettied) {
     // pretty sizes of input/output for each module the first time
     mfidxdim d(ds.sample_mfdims());
-    std::cout << "machine sizes: " << d << machine.mod1.pretty(d) << std::endl
-              << "trainable parameters: " << param << std::endl;
+    eblprint( "machine sizes: " << d << machine.mod1.pretty(d) << std::endl
+              << "trainable parameters: " << param << std::endl);
     prettied = true;
   }
 }
@@ -272,7 +272,7 @@ template <typename T, typename Tdata, typename Tlabel>
 void supervised_trainer<T, Tdata, Tlabel>::
 set_progress_file(const std::string &f) {
   progress_file = f;
-  std::cout << "Setting progress file to \"" << f << "\"" << std::endl;
+  eblprint( "Setting progress file to \"" << f << "\"" << std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>

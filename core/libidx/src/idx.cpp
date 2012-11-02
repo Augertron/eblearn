@@ -56,10 +56,10 @@ void pretty_memory(const char *prefix) {
   intg locks = smart_pointer::locks;
   intg sp = smart_pointer::spointers;
   // print
-  std::cout << prefix << " idx total_memory_usage="
+  eblprint( prefix << " idx total_memory_usage="
             << total / (float) 1048576 << " Mb"
             << ", Locks: " << locks
-            << ", smart pointers: " << sp << std::endl;
+            << ", smart pointers: " << sp << std::endl);
 }
 
 template <> std::string idx<double>::info() {

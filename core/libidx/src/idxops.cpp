@@ -44,7 +44,7 @@ namespace ebl {
     intg N1=(i1).nelements();						\
     intg N2 =(i2).nelements();						\
     if (N1 != N2) {							\
-      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblwarn( "incompatible idxs: " << i1 << " and " << i2 << endl);	\
       eblerror("idx_op: idxs have different number of elements\n"); }	\
     if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
       /* they are 1D vectors of the same size, use the stride version */ \
@@ -84,7 +84,7 @@ namespace ebl {
     intg N1=(i1).nelements();						\
     intg N2 =(i2).nelements();						\
     if (N1 != N2) {							\
-      cerr << "incompatible idxs: " << i1 << " and " << i2 << endl;	\
+      eblwarn( "incompatible idxs: " << i1 << " and " << i2 << endl);	\
       eblerror("idx_op: idxs have different number of elements\n"); }	\
     if ( ((i1).order() == 0) && ((i2).order() == 0) ) {			\
       /* they are 1D vectors of the same size, use the stride version */ \

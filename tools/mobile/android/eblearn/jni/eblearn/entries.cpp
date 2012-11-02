@@ -37,7 +37,6 @@
 #include "libeblearn.h"
 
 using namespace ebl;
-using namespace std;
 
 extern "C" {
 
@@ -56,8 +55,8 @@ extern "C" {
     //    configuration conf;
     
     if (!fd_sys1 || !fd_sys1 || !fd_sys1) {
-      cerr << "null file descriptor: " << fd_sys1 << " " << fd_sys2
-	   << " " << fd_sys3 << endl;
+      eblprint( "null file descriptor: " << fd_sys1 << " " << fd_sys2
+                << " " << fd_sys3 << std::endl);
       return -1;
     }
     jclass fdClass = env->FindClass("java/io/FileDescriptor");
@@ -72,21 +71,21 @@ extern "C" {
 	// weights
 	fp = fdopen(fd1, "rb"); 
 	if (!fp) {
-	  cerr << "Could not open resource file descriptor " << fp << endl;
+	  eblwarn("Could not open resource file descriptor " << fp << std::endl);
 	  return -1; }
 	fseek(fp, off1, SEEK_SET);
 	weights = load_matrix<t_net>(fp);
-	cout << "Loaded weight matrix: " << weights
+	eblprint( "Loaded weight matrix: " << weights
 	     << " (min: " << idx_min(weights)
-	     << ", max: " << idx_max(weights) << ")" << endl;
+                  << ", max: " << idx_max(weights) << ")" << std::endl);
 	// class names
 	fp = fdopen(fd2, "rb"); 
 	if (!fp) {
-	  cerr << "Could not open resource file descriptor " << fp << endl;
+	  eblwarn( "Could not open resource file descriptor " << fp << std::endl);
 	  return -1; }
 	fseek(fp, off2, SEEK_SET);
 	classnames = load_matrix<ubyte>(fp);
-	cout << "Loaded class names matrix: " << classnames << endl;
+	eblprint( "Loaded class names matrix: " << classnames << std::endl);
 	// // configuration
 	// fp = fdopen(fd3, "rb"); 
 	// if (!fp) { LOGI("Could not open resource file descriptor " << fp);
@@ -103,16 +102,17 @@ extern "C" {
     int ret;
 
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
-      cerr << "AndroidBitmap_getInfo() failed ! error=" << ret << endl;
+      eblwarn("AndroidBitmap_getInfo() failed ! error=" << ret << std::endl);
       return -1; }
-    cout << "Image height " << info.height << " width " << info.width
-	 << " format: " << info.format << " stride: " << info.stride << endl;
+    eblprint( "Image height " << info.height << " width " << info.width
+              << " format: " << info.format << " stride: "
+              << info.stride << std::endl);
     if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
       LOGE("Bitmap format is not ARGB_8888 !");
       return -1;
     }
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
-      cerr << "AndroidBitmap_lockPixels() failed ! error=" << ret << endl;
+      eblwarn("AndroidBitmap_lockPixels() failed ! error=" << ret << std::endl);
       return -1; }
     typedef ubyte intype;
     idx<ubyte> im(info.height, info.width, 3);
@@ -125,8 +125,8 @@ extern "C" {
       p++; // a
     }
     AndroidBitmap_unlockPixels(env, bitmap);
-    cout << "Created idx image " << im << " (range: " << (int) idx_min(im)
-	 << ", " << (int) idx_max(im) << ")" << endl;
+    eblprint( "Created idx image " << im << " (range: " << (int) idx_min(im)
+              << ", " << (int) idx_max(im) << ")" << std::endl);
     // string fname = "/sdcard/nens.mat";
     // im = load_matrix<ubyte>(fname);
     //      eblerror("failed to load " << fname);
@@ -134,17 +134,20 @@ extern "C" {
     ////////////////////////////////////////////////////////////////////////////
     // start detection
     uint norm_size = 7, input_max = 300;
-    float scaling = 1.3, min_scale = 1.0, max_scale = 1.0,
-      bbhfactor = 1, bbwfactor = 1, bbh_overlap = .67, bbw_overlap = 0,
-      hzpad = .5, wzpad = .5;
-    uint net_ih = 32, net_iw = 32, net_c1h = 5, net_c1w = 5,
-      net_s1h = 2, net_s1w = 2, net_c2h = 5, net_c2w = 5,
-      net_s2h = 2, net_s2w = 2, noutputs = classnames.dim(0);
-    bool absnorm = true, color = false, mirror = false, use_tanh = true,
+    float scaling = 1.4, min_scale = 1.0, max_scale = 2.0;
+    float bbhfactor = 1, bbwfactor = 1, bbh_overlap = .67, bbw_overlap = 0;
+    float hzpad = .5, wzpad = .5;
+    uint net_ih = 32, net_iw = 32;
+    uint net_c1h = 5, net_c1w = 5;
+    uint net_s1h = 2, net_s1w = 2;
+    uint net_c2h = 5, net_c2w = 5;
+    uint net_s2h = 2, net_s2w = 2;
+    uint noutputs = classnames.dim(0);
+    bool absnorm = true, color = false,  use_tanh = true,
       use_shrink = false, pruning = true;
 
     // load classes
-    vector<string> sclasses;
+    std::vector<std::string> sclasses;
     idx_bloop1(uu, classnames, ubyte) {
       sclasses.push_back((const char *) uu.idx_ptr());
     }
@@ -163,58 +166,71 @@ extern "C" {
 
     // create preprocessing
     module_1_1<t_net> *chanmodule = NULL;
-    resizepp_module<t_net> *ppmodule = NULL;
-    bool globn = false; // global normalization
     idxdim norm_dim(norm_size,norm_size);
+    bool globn = true; // global normalization
+    bool mirror = DEFAULT_PP_MIRROR;
     t_norm mode = WSTD_NORM;
     double eps = NORM_EPSILON, eps2 = 0;
-    if (im.dim(2) == 1) // grayscale input
+    if (im.dim(2) == 1) {// grayscale input
       chanmodule = new y_to_yp_module<t_net>(norm_dim, mirror, 
 					      mode, globn, eps, eps2);
-    else if (im.dim(2) == 3) // color input
+      eblprint("Detected Grayscale Input. Setting preprocessing to y_to_yn"
+               << std::endl);
+    }
+    else if (im.dim(2) == 3) { // color input
       chanmodule = new rgb_to_yn_module<t_net>(norm_dim, mirror, mode, 
 						globn, eps, eps2);
+      eblprint("Detected Color Input. Setting preprocessing to rgb_to_yn"
+               << std::endl);
+    }
     else {
-      cerr << "image format not supported: " << im << endl;
+      eblwarn("image format not supported: " << im << std::endl);
       return -1;
-    }   
-    idxdim d(net_ih, net_iw);
+    }
+    module_1_1<t_net> *ppmodule = NULL;
+    idxdim target_size(net_ih, net_iw);
     uint resize_type = MEAN_RESIZE;
     bool keep_aspect_ratio = true;
-    ppmodule = new resizepp_module<t_net>(d, resize_type, 
-							      chanmodule, true,
-					       NULL, keep_aspect_ratio);
+    ppmodule = (module_1_1<t_net>*)
+      new resizepp_module<t_net>(target_size, resize_type, chanmodule, true,
+                                 NULL, keep_aspect_ratio);
 
-    // create network
+    // create network    
     parameter<t_net> theparam;
     // build net
-    lenet_cscsc<t_net>
-      net(theparam, net_ih, net_iw, net_c1h, net_c1w, net_s1h, net_s1w, net_c2h,
-	  net_c2w, net_s2h, net_s2w, noutputs, absnorm, color, mirror, use_tanh,
-	  use_shrink);
+    module_1_1<t_net>
+      *lenet = (module_1_1<t_net>*)new lenet_cscsc<t_net>(theparam, net_ih, net_iw,
+                                                        net_c1h, net_c1w, net_s1h,
+                                                        net_s1w, net_c2h,
+                                                        net_c2w, net_s2h, net_s2w,
+                                                        noutputs, absnorm, color,
+                                                        mirror, use_tanh,
+                                                        use_shrink);
     // load net
     theparam.load_x(weights);
+
+    layers<t_net>* net = new layers<t_net>(true, "face detector");
+    net->add_module(ppmodule);
+    net->add_module(lenet);
     // build detector
-    detector<t_net> detect(net, sclasses, NULL, ppmodule);
+    detector<t_net> detect(*((module_1_1<t_net>*)net), sclasses, NULL, NULL);
     detect.set_resolutions(scaling, max_scale, min_scale);
-    state<t_net> input(1,1,1), output(1,1,1);
-    // detect.set_mem_optimization(input, output);
     detect.set_max_resolution(input_max);
     // TODO: change pruning to nms calls
     //detect.set_pruning(pruning);
     //detect.set_bbox_factors(bbhfactor, bbwfactor);
     //detect.set_bbox_overlaps(bbh_overlap, bbw_overlap);
     detect.set_zpads(hzpad, wzpad);
-    detect.set_silent();
+    // detect.set_silent();
     // detection
-    cout << "Detection threshold: " << threshold << endl;
+    eblprint( "Detection threshold: " << threshold << std::endl);
     detect.set_outputs_threshold(threshold, -1);
     // vector<bbox*> &bb = detect.fprop(im);
+    eblprint( "Detection started!" << std::endl);
     bboxes bb = detect.fprop(im);
     
-    cout << "Detection finished" << endl;
-    bb.pretty_short(sclasses);
-    // detect.pretty_bboxes_short(bb);
+    eblprint( "Detection finished" << std::endl);
+    eblprint(bb.pretty_short(sclasses) << std::endl);    
 
     jclass cls = env->GetObjectClass(jbb);
     jmethodID mid = env->GetMethodID(cls, "add", "(FIIII)V");

@@ -234,8 +234,8 @@ template <typename T>
 bool divisive_norm_module<T>::optimize_fprop(state<T> &in, state<T> &out) {
   // memory optimization
   // if (false) {//hi && ho) { // dual buffers are provided, use them
-  std::cout << "Using dual buffer memory optimization in divisive_norm_module"
-            << std::endl;
+  eblprint( "Using dual buffer memory optimization in divisive_norm_module"
+            << std::endl);
   insq = out;
   invar = in;
   instd = out;
@@ -416,8 +416,8 @@ template <typename T>
 bool subtractive_norm_module<T>::optimize_fprop(state<T> &in, state<T> &out) {
   // memory optimization
   // if (false) {//hi && ho) { // dual buffers are provided, use them
-  std::cout << "Using dual buffer memory optimization in subtractive_norm_module"
-            << std::endl;
+  eblprint( "Using dual buffer memory optimization in subtractive_norm_module"
+            << std::endl);
   inmean = out;
   return true;
 }
@@ -532,8 +532,8 @@ template <typename T>
 bool contrast_norm_module<T>::optimize_fprop(state<T> &in, state<T> &out) {
   // memory optimization
   // if (false) {//hi && ho) { // dual buffers are provided, use them
-  std::cout << "Using dual buffer memory optimization in contrast_norm_module"
-            << std::endl;
+  eblprint( "Using dual buffer memory optimization in contrast_norm_module"
+            << std::endl);
   return true;
 }
 

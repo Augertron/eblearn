@@ -123,6 +123,7 @@ protected:
 
 #else // extending STL
 
+ 
 //! Operator to concatenate elements into the string.
 template<class T> EXPORT string& operator<<(string& e, const T v);
 template<> EXPORT string& operator<<(string& e, void *v);

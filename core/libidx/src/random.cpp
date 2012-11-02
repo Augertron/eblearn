@@ -51,7 +51,7 @@ random::random() {
 
 random::random(int x) {
 	init(x);
-	std::cout << "Random seed initialized to " << x << std::endl;
+	eblprint( "Random seed initialized to " << x << std::endl);
 }
 
 random::~random() {

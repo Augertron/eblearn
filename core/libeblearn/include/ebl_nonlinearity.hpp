@@ -415,7 +415,7 @@ void smooth_shrink_module<T>::bprop1(state<T> &in, state<T> &out) {
     // df/dx
     idx_mul(ebxddxi,outdxi,tindxi);
 
-    //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+    // eblprint(tinxi.get(0,0) << tindxi.get(0,0) << endl);
 
     // ebddx = 1/ebdx
     idx_inv(ebxdxi,ebxddxi);
@@ -481,7 +481,7 @@ void smooth_shrink_module<T>::bbprop1(state<T> &in, state<T> &out){
     idx_mul(ebxddxi,ebxddxi,ebxddxi);
     idx_mul(ebxddxi,outdxi,tindxi);
 
-    //cout << tinxi.get(0,0) << tindxi.get(0,0) << endl;
+    //eblprint(tinxi.get(0,0) << tindxi.get(0,0) << endl);
 
     // ebddx = 1/ebdx
     idx_inv(ebxdxi,ebxddxi);

@@ -167,15 +167,15 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
       conf_ratio = targets.dim(0) * max_dist * max_dist;
       // shift value to be subtracted before dividing by conf_ratio
       conf_shift = target_min;
-      std::cout << "Using sqrdist confidence formula with normalization ratio "
-                << conf_ratio << " and shift value " << conf_shift << std::endl;
+      eblprint( "Using sqrdist confidence formula with normalization ratio "
+                << conf_ratio << " and shift value " << conf_shift << std::endl);
       break ;
     case confidence_single:
       conf_ratio = target_max - target_min;
       // shift value to be subtracted before dividing by conf_ratio
       conf_shift = target_min;
-      std::cout << "Using single output confidence with normalization ratio "
-                << conf_ratio << " and shift value " << conf_shift << std::endl;
+      eblprint( "Using single output confidence with normalization ratio "
+                << conf_ratio << " and shift value " << conf_shift << std::endl);
       break ;
     case confidence_max:
       if (force >= 0) {
@@ -186,8 +186,8 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
 	conf_ratio = target_max - target_min;
 	conf_shift = 0; // no shift needed, the difference min is 0.
       }
-      std::cout << "Using max confidence formula with normalization ratio "
-                << conf_ratio << std::endl;
+      eblprint( "Using max confidence formula with normalization ratio "
+                << conf_ratio << std::endl);
       break ;
     default:
       eblerror("confidence type " << conf_type << " undefined");
@@ -199,7 +199,7 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
   else
     smoothing_kernel =
 	create_mexican_hat2<T>(9, 9, 1, sigma_scale);
-  std::cout << "smoothing kernel:" << std::endl;
+                eblprint( "smoothing kernel:" << std::endl);
   smoothing_kernel.print();
 }
 
@@ -828,7 +828,7 @@ void vote_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
     // accumulate confidence
     uint index = (uint) out.get(0);
     confidences.set(out.get(1) + confidences.get(index), index);
-    std::cout << "id: " << index << " conf: " << out.get(1) << std::endl;
+    eblprint( "id: " << index << " conf: " << out.get(1) << std::endl);
     if (bestconf < out.get(1)) {
       bestconf = out.get(1);
       //bestid = index;
@@ -841,7 +841,7 @@ void vote_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
   //     out.sset(bestconf, 1); // confidence
   out.sset((T) id, 0); // class id
   out.sset(conf, 1); // confidence
-  std::cout << "vote: id: " << id << " conf: " << conf << std::endl;
+  eblprint( "vote: id: " << id << " conf: " << conf << std::endl);
 }
 
 // trainable_module ////////////////////////////////////////////////////////////
@@ -1077,9 +1077,9 @@ std::string trainable_module<T,Tds1,Tds2>::describe() {
 // utility functions ///////////////////////////////////////////////////////////
 
 template <typename T> void print_targets(idx<T> &targets) {
-  std::cout << "Targets: " << targets << std::endl;
+  eblprint( "Targets: " << targets << std::endl);
   if (targets.nelements() < 500)
-    std::cout << targets.str() << std::endl;
+    eblprint( targets.str() << std::endl);
 }
 
 } // end namespace ebl

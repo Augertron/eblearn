@@ -247,11 +247,15 @@ CONCAT_SPRINTF(unsigned char, "%c", unsigned char)
 #define CONCAT_SPRINTF(type, specifier, type_cast)      \
   template <>                                           \
   string& operator<<(string &e, type v) {               \
-    char buf[1024];                                     \
-    sprintf(buf, specifier, (type_cast) v);             \
-    e.append(buf);                                      \
+    std::stringstream ss;                               \
+    ss << e;                                            \
+    ss << v;                                            \
+    e = ss.str();                                       \
     return e;                                           \
   }
+    // char buf[1024];                                     \
+    // sprintf(buf, specifier, (type_cast) v);             \
+    // e.append(buf);                                      \
 
 CONCAT_SPRINTF(void*, "%p", void*)
 CONCAT_SPRINTF(const int, "%d", const int)

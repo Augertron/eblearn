@@ -1756,7 +1756,7 @@ void laplacian_pyramid_module<T>::fprop(state<T> &in, midx<T> &out) {
   }
   EDEBUG("laplacian outputs: " << out.str());
   if (!this->silent)
-    std::cout << "laplacian outputs: " << out.str() << std::endl;
+    eblprint( "laplacian outputs: " << out.str() << std::endl);
   TIMING2(this->name());
 }
 

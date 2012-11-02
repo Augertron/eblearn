@@ -80,12 +80,12 @@ std::string module::describe_indent(uint indent) {
 
 void module::enable() {
   _enabled = true;
-  cout << "Module " << this->name() << " is enabled." << endl;
+  eblprint( "Module " << this->name() << " is enabled." << std::endl);
 }
 
 void module::disable() {
   _enabled = false;
-  cout << "Module " << this->name() << " is disabled." << endl;
+  eblprint( "Module " << this->name() << " is disabled." << std::endl);
 }
 
 } // end namespace ebl

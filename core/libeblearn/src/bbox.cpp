@@ -137,7 +137,7 @@ void bbox::narrow(uint imh, uint imw) {
 }
 
 std::string bbox::pretty(std::vector<std::string> *labels) {
-  std::string s;
+  std::stringstream s;
   if (labels && class_id < (int)labels->size()) s << (*labels)[class_id];
   else s << "bbox";
   s << " with confidence " << confidence
@@ -150,7 +150,7 @@ std::string bbox::pretty(std::vector<std::string> *labels) {
     << " and size " << height << "x" << width
     << " out position: " << o.h0 << "x" << o.w0
     << " in " << oheight << "x" << owidth;
-  return s;
+  return s.str();
 }
 
 bbox mean_bbox(std::vector<bbox*> &boxes, float bonus_per_bbox, int classid) {
@@ -679,29 +679,29 @@ void bboxes::print_saving_type() {
 }
 
 std::string bboxes::pretty(std::vector<std::string> *labels) {
-  std::string s;
+  std::stringstream s;
   if (this->size() == 0) {
     s << (int) this->size() << " boxes.";
-    return s;
+    return s.str();
   }
   s << (int) this->size() << " boxes:\n";
   for (bboxes::iterator i = this->begin() ; i != this->end(); ++i)
     s << i->pretty(labels) << "\n";
-  return s;
+  return s.str();
 }
 
 std::string bboxes::pretty_short(std::vector<std::string> &labels) {
-  std::string s;
+  std::stringstream s;
   if (this->size() == 0) {
     s << (int) this->size() << " boxes.";
-    return s;
+    return s.str();
   }
   s << (int) this->size() << " boxes:\n";
   for (bboxes::iterator bb = this->begin(); bb != this->end(); ++bb) {
     s << (bb->class_id < (int)labels.size() ? labels[bb->class_id] : "")
       << " " << *bb << "\n";
   }
-  return s;
+  return s.str();
 }
 
 std::string bboxes::str() {
