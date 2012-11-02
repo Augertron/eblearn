@@ -206,8 +206,8 @@ namespace ebl {
 	    B = qv;
 	    break;
 	  default:
-	    std::cerr << "i Value error in Pixel conversion, Value is "
-                      << i << std::endl;
+	    eblwarn( "i Value error in Pixel conversion, Value is "
+                     << i << std::endl);
 	    eblerror("hsv to rgb error");
 	    break;
 	  }
@@ -288,8 +288,8 @@ namespace ebl {
 	    B = qv;
 	    break;
 	  default:
-	    std::cerr << "i Value error in Pixel conversion, Value is "
-                      <<i << std::endl;
+	    eblwarn( "i Value error in Pixel conversion, Value is "
+                     <<i << std::endl);
 	    eblerror("hsv to rgb2 error");
 	    break;
 	  }

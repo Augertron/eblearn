@@ -66,11 +66,11 @@ extern std::string dump_prefix;
     n << fname << "_" << mat << ".mat";                                 \
     dump_count = dump_count + 1;					\
     if (save_matrix(mat, n))						\
-      std::cout << "Dumped " << n << " (min " << idx_min(mat)		\
+      eblprint( "Dumped " << n << " (min " << idx_min(mat)		\
                 << " max " << idx_max(mat) << " mean " << idx_mean(mat)	\
-                << ")" << std::endl;                                    \
+                << ")" << std::endl);					\
     else								\
-      std::cerr << "Failed to dump " << n << std::endl;                 \
+      eblwarn( "Failed to dump " << n << std::endl);			\
   }
 
 ////////////////////////////////////////////////////////////////////////////////

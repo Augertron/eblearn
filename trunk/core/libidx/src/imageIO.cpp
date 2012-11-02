@@ -164,7 +164,7 @@ namespace ebl {
 	  )))
       */
     default:
-      std::cerr << "Format P" << type << " not implemented." << std::endl;
+      eblwarn( "Format P" << type << " not implemented." << std::endl);
     }
     return *pout;
   }

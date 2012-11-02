@@ -53,7 +53,7 @@ parameter<T>::parameter(const char *param_filename)
   this->set_forward_only();
   // load data
   if (!load_x(param_filename)) {
-    std::cerr << "failed to open " << param_filename << std::endl;
+    eblwarn( "failed to open " << param_filename << std::endl);
     eblerror("failed to load bbparameter file in bbparameter constructor");
   }
 }
@@ -93,8 +93,8 @@ bool parameter<T>::load_x(std::vector<std::string> &files) {
       idx<T> tmp = load_matrix<T>(files[i]);
       w = idx_concat(w, tmp);
     }
-    std::cout << "Concatenated " << files.size() << " matrices into 1: "
-              << w << " from " << files << std::endl;
+    eblprint( "Concatenated " << files.size() << " matrices into 1: "
+              << w << " from " << files << std::endl);
     load_x(w);
     return true;
   } eblcatcherror_msg("failed to load weights");
@@ -112,7 +112,7 @@ bool parameter<T>::load_x(const char *s) {
                << " parameters");
     this->resize_parameter(m.dim(0));
     idx_copy(m, *this);
-    std::cout << "Loaded weights from " << s << ": " << *this << std::endl;
+    eblprint( "Loaded weights from " << s << ": " << *this << std::endl);
     return true;
   } eblcatcherror_msg("failed to load weights");
   return false;
@@ -128,7 +128,7 @@ bool parameter<T>::load_x(idx<T> &m) {
   }
   this->resize_parameter(m.dim(0));
   idx_copy(m, *this);
-  std::cout << "Loaded weights from " << m << ": " << *this << std::endl;
+  eblprint( "Loaded weights from " << m << ": " << *this << std::endl);
   return true;
 }
 
@@ -166,8 +166,8 @@ void parameter<T>::permute_x(std::vector<intg> &blocks,
     idx_copy(copies[i], tmp);
     offset += sz;
   }
-  std::cout << "Permuted weight blocks " << blocks
-            << " with permutation vector " << permutations << std::endl;
+  eblprint( "Permuted weight blocks " << blocks
+            << " with permutation vector " << permutations << std::endl);
 }
 
 // weights manipulation ////////////////////////////////////////////////////
@@ -248,7 +248,7 @@ dparameter<T>::dparameter(const char *param_filename) : state<T>(1) {
   this->dx.push_back(new idx<T>(this->get_idxdim()));
   // load data
   if (!this->load_x(param_filename)) {
-    std::cerr << "failed to open " << param_filename << std::endl;
+    eblwarn( "failed to open " << param_filename << std::endl);
     eblerror("failed to load bbdparameter file in bbdparameter constructor");
   }
 }
@@ -274,7 +274,7 @@ ddparameter<T>::ddparameter(const char *param_filename) : parameter<T>(1) {
   this->ddx.push_back(new idx<T>(this->get_idxdim()));
   // load data
   if (!this->load_x(param_filename)) {
-    std::cerr << "failed to open " << param_filename << std::endl;
+    eblwarn("failed to open " << param_filename << std::endl);
     eblerror("failed to load bbbbparameter file in bbbbparameter constructor");
   }
 }

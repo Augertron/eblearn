@@ -38,6 +38,8 @@
 //#else
 #include <iostream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 //#endif
 
 #include "config.h"
@@ -255,17 +257,28 @@
     std::stringstream ANDs; ANDs << info;                               \
     std::string ANDs2 = ANDs.str();                                     \
     __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,ANDs2.c_str()); }
-#define eblerror(s) LOGE(s)
-#define eblwarn(s) LOGE(s)
+#define eblerror(s) do {					\
+    std::stringstream errvar;					\
+    errvar << "Error: " << s;					\
+    errvar << ", in " << __FUNCTION__ << " at " << __FILE__;	\
+    errvar << ":" << __LINE__ << std::endl;			\
+    std::string errstr = errvar.str();				\
+    LOGE(errstr);						\
+    abort();                                                    \
+  } while(0)
+// #define eblerror(s) do{LOGE(s); ebltrace(); abort();} while(0)
+#define eblwarn(s) do{LOGE(s)} while(0)
+#define eblprint(s) do {LOGI(s)} while(0)
+#define eblprinto(o,s) do {LOGI(s)} while(0)
 
 #elif defined(__WINDOWS__) ///////////////////////////////////////////////////
 
-#define eblerror(s) {                                           \
+#define eblerror(s) do {                                           \
     std::cerr << "Error: " << s;                                \
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__; \
     std::cerr << ":" << __LINE__ << std::endl;                  \
     abort();                                                    \
-  }
+  } while(0)
 
 #define ebltrace()
 
@@ -278,17 +291,20 @@
     backtrace_symbols_fd(array, size, 2);       \
   }
 
-#define eblerror(s) {                                           \
+#define eblerror(s) do {                                           \
     std::cerr << "\033[1;31mError:\033[0m " << s;               \
     std::cerr << ", in " << __FUNCTION__ << " at " << __FILE__; \
     std::cerr << ":" << __LINE__ << std::endl;                  \
     std::cerr << "\033[1;31mStack:\033[0m" << std::endl;        \
     ebltrace();                                                 \
     abort();                                                    \
-  }
+  } while (0)
+
 #endif /* __WINDOWS__ */
 
 #ifndef __ANDROID__
+#define eblprint(s) do { std::cout << s ; } while(0)
+#define eblprinto(o, s) do { o << s ; } while(0)
 #define eblwarn(s) { std::cerr << "Warning: " << s << "." << std::endl; }
 #endif
 /* #ifndef MAX */

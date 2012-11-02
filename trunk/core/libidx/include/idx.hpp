@@ -749,7 +749,7 @@ void idx<T>::printElems() const {
 template <typename T>
 void idx<T>::print() const {
   this->printElems(std::cout);
-  std::cout << "\n";
+  eblprint( "\n");
 }
 
 template <typename T>
@@ -793,28 +793,30 @@ void idx<T>::printElems_impl(int indent, stream& out, bool newline) const {
     tab << " ";
   // printing a 0-dimensional tensor
   if (order() == 0)
-    out << lbrace << "@" << sep << printElems_impl_cast(get()) <<sep<< rbrace;
+    eblprinto(out, lbrace << "@" << sep << printElems_impl_cast(get()) <<sep<< rbrace);
   else if (order() == 1) { // printing a 1-D tensor
-    out << lbrace << sep;
+    std::stringstream outstring;
+    outstring <<  lbrace << sep;
     for (int ii = 0; ii < dim(0); ++ii)
-      out << printElems_impl_cast(get(ii)) <<sep;
-    out << rbrace; //<<"\n";
+      outstring << printElems_impl_cast(get(ii)) <<sep;
+    outstring << rbrace; //<<"\n";
+    eblprinto(out, outstring.str()); 
     //if (newline) out << "\n";
   } else { // printing a multidimensional tensor
-    out << lbrace; // opening brace
+    eblprinto(out,  lbrace); // opening brace
     // print subtensors.
     idx<T> subtensor(storage, spec.offset);
     for(int dimInd = 0; dimInd < dim(0); ++dimInd ){
       // only print indent if this isn't the first subtensor.
       if (dimInd > 0)
-        for(int ii = 0; ii < indent + 1; ++ii) out << tab;
+        for(int ii = 0; ii < indent + 1; ++ii) eblprinto(out, tab);
       // print subtensor
       spec.select_into(&subtensor.spec, 0, dimInd);
       subtensor.printElems_impl(indent+1, out, newline);
       // only print the newline if this isn't the last subtensor.
-      if (dimInd < dim(0) - 1 && newline) out << "\n";
+      if (dimInd < dim(0) - 1 && newline) eblprinto(out,  "\n");
     }
-    out << rbrace; // closing brace
+    eblprinto(out, rbrace);  // closing brace
     //if (newline) out << "\n";
   }
 }
@@ -830,9 +832,9 @@ template <typename T> void idx<T>::pretty() const {
 }
 
 template <typename T> void idx<T>::pretty(std::ostream& out) const {
-  out << "idx: at address " << (intg)this << "\n";
-  out << "  storage=" <<  (intg)storage << "(size=" << storage->size();
-  out << "\n";
+  eblprinto( out, "idx: at address " << (intg)this << "\n");
+  eblprinto(out, "  storage=" <<  (intg)storage << "(size=" << storage->size());
+  eblprinto(out, "\n");
   spec.pretty(out);
 }
 
@@ -1332,21 +1334,21 @@ void midx<T>::pretty() const {
 
 template <typename T> template <class stream>
 void midx<T>::pretty(stream &out, bool newline) const {
-  out << "[ ";
+  eblprinto(out,  "[ ");
   if (this->order() == 0)
-    out << "empty midx";
+    eblprinto(out, "empty midx");
   else {
     idx_aloopf1(e, ((idx<idx<T>*>&) *this), idx<T>*, {
         idx<T> *pe = *e;
         if (pe) {
           idxdim d(*pe);
-          out << d << " ";
+          eblprinto(out, d << " ");
         } else
-          out << "empty ";
+          eblprinto(out, "empty ");
       });
   }
-  out << "]";
-  if (newline) out << "\n";
+  eblprinto(out, "]");
+  if (newline) eblprinto(out, "\n");
 }
 
 template <typename T>

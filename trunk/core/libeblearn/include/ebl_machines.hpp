@@ -398,8 +398,8 @@ void net_cscsc<T>::init(parameter<T> &prm, intg ini, intg inj,
   // and feed the input of the following module.
 
   if (norm)
-    std::cout << "Using contrast normalization " << (norm_pos?"after":"before")
-              << " subsampling. " << std::endl;
+    eblprint( "Using contrast normalization " << (norm_pos?"after":"before")
+              << " subsampling. " << std::endl);
   // convolution
   this->add_module(new convolution_module<T>
                    (&prm, ker0, stride, tbl0, "c0"));
@@ -499,8 +499,8 @@ lenet_cscsc(parameter<T> &prm, intg image_height, intg image_width,
     // determine max of previous table
     idx<intg> outtable = table1.select(1, 1);
     table2 = full_table(idx_max(outtable) + 1, output_size);
-    std::cout << "Using a full table for table 2: " << idx_max(outtable) + 1
-              <<  " -> " << output_size << std::endl;
+    eblprint( "Using a full table for table 2: " << idx_max(outtable) + 1
+              <<  " -> " << output_size << std::endl);
   }
 
   // WARNING: those two numbers must be changed

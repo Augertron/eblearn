@@ -140,9 +140,8 @@ namespace ebl {
       return in;
     // only accept 2D images or 3D with channel dim to 0.
     if ((in.order() != 2) && (in.order() != 3)) {
-      std::cerr << "error: gaussian_pyramid only accepts 2D images ";
-      std::cerr << "or 3D. ";
-      std::cerr << "input image is " << in << std::endl;
+      eblwarn( "error: gaussian_pyramid only accepts 2D images or 3D. "
+               << "input image is " << in << std::endl);
       eblerror("unexpected image format");
     }
     int d0 = 1;

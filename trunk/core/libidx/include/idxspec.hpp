@@ -131,7 +131,7 @@ template <typename T>
 void idxd<T>::insert_dim(intg pos, T dim_size) {
   if (ndim + 1 > MAXDIMS)
     eblerror("error: cannot add another dimension to dim."
-             << " Maximum number of dimensions (" << MAXDIMS << ") reached.")
+             << " Maximum number of dimensions (" << MAXDIMS << ") reached.");
         // check that dim_size is valid
         if (dim_size <= 0)
           eblerror("cannot set negative or zero dimension");
@@ -441,8 +441,10 @@ std::ostream& operator<<(std::ostream& out, const idxd<T>& d) {
 
 template <typename T>
 std::string& operator<<(std::string& out, const idxd<T>& d) {
+  std::stringstream outstring;
+  //outstring << out;
   if (d.order() <= 0)
-    out << "<empty>";
+    outstring << "<empty>";
   else {
     if (d.offsets) {
       bool show = false;
@@ -452,17 +454,18 @@ std::string& operator<<(std::string& out, const idxd<T>& d) {
           break;
         }
       if (show) {
-        out << "(";
-        out << d.offset(0);
+        outstring << "(";
+        outstring << d.offset(0);
         for (int i = 1; i < d.order(); ++i)
-          out << "," << d.offset(i);
-        out << ")";
+          outstring << "," << d.offset(i);
+        outstring << ")";
       }
     }
-    out << d.dim(0);
+    outstring << d.dim(0);
     for (int i = 1; i < d.order(); ++i)
-      out << "x" << d.dim(i);
+      outstring << "x" << d.dim(i);
   }
+  out <<  outstring.str();
   return out;
 }
 // midxdim ///////////////////////////////////////////////////////////////////

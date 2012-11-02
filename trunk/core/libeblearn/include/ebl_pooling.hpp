@@ -199,8 +199,8 @@ bool subsampling_module<T>::resize_forward(Tstate &in, Tstate &out) {
   // check sizes
   if (!crop && !pad &&
       ((sin_i % stride.dim(0)) != 0 || (sin_j % stride.dim(2)) != 0)) {
-    std::cerr << "subsampling " << sin_i << "x" << sin_j << " with stride "
-              << stride << std::endl;
+    eblwarn( "subsampling " << sin_i << "x" << sin_j << " with stride "
+             << stride << std::endl);
     eblerror("inconsistent input size and subsampling ratio");
   }
   // resize output and sub based in input dimensions

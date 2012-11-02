@@ -82,7 +82,7 @@ public class eblearn extends Activity {
     bboxview bbview;
     bboxes bb;
     int ret = 0;
-    float threshold = (float) -.1;
+    float threshold = (float) .1;
     AlertDialog.Builder alert, erralert;
     
     /** Called when the activity is first created. */

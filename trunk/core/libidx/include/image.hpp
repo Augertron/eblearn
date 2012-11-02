@@ -94,7 +94,7 @@ namespace ebl {
 	if (0 == h)
 	  eblerror("desired width and height cannot be both zero"
 		   << " while trying to resize image " << image
-		   << " to " << h << "x" << w << " with mode " << mode)
+		   << " to " << h << "x" << w << " with mode " << mode);
 	  else	w = std::max(1, (int) (imw * (w / imh)));
       } else	h = std::max(1, (int) (imh * (h / imw)));
     }
@@ -170,7 +170,7 @@ namespace ebl {
 			       rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
-      std::cerr << "illegal order: " << im << std::endl;
+      eblwarn("illegal order: " << im << std::endl);
       eblerror("unexpected image format");
     }
     // iregion is optional, set it to entire image if not given
@@ -269,11 +269,11 @@ namespace ebl {
 			   uint mode, rect<int> *iregion_, rect<int> *oregion) {
     // only accept 2D or 3D images
     if ((im.order() != 2) && (im.order() != 3)) {
-      std::cerr << "illegal order: " << im << std::endl;
+      eblwarn( "illegal order: " << im << std::endl);
       eblerror("unexpected image format");
     }
     if (oheight == 0 || owidth == 0) {
-      std::cerr << "oheight: " << oheight << " owidth " << owidth << std::endl;
+      eblwarn( "oheight: " << oheight << " owidth " << owidth << std::endl);
       eblerror("illegal resize image to zero");
     }
     // iregion is optional, set it to entire image if not given
@@ -1114,8 +1114,8 @@ namespace ebl {
     // check that image is bigger than filter
     if ((in.dim(0) < filter.dim(0)) ||
 	(in.dim(1) < filter.dim(1))) {
-      std::cerr << "error: image " << in << " is too small to be convolved with ";
-      std::cerr << filter << " filter." << std::endl;
+      eblwarn( "error: image " << in << " is too small to be convolved with "
+               << filter << " filter." << std::endl);
       eblerror("too small image for convolution");
     }
     idxdim d(in);

@@ -176,14 +176,14 @@ void flat_merge_module<T>::fprop(state<T> &in, state<T> &out) {
   LOCAL_TIMING_REPORT("merge copies");
 
 #ifdef __DEBUG_PRINT__
-  // std::cout << describe() << ": " << in0 << " (in " << din
-  //      << " stride " << stride << ")";
+  // eblprint( describe() << ": " << in0 << " (in " << din
+  //      << " stride " << stride << ")");
   // for (uint i = 1; i < in.x.size(); ++i)
-  //   std::cout << " + " << in[i]
-  //        << " (in " << dins[i] << " stride " << strides[i] << ")";
-  // std::cout << " -> " << out << std::endl;
-  // std::cout << "output min: " << idx_min(out) << " max: " << idx_max(out)
-  //      << std::endl;
+  //   eblprint( " + " << in[i]
+  //        << " (in " << dins[i] << " stride " << strides[i] << ")");
+  // eblprint( " -> " << out << std::endl);
+  // eblprint( "output min: " << idx_min(out) << " max: " << idx_max(out)
+  //      << std::endl);
 #endif
 }
 
@@ -341,9 +341,9 @@ void flat_merge_module<T>::set_strides(mfidxdim &s) {
   fidxdim ref(1, 1);
   for (uint i = 0; i < strides.size(); ++i)
     if (ref == strides[i]) reference_scale = i;
-  std::cout << this->name() << ": setting strides to " << strides
+  eblprint( this->name() << ": setting strides to " << strides
             << " with reference scale " << reference_scale << " with stride: "
-            << strides[reference_scale] << std::endl;
+            << strides[reference_scale] << std::endl);
 }
 
 // protected /////////////////////////////////////////////////////////////////
@@ -568,12 +568,12 @@ void mstate_merge_module<T>::fprop(state<T> &in, state<T> &out) {
     offset += fsize;
   }
 #ifdef __DEBUG_PRINT__
-  // std::cout << describe() << ": " << in << " (in " << din
-  // 	 << " stride " << stride << ")";
+  // eblprint( describe() << ": " << in << " (in " << din
+  // 	 << " stride " << stride << ")");
   // for (uint i = 0; i < inputs.size(); ++i)
-  //   std::cout << " + " << (*inputs[i])->x << " (in " << dins[i]
-  // 		 << " stride " << strides[i] << ")";
-  // std::cout << " -> " << out << std::endl;
+  //   eblprint( " + " << (*inputs[i])->x << " (in " << dins[i]
+  // 		 << " stride " << strides[i] << ")");
+  // eblprint( " -> " << out << std::endl);
 #endif
 }
 
@@ -816,9 +816,9 @@ void merge_module<T>::merge_f(state<T> &in, state<T> &out, uint iout) {
     offset += s.dim(concat_dim);
   }
 #ifdef __DEBUG_PRINT__
-  std::cout << describe() << ": " << in.x[0];
-  for (uint i = 1; i < in.x.size(); ++i) std::cout << " + " << in.x[i];
-  std::cout << " -> " << out.x[iout] << std::endl;
+  eblprint( describe() << ": " << in.x[0]);
+  for (uint i = 1; i < in.x.size(); ++i) eblprint( " + " << in.x[i]);
+  eblprint( " -> " << out.x[iout] << std::endl);
 #endif
 }
 
@@ -834,9 +834,9 @@ void merge_module<T>::merge_b(state<T> &in, state<T> &out, uint iout) {
     offset += s.dim(concat_dim);
   }
 #ifdef __DEBUG_PRINT__
-  std::cout << describe() << ": bprop " << in.dx[0];
-  for (uint i = 1; i < in.dx.size(); ++i) std::cout << " + " << in.dx[i];
-  std::cout << " <- " << out.dx[iout] << std::endl;
+  eblprint( describe() << ": bprop " << in.dx[0]);
+  for (uint i = 1; i < in.dx.size(); ++i) eblprint( " + " << in.dx[i]);
+  eblprint( " <- " << out.dx[iout] << std::endl);
 #endif
 }
 
@@ -852,9 +852,9 @@ void merge_module<T>::merge_bb(state<T> &in, state<T> &out, uint iout) {
     offset += s.dim(concat_dim);
   }
 #ifdef __DEBUG_PRINT__
-  std::cout << describe() << ": bbprop " << in.ddx[0];
-  for (uint i = 1; i < in.ddx.size(); ++i) std::cout << " + " << in.ddx[i];
-  std::cout << " <- " << out.ddx[iout] << std::endl;
+  eblprint( describe() << ": bbprop " << in.ddx[0]);
+  for (uint i = 1; i < in.ddx.size(); ++i) eblprint( " + " << in.ddx[i]);
+  eblprint( " <- " << out.ddx[iout] << std::endl);
 #endif
 }
 

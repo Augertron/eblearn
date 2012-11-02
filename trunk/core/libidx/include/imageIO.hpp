@@ -104,9 +104,9 @@ namespace ebl {
       err << "conversion of image " << fname << " failed (errno: "
 	  << errno << ", " << strerror(errno) << ")";
       if (attempts > 0) {
-	std::cerr << "Warning: " << err << std::endl;
-	std::cerr << "trying again... (remaining attempts: " << attempts << ")"
-                  << std::endl;
+	eblwarn( "Warning: " << err << std::endl);
+	eblwarn( "trying again... (remaining attempts: " << attempts << ")"
+                 << std::endl);
 	return image_read(fname, out_, attempts - 1);
       } else
 	eblthrow(err);
@@ -116,20 +116,20 @@ namespace ebl {
       tmp = pnm_read(fp);
     } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
-	std::cerr << "Warning: pclose failed (errno: " << errno << ")"
-                  << std::endl;
+	eblwarn( "Warning: pclose failed (errno: " << errno << ")"
+                 << std::endl);
       }
       if (attempts > 0) {
-	std::cerr << "Warning: " << err << std::endl;
-	std::cerr << "trying again... (remaining attempts: " << attempts << ")"
-                  << std::endl;
+	eblwarn( "Warning: " << err << std::endl);
+	eblwarn( "trying again... (remaining attempts: " << attempts << ")"
+                 << std::endl);
 	return image_read(fname, out_, attempts - 1);
       } else
 	eblthrow(err);
     }
     if (PCLOSE(fp) != 0) {
-      std::cerr << "Warning: pclose failed (errno: " << errno << ")"
-                << std::endl;
+      eblwarn( "Warning: pclose failed (errno: " << errno << ")"
+               << std::endl);
     }
 #else
     // nor Magick++ nor convert are available, error
@@ -215,14 +215,14 @@ namespace ebl {
     // check order
     // TODO: support grayscale
     if (in.order() != 3) {
-      std::cerr << "error: image order (" << in.order() << " not supported."
-                << std::endl;
+      eblwarn( "error: image order (" << in.order() << " not supported."
+               << std::endl);
       return false;
     }
     // save as ppm
     FILE *fp = fopen(fname, "wb");
     if (!fp) {
-      std::cerr << "error: failed to open file " << fname << std::endl;
+      eblwarn( "error: failed to open file " << fname << std::endl);
       return false;
     }
     save_image_ppm(fp, in);
@@ -235,12 +235,12 @@ namespace ebl {
     // check order
     // TODO: support grayscale
     if (in.order() != 3) {
-      std::cerr << "error: image order (" << in.order() << " not supported."
-                << std::endl;
+      eblwarn( "error: image order (" << in.order() << " not supported."
+               << std::endl);
       return false;
     }
     if (!fp) {
-      std::cerr << "error: NULL fp " << std::endl;
+      eblwarn( "error: NULL fp " << std::endl);
       return false;
     }
     fprintf(fp,"P6 %d %d 255\n", (int) in.dim(1), (int) in.dim(0));
@@ -326,8 +326,8 @@ namespace ebl {
     FILE* fp = POPEN(cmd.c_str(), "w");
 #endif
     if (!fp) {
-      std::cerr << "conversion of image " << fname << " failed (errno: "
-	   << errno << ", " << strerror(errno) << ")";
+      eblwarn( "conversion of image " << fname << " failed (errno: "
+               << errno << ", " << strerror(errno) << ")");
       return false;
     }
     try {
@@ -335,14 +335,14 @@ namespace ebl {
       save_image_ppm(fp, in);
     } catch (eblexception &err) {
       if (PCLOSE(fp) != 0) {
-	std::cerr << "Warning: pclose failed (errno: " << errno << ")"
-                  << std::endl;
+	eblwarn( "Warning: pclose failed (errno: " << errno << ")"
+                 << std::endl);
       }
       return false;
     }
     if (PCLOSE(fp) != 0) {
-      std::cerr << "Warning: pclose failed (errno: " << errno << ")"
-                << std::endl;
+      eblwarn( "Warning: pclose failed (errno: " << errno << ")"
+               << std::endl);
       return false;
     }
 #else

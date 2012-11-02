@@ -574,7 +574,7 @@ void state<T>::get_padded_midx(mfidxdim &dims, midx<T> &all) {
 
 template <typename T>
 void state<T>::pretty() const {
-  std::cout << pretty_str() << std::endl;
+  eblprint( pretty_str() << std::endl);
 }
 
 template <typename T>
@@ -608,7 +608,7 @@ std::string state<T>::str() const {
 
 template <typename T>
 void state<T>::print() const {
-  std::cout << str() << std::endl;
+  eblprint( str() << std::endl);
 }
 
 template <typename T>
