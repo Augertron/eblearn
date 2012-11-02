@@ -92,8 +92,6 @@
 #define MEDEBUG(s)
 #endif
 
-#define ELOG(s) std::cout << s << std::endl;
-
 ////////////////////////////////////////////////////////////////
 // library export macros
 

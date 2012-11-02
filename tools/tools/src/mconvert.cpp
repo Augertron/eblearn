@@ -61,10 +61,10 @@ void print_usage() {
 
 template <typename T>
 void csv_to_mat(char* infile, char* outfile, bool ignore_first_line) {
-  ELOG("Converting csv file " << infile << " to eblearn matrix file "
+  eblprint("Converting csv file " << infile << " to eblearn matrix file "
        << outfile);
   idx<T> in_idx = load_csv_matrix<T>(infile, ignore_first_line);
-  ELOG("Extracted " << in_idx << " matrix: ");
+  eblprint("Extracted " << in_idx << " matrix: ");
   in_idx.print();
   save_matrix<T>(in_idx, outfile);
 }
