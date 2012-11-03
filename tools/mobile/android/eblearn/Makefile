@@ -17,7 +17,7 @@ lib:
 	cd ${app}/../.. && make APP=${name} APP_OPTIM=release APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti -D__PTHREAD__"
 
 debug:
-	cd ${app}/../.. && make APP=${name} APP_OPTIM=debug V=1  NDK_DEBUG=1  APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti -D__TIMING__"
+	cd ${app}/../.. && make APP=${name} APP_OPTIM=debug V=1  NDK_DEBUG=1  APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti -D__PTHREAD__"
 	cd ${app} && ant debug
 
 gdb: debug dinstall

@@ -58,8 +58,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 // for assets extraction
-import java.io.FileDescriptor;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import java.lang.Exception;
 
@@ -217,7 +215,10 @@ public class eblearn extends Activity {
 		String fullPath =  ASSETS_PATH + path;
 		Log.i(tag, "path="+fullPath);
 		File dir = new File(fullPath);
-		if (!dir.exists() && !path.startsWith("images") && !path.startsWith("sounds") && !path.startsWith("webkit"))
+		if (!dir.exists()
+		    && !path.startsWith("images")
+		    && !path.startsWith("sounds")
+		    && !path.startsWith("webkit"))
 		    if (!dir.mkdirs());
 		Log.i(tag, "could not create dir "+fullPath);
 		for (int i = 0; i < assets.length; ++i) {
@@ -227,7 +228,9 @@ public class eblearn extends Activity {
 		    else
 			p = path + "/";
 
-		    if (!path.startsWith("images") && !path.startsWith("sounds") && !path.startsWith("webkit"))
+		    if (!path.startsWith("images")
+			&& !path.startsWith("sounds")
+			&& !path.startsWith("webkit"))
 			copyFileOrDir( p + assets[i]);
 		}
 	    }
@@ -245,8 +248,10 @@ public class eblearn extends Activity {
 	try {
 	    Log.i(tag, "copyFile() "+filename);
 	    in = assetManager.open(filename);
-	    if (filename.endsWith(".mp3")) // extension was added to avoid compression on APK file
-		newFileName = ASSETS_PATH + filename.substring(0, filename.length()-4);
+	    // extension was added to avoid compression on APK file
+	    if (filename.endsWith(".mp3")) 
+		newFileName = ASSETS_PATH +
+		    filename.substring(0, filename.length()-4);
 	    else
 		newFileName = ASSETS_PATH + filename;
 	    out = new FileOutputStream(newFileName);
