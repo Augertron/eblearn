@@ -140,8 +140,9 @@ extern "C" {
     bbox *b;
     for (size_t i = 0; i < bb.size(); ++i) {
       b = &bb[i];
-      env->CallVoidMethod(jbb, mid, b->confidence, b->h0, b->w0, b->height,
-			  b->width);
+      env->CallVoidMethod(jbb, mid, b->confidence, (int)b->h0, (int)b->w0,
+                          (int)b->height,
+			  (int)b->width);
     }
     
     return (jint) bb.size();
