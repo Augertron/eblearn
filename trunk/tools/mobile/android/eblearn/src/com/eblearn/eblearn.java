@@ -58,6 +58,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 // for assets extraction
+import java.io.FileDescriptor;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import java.lang.Exception;
 
@@ -250,8 +252,7 @@ public class eblearn extends Activity {
 	    in = assetManager.open(filename);
 	    // extension was added to avoid compression on APK file
 	    if (filename.endsWith(".mp3")) 
-		newFileName = ASSETS_PATH +
-		    filename.substring(0, filename.length()-4);
+		newFileName = ASSETS_PATH + filename.substring(0, filename.length()-4);
 	    else
 		newFileName = ASSETS_PATH + filename;
 	    out = new FileOutputStream(newFileName);
