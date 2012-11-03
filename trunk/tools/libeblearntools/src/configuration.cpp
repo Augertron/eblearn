@@ -247,7 +247,7 @@ namespace ebl {
         pos3 = res.find("${", pos + 2);
       }
       if (pos2 == std::string::npos) {
-        cerr << "unmatched closing bracket in: " << v << endl;
+        eblwarn("unmatched closing bracket in: " << v << std::endl);
         eblerror("error resolving variables in configuration");
       }
       // variable to replace
@@ -322,8 +322,8 @@ namespace ebl {
           // forbid spaces in names
           pos = name.find(' ');
           if (pos != std::string::npos && !silent) {
-            cerr << "warning: variable name cannot contain an empty space,";
-            cerr << " ignoring this line: " << line << endl;
+            eblwarn("warning: variable name cannot contain an empty space,"
+                    << " ignoring this line: " << line << std::endl);
             continue ;
           }
           // 		// forbid empty values
@@ -377,7 +377,7 @@ namespace ebl {
             qpos2 = s.find(DQ, qpos2 + 1);
           }
           if (qpos2 == std::string::npos) {
-            cerr << "unmatched quote in: " << s << endl;
+            eblwarn("unmatched quote in: " << s << std::endl);
             eblerror("unmatched quote");
           }
           pos = qpos2 + 1; // update pos to skip quoted section
@@ -394,7 +394,7 @@ namespace ebl {
             qpos2 = s.find(BQ, qpos2 + 1);
           }
           if (qpos2 == std::string::npos) {
-            cerr << "unmatched single quote in: " << s << endl;
+            eblwarn("unmatched single quote in: " << s << std::endl);
             eblerror("unmatched single quote");
           }
           pos = qpos2 + 1; // update pos to skip quoted section
@@ -475,26 +475,26 @@ namespace ebl {
     std::vector<size_t>::iterator ci = conf_indices.begin();
 
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
-      cout << lmi->first << " = " << lmi->second[*ci] << endl;
+      eblprint(lmi->first << " = " << lmi->second[*ci] << std::endl);
   }
 
   void print_string_map(string_map_t &smap) {
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
-      cout << smi->first << " : " << smi->second << endl;
+      eblprint(smi->first << " : " << smi->second << std::endl);
   }
 
   void print_string_list_map(string_list_map_t &lmap) {
-    cout <<
-      "___________________________________________________________" << endl;
+    eblprint("___________________________________________________________"
+             << std::endl);
     string_list_map_t::iterator lmi = lmap.begin();
     for ( ; lmi != lmap.end(); ++lmi) {
-      cout << lmi->first << " : ";
+      eblprint(lmi->first << " : ");
       std::vector<std::string>::iterator vi = lmi->second.begin();
       for ( ; vi != lmi->second.end(); ++vi) {
-        cout << *vi << ", ";
+        eblprint(*vi << ", ");
       }
-      cout << endl;
+      eblprint(std::endl);
     }
   }
 
@@ -545,7 +545,7 @@ namespace ebl {
     // extract conf name from from filename
     name = basename(fname, ".conf");
     // read file and extract all variables and values
-    if (!silent) cout << "loading configuration file: " << fname << endl;
+    if (!silent) eblprint("loading configuration file: " << fname << std::endl);
     std::string content = file_to_string(fname);
     return read(content, bresolve, replacequotes, silent_, outdir, fname);
   }
@@ -571,7 +571,7 @@ namespace ebl {
   bool configuration::write(const char *fname) {
     ofstream of(fname);
     if (!of) {
-      cerr << "error: failed to open " << fname << endl;
+      eblwarn("error: failed to open " << fname << std::endl);
       return false;
     }
     // update all values in original text
@@ -786,7 +786,7 @@ namespace ebl {
     if (val) {
       if (!silent_)
         // 	cout << "using environment variable \"" << varname << "\": "
-        // 			 << val << endl;
+        // 			 << val << std::endl;
         return val;
     }
     return NULL;
@@ -823,9 +823,9 @@ namespace ebl {
   }
 
   void configuration::pretty() {
-    cout << "_____________________ Configuration _____________________" << endl;
+    eblprint("_____________________ Configuration _____________________" << std::endl);
     print_string_map(smap);
-    cout << "_________________________________________________________" << endl;
+    eblprint("_________________________________________________________" << std::endl);
   }
 
   std::string& configuration::str() {
@@ -840,7 +840,7 @@ namespace ebl {
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
       if (s.find(smi->first) != std::string::npos)
-        cout << smi->first << "=" << smi->second << endl;
+        eblprint(smi->first << "=" << smi->second << std::endl);
   }
 
   ////////////////////////////////////////////////////////////////
@@ -856,14 +856,14 @@ namespace ebl {
                                 const std::string *stamp, bool replacequotes,
                                 const char *resume_name, bool silent) {
     if (!silent)
-      cout << "Reading meta configuration file: " << fname << endl;
+      eblprint("Reading meta configuration file: " << fname << std::endl);
     // read file and extract all variables and values
     std::string content = file_to_string(fname);
     if (!extract_variables(content, smap, otxt, NULL, bresolve, replacequotes,
                            silent))
       return false;
     if (!silent) {
-      cout << "loaded: " << endl;
+      eblprint("loaded: " << std::endl);
       pretty();
     }
     // transpose values into list of values (a variable can be assigned a list
@@ -897,8 +897,8 @@ namespace ebl {
   }
 
   std::vector<configuration>& meta_configuration::configurations() {
-    cout << "Creating all " << conf_combinations
-         << " possible configurations..." << endl;
+    eblprint("Creating all " << conf_combinations
+             << " possible configurations..." << std::endl);
     // create all possible configurations
     confs.clear();
     conf_indices.assign(lmap.size(), 0); // reset conf
@@ -921,22 +921,24 @@ namespace ebl {
   }
 
   void meta_configuration::pretty() {
-    cout << "__________________ Meta configuration ___________________" << endl;
+    eblprint("__________________ Meta configuration ___________________"
+             << std::endl);
     print_string_map(smap);
-    cout << "_________________________________________________________" << endl;
+    eblprint("_________________________________________________________"
+             << std::endl);
   }
 
   void meta_configuration::pretty_combinations() {
-    cout << "Configuration has " << conf_combinations
-         << " combinations:" << endl;
+    eblprint("Configuration has " << conf_combinations
+             << " combinations:" << std::endl);
     string_list_map_t::iterator lmi = lmap.begin();
     std::vector<std::string>::iterator lmj;
     for ( ; lmi != lmap.end(); ++lmi) {
       if (lmi->second.size() > 1) {
-        cout << lmi->second.size() << " " << lmi->first << ":";
+        eblprint(lmi->second.size() << " " << lmi->first << ":");
         for (lmj = lmi->second.begin(); lmj != lmi->second.end(); ++lmj)
-          cout << " " << *lmj;
-        cout << endl;
+          eblprint(" " << *lmj);
+        eblprint(std::endl);
       }
     }
   }

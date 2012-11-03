@@ -42,8 +42,8 @@ namespace ebl {
   camera_shmem<Tdata>::camera_shmem(const char *shmem_path,
 				    int height_, int width_)
     : camera<Tdata>(height_, width_), buffer(NULL) {
-#ifdef __WINDOWS__
-    eblerror("missing shmem implementation for windows");
+#if defined(__WINDOWS__) || defined(__ANDROID__)
+    eblerror("missing shmem implementation for windows and android");
 #else
     std::cout << "Initializing shared buffer camera..." << std::endl;
     // connect to shared memory segment
@@ -72,7 +72,7 @@ namespace ebl {
 
   template <typename Tdata>
   camera_shmem<Tdata>::~camera_shmem() {
-#ifndef __WINDOWS__
+#if  !defined(__WINDOWS__) && !defined(__ANDROID__)
     // detach from shared memory
     if (buffer)
       shmdt((const void*)buffer);
@@ -84,7 +84,7 @@ namespace ebl {
 
   template <typename Tdata>
   idx<Tdata> camera_shmem<Tdata>::grab() {
-#ifndef __WINDOWS__
+#if  !defined(__WINDOWS__) && !defined(__ANDROID__)
     // make a frame request
     buffer->dump_to_file = 0;
     buffer->request_frame = 1;

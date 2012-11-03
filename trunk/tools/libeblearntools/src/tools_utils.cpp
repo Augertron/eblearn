@@ -575,7 +575,7 @@ bool tar(const std::string &dir, const std::string &tgtdir) {
       << ".tgz " << p.filename().c_str();// << " 2> /dev/null";
   int ret = std::system(cmd.c_str());
   if (ret < 0) {
-    cerr << "tar failed." << endl;
+    eblwarn("tar failed." << std::endl);
     return false;
   }
 #endif
@@ -588,8 +588,8 @@ bool tar_pattern(const std::string &dir, const std::string &tgtdir,
   // find all files matching pattern
   std::list<std::string> *files = find_fullfiles(dir, pattern);
   if (!files) {
-    cerr << "No files matching pattern \"" << pattern
-         << "\" were found." << endl;
+    eblwarn("No files matching pattern \"" << pattern
+            << "\" were found." << std::endl);
     return false;
   }
   // tar them
@@ -602,7 +602,7 @@ bool tar_pattern(const std::string &dir, const std::string &tgtdir,
   }
   int ret = std::system(cmd.c_str());
   if (ret < 0) {
-    cerr << "tar failed." << endl;
+    eblwarn("tar failed." << std::endl);
     return false;
   }
 #endif
@@ -644,13 +644,25 @@ std::string file_to_string(const std::string &fname) {
 }
 
 std::string file_to_string(const char *fname) {
-  ifstream in(fname);
+  std::ifstream in(fname);
   if (!in) eblthrow("error: failed to open " << fname);
   std::string s((std::istreambuf_iterator<char>(in)),
                 std::istreambuf_iterator<char>());
   in.close();
   return s;
 }
+
+ std::string file_to_string(FILE* fd, long size) { 
+   char *buf = (char *)malloc(size);
+   size_t read = fread(buf, 1, size, fd);
+   if (read != size)
+     eblerror("Read error");
+   std::stringstream s;
+   s << buf;
+   free(buf);
+   return s.str();  
+}
+
 
 bool string_to_file(const std::string &data, const std::string &fname) {
   return string_to_file(data, fname.c_str());
@@ -683,7 +695,7 @@ std::string filename(const char *s_) {
 
 std::string system_to_string(const std::string &cmd) {
 #ifdef __DEBUG__
-  cout << "system call: " << cmd << ", answer: " << flush;
+  eblprint("system call: " << cmd << ", answer: " << flush);
 #endif
   std::string res;
   char buf[256];
@@ -695,11 +707,11 @@ std::string system_to_string(const std::string &cmd) {
   while (fgets(buf, 256, fp))
     res << buf;
   if (PCLOSE(fp) != 0) {
-    cerr << "Warning: pclose failed (errno: " << errno
-         << ") after calling command: " << cmd << endl;
+    eblwarn("Warning: pclose failed (errno: " << errno
+            << ") after calling command: " << cmd << std::endl);
   }
 #ifdef __DEBUG__
-  cout << res << endl;
+  eblprint(res << std::endl);
 #endif
   return res;
 }

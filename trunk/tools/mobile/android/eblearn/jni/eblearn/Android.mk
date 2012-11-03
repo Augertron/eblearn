@@ -17,8 +17,8 @@ LOCAL_SRC_FILES  := \
 		    $(SRC)/ebl_logger.cpp \
 		    $(SRC)/ebl_module.cpp \
 		    $(SRC)/ebl_utils.cpp \
-		    $(SRC)/ebl_parameters.cpp \
-		    entries.cpp
+		    $(SRC)/ebl_parameters.cpp
+		    #entries.cpp
 
 	       	    #$(SRC)/ebl_arch.cpp \
 		    #$(SRC)/ebl_tester.cpp \

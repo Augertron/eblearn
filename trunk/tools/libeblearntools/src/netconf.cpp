@@ -50,8 +50,8 @@ namespace ebl {
 	eblerror("cannot find table file declared in variable " << name
 		 << ": " << filename);
       table = load_matrix<intg>(filename);
-      cout << "Loaded " << name << " (" << table << ") from " << filename
-	   << endl;
+      eblprint("Loaded " << name << " (" << table << ") from " << filename
+               << endl);
       return true;
     } else if (conf.exists(name_in) && conf.exists(name_out)) {
       intg in, out;
@@ -69,11 +69,11 @@ namespace ebl {
 	out = conf.get_int(name_out.c_str());
       // create table
       table = full_table(in, out);
-      cout << "Using a full table for " << name << ": "
-	   << in << " -> " << out << " (" << table << ")" << endl;
+      eblprint("Using a full table for " << name << ": "
+               << in << " -> " << out << " (" << table << ")" << std::endl);
       return true;
     }
-    cerr << "Failed to load table " << name << endl;
+    eblwarn("Failed to load table " << name << std::endl);
     return false;
   }
 
@@ -98,7 +98,7 @@ namespace ebl {
     if (conf.exists("gradient_threshold"))
       gdp.gradient_threshold = conf.get_double("gradient_threshold");
     // printing parameters
-    cout << gdp << endl;
+    eblprint(gdp << std::endl);
   }
 
 } /* namespace ebl */

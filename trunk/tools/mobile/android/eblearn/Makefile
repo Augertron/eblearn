@@ -14,7 +14,7 @@ all: lib
 	cd ${app} && ant release
 
 lib:
-	cd ${app}/../.. && make APP=${name} APP_OPTIM=release APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti "
+	cd ${app}/../.. && make APP=${name} APP_OPTIM=release APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti -D__PTHREAD__"
 
 debug:
 	cd ${app}/../.. && make APP=${name} APP_OPTIM=debug V=1  NDK_DEBUG=1  APP_STL=gnustl_static APP_CPPFLAGS="-fexceptions -frtti -D__TIMING__"
