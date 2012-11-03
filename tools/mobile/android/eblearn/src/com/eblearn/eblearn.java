@@ -296,7 +296,6 @@ public class eblearn extends Activity {
 	    Iterator i = bb.iterator();
 	    while (i.hasNext()) {
 		bbox b = (bbox)i.next();
-		Log.e(tag, "Drawing bbox");
 		canvas.drawRect(b.r, p);
 	    }
 	    p.setColor(Color.WHITE);
