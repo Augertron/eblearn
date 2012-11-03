@@ -46,7 +46,7 @@ bool get_param2(configuration &conf, const std::string &module_name,
   // check that variable is present
   if (!conf.exists(pn)) {
     // not found
-    std::cerr << "error: required parameter " << pn << " not found" << std::endl;
+    eblwarn("error: required parameter " << pn << " not found" << std::endl);
     return false;
   }
   std::string val_in = conf.get_string(pn);
@@ -70,7 +70,7 @@ bool get_param(configuration &conf, const std::string &module_name,
   if (!conf.exists(pn)) {
     // not found
     if (!optional)
-      std::cerr << "error: required parameter " << pn << " not found" << std::endl;
+      eblwarn("error: required parameter " << pn << " not found" << std::endl);
     return false;
   }
   std::string val_in = conf.get_string(pn);
@@ -93,13 +93,13 @@ create_network(parameter<T> &theparam, configuration &conf,
   uint arch_size = arch.size();
   layers<T>* l = new layers<T>(true, varname);
   // info
-  std::cout << "Creating a network with " << nout << " outputs and "
+  eblprint("Creating a network with " << nout << " outputs and "
             << arch_size << " modules (input thickness is " << thick
-            << "): " << conf.get_string(varname) << std::endl;
+           << "): " << conf.get_string(varname) << std::endl);
   try {
     // loop over each module
     for (uint i = 0; i < arch_size; ++i) {
-      std::cout << varname << " " << i << ": ";
+      eblprint(varname << " " << i << ": ");
       // get first module name of the list and remove it from list
       std::string name = arch.front(); arch.pop_front();
       int errid = 0; // id of error thrown by create_module
@@ -118,9 +118,9 @@ create_network(parameter<T> &theparam, configuration &conf,
       if (module) {
         // add the module
         l->add_module(module);
-        std::cout << "Added " << module->describe() << " (#params "
+        eblprint("Added " << module->describe() << " (#params "
                   << theparam.nelements() << ", thickness " << thick
-                  << ")" << std::endl;
+                 << ")" << std::endl);
       } else {
         switch (errid) {
           case 1: eblwarn("ignoring module " << name);
@@ -134,7 +134,7 @@ create_network(parameter<T> &theparam, configuration &conf,
       eblerror("Some error occurred when loading modules, expected to load "
                << arch_size << " modules but only " << l->size()
                << " were successfully loaded");
-    std::cout << varname << ": loaded " << l->size() << " modules." << std::endl;
+    eblprint(varname << ": loaded " << l->size() << " modules." << std::endl);
   } eblcatcherror();
   if (!shared_) delete shared; // shared was allocated here, we can delete it
   if (!loaded_) delete loaded; // loaded was allocated here, we can delete it
@@ -155,7 +155,7 @@ create_module(const std::string &name, parameter<T> &theparam,
   int num_devices = eblcuda_count_devices();
   if (tid != -1 && num_devices > 0) {
     gpu_id = tid % num_devices;
-    //std::cout << "Thread " << tid <<":\tUsing GPU:" << gpu_id << std::endl;
+    //eblprint("Thread " << tid <<":\tUsing GPU:" << gpu_id << std::endl);
   }
   if (conf.exists("gpu_id"))
     gpu_id = conf.get_uint("gpu_id");
@@ -347,14 +347,14 @@ create_module(const std::string &name, parameter<T> &theparam,
                                              sp.c_str(), tid, &shared, &loaded);
         // check the module was created
         if (!m) {
-          std::cerr << "expected a module in " << spipe << std::endl;
+          eblwarn("expected a module in " << spipe << std::endl);
           return NULL;
         }
         // add it
         pipes.push_back(m);
       } else {
-        std::cout << "adding empty pipe (just passing data along) from variable "
-                  << sp << std::endl;
+        eblprint("adding empty pipe (just passing data along) from variable "
+                 << sp << std::endl);
         pipes.push_back(NULL);
       }
     }
@@ -453,7 +453,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     module_1_1<T> *pp =
 	create_module<T>(pps, theparam, conf, nout, thick, shared, loaded, tid);
     if (!pp) {
-      std::cerr << "expected a preprocessing module in " << name << std::endl;
+      eblwarn("expected a preprocessing module in " << name << std::endl);
       return NULL;
     }
     std::string szpad, ssize, sfovea, smode;
@@ -503,7 +503,7 @@ create_module(const std::string &name, parameter<T> &theparam,
       typename std::map<std::string,module_1_1<T>*>::iterator i =
           loaded.find(smod);
       if (i != loaded.end()) {
-        std::cout << "resizing as found module " << i->second->name() << std::endl;
+        eblprint("resizing as found module " << i->second->name() << std::endl);
         module = (module_1_1<T>*)
             new resize_module<T>(i->second, size, mode, &pad,
                                  name.c_str());
@@ -985,7 +985,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (!get_param(conf, name, "script", script)) return NULL;
     module = (module_1_1<T>*) new lua_module<T>(script.c_str());
   } else
-    std::cout << "unknown module type " << type << std::endl;
+    eblprint("unknown module type " << type << std::endl);
   // check if the module we're loading is shared
   if (module && bshared) { // this module is shared with others
     // check if we already have it in stock
@@ -994,7 +994,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (i != shared.end()) { // already exist
       delete module;
       module = i->second->copy(); // load a shared copy instead
-      std::cout << "Loaded a shared copy of " << name << ". ";
+      eblprint("Loaded a shared copy of " << name << ". ");
     }
     else // we don't have it, add it
       shared[name] = module; // save this copy for future sharing
@@ -1025,7 +1025,7 @@ ebm_1<T>* create_ebm1(const std::string &name, configuration &conf) {
     get_param(conf, name, "coeff", coeff, true);
     ebm = (ebm_1<T>*) new l1_penalty<T>(threshold, coeff);
   }
-  else std::cout << "unknown ebm1 type " << type << std::endl;
+  else eblprint("unknown ebm1 type " << type << std::endl);
   return ebm;
 }
 
@@ -1139,7 +1139,7 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
 	 coeffs_set ? &coeffs : NULL, name.c_str());
     //////////////////////////////////////////////////////////////////////////
   } else
-    std::cerr << "unknown answer type " << type << std::endl;
+    eblwarn("unknown answer type " << type << std::endl);
   return module;
 }
 
@@ -1411,7 +1411,7 @@ module_1_1<T>* create_network_old(parameter<T> &theparam,
 	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
 	 conf.exists_true("use_shrink"), conf.exists_true("use_diag"));
   } else {
-    std::cerr << "network type: " << net_type << std::endl;
+    eblwarn("network type: " << net_type << std::endl);
     eblerror("unknown network type");
   }
   return NULL;
@@ -1430,9 +1430,9 @@ bool load_module(configuration &conf, module_1_1<T> &m,
       string_to_stringvector(conf.get_string(name.c_str()));
   idx<T> w = load_matrix<T>(filenames, 0);
   m.load_x(w);
-  std::cout << "Loaded weights " << w << " into " << module_name << " from "
+  eblprint("Loaded weights " << w << " into " << module_name << " from "
             << filenames << " (dims " << w << " min " << idx_min(w) << " max "
-            << idx_max(w) << " mean " << idx_mean(w) << ")" << std::endl;
+           << idx_max(w) << " mean " << idx_mean(w) << ")" << std::endl);
   return true;
 }
 
@@ -1442,8 +1442,8 @@ uint manually_load_network(layers<T> &l, configuration &conf,
                            const char *varname) {
   std::list<std::string> arch = string_to_stringlist(conf.get_string(varname));
   uint arch_size = arch.size();
-  std::cout << "Loading network manually using module list: "
-            << conf.get_string(varname) << std::endl;
+  eblprint("Loading network manually using module list: "
+           << conf.get_string(varname) << std::endl);
   uint n = 0;
   // loop over each module
   for (uint i = 0; i < arch_size; ++i) {
@@ -1478,7 +1478,7 @@ uint manually_load_network(layers<T> &l, configuration &conf,
       }
     }
   }
-  std::cout << "Loaded " << n << " weights." << std::endl;
+  eblprint("Loaded " << n << " weights." << std::endl);
   return n;
 }
 

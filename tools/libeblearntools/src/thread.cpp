@@ -191,13 +191,16 @@ namespace ebl {
 #ifndef __PTHREAD__
     eblerror("pthread missing, install it and recompile.");
 #else
+#if !defined(__ANDROID__)
+    // Android's bionic rewrite doesn't have pthread_cancel
     int ret = pthread_cancel(threadptr);
     if (ret) {
       merr << "Warning: failed to cancel thread, with error code " << ret
 	   << std::endl;
       return ;
     }
-#endif
+#endif // __ANDROID__
+#endif // __PTHREAD__
     mutex1.lock();
     _finished = true;
     mutex1.unlock();

@@ -256,6 +256,8 @@ EXPORT std::string string_replaceall(const std::string &s, const char *s1,
 EXPORT std::string file_to_string(const std::string &fname);
 //! Reads file 'fname' into a string an returns it.
 EXPORT std::string file_to_string(const char *fname);
+//! Reads a C file handle 'fd' with size 'size' into a string an returns it.
+EXPORT std::string file_to_string(FILE *fd, long size);
 //! Save string content as binary file 'fname'.
 EXPORT bool string_to_file(const std::string &data, const std::string &fname);
 //! Save string content as binary file 'fname'.

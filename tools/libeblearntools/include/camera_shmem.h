@@ -35,7 +35,7 @@
 
 #include "camera.h"
 
-#ifndef __WINDOWS__
+#if  !defined(__WINDOWS__) && !defined(__ANDROID__)
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -91,7 +91,7 @@ namespace ebl {
     using camera<Tdata>::grabbed;	//!< frame buffer grabbed yet or not
     using camera<Tdata>::frame_id_;	//!< frame counter
     t_video_buffer	*buffer;
-#ifndef __WINDOWS__
+#if  !defined(__WINDOWS__) && !defined(__ANDROID__)
     key_t		 shmem_key;
 #endif
     int			 shmem_id;

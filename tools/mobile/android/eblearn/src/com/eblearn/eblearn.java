@@ -40,6 +40,9 @@ import android.os.Bundle;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -77,12 +80,12 @@ import android.graphics.Rect;
 public class eblearn extends Activity {
     static final String tag = "eblearn";
     String url = "http://cs.nyu.edu/~sermanet/face/0.png";
-    // String url = "http://www.fbi.gov/headlines/fames_faces500.jpg";
+    static final String ASSETS_PATH = "/sdcard/eblearn/";
+    String conf = "face.conf";
     Bitmap bm;
     bboxview bbview;
     bboxes bb;
     int ret = 0;
-    float threshold = (float) .1;
     AlertDialog.Builder alert, erralert;
     
     /** Called when the activity is first created. */
@@ -118,7 +121,7 @@ public class eblearn extends Activity {
 		    bm = downloadBitmap(url);
 		    bb.clear();
 		    bbview.setData(bm, bb, url);
-		    ret = process(bm);
+		    ret = process(bm, conf);
 		    if (ret < 0)
 			erralert.show();
 		    else
@@ -134,17 +137,13 @@ public class eblearn extends Activity {
     ///////////////////////////////////////////////////////////////////////////
     // native functions
 
-    public native int detect(Bitmap intidx, FileDescriptor fd1, long off1,
-			     FileDescriptor fd2, long off2,
-			     FileDescriptor fd3, long off3, bboxes bb,
-			     float threshold);
+    public native int detect(Bitmap intidx,
+			     String confName,
+			     String assetsPath,
+			     bboxes bb);
 
     ///////////////////////////////////////////////////////////////////////////
-    // network
-    
-    private AssetFileDescriptor raw_net, raw_netclass, raw_conf;
-    private FileDescriptor fd_net, fd_netclass, fd_conf;
-    private long off_net, off_netclass, off_conf;
+    // initialize and process
     
     // load learning data
     private void initLearning() {
@@ -152,31 +151,14 @@ public class eblearn extends Activity {
 	// loading learning libraries
         System.loadLibrary("idx");
 	System.loadLibrary("eblearn");
-	// loading learned configuration
-	AssetManager man = getAssets();
-	try {
-	    String net = "face.mat.mp3", netclass = "face_classes.mat.mp3",
-		netconf = "face.conf.mp3";
-	    raw_net = man.openFd(net);
-	    raw_netclass = man.openFd(netclass);
-	    raw_conf = man.openFd(netconf);
-	    fd_net = raw_net.getFileDescriptor();
-	    fd_netclass = raw_netclass.getFileDescriptor();
-	    fd_conf = raw_conf.getFileDescriptor();
-	    off_net = raw_net.getStartOffset();
-	    off_netclass = raw_netclass.getStartOffset();
-	    off_conf = raw_conf.getStartOffset(); 
-	    Log.i(tag, "Loaded assets " + net + ", " + netclass
-		  + " and " + netconf);
-	} catch(Exception e) {
-	    Log.e(tag, "failed to load weights from assets: " + e);
-	}
+	System.loadLibrary("eblearntools");
+	// move assets to SDCard
+	copyFilesToSdCard();	
     }
 
     // process an image
-    public int process(Bitmap b) {
-	int z = detect(b, fd_net, off_net, fd_netclass, off_netclass,
-		       fd_conf, off_conf, bb, threshold);
+    public int process(Bitmap b, String confFileName) {
+	int z = detect(b, confFileName, ASSETS_PATH, bb);
 	Log.i(tag, "Detected " + z + " faces");
 	return z;
     }
@@ -218,6 +200,74 @@ public class eblearn extends Activity {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // transfer assets to sdcard for reading
+    private void copyFilesToSdCard() {
+	copyFileOrDir(""); // copy all files in assets folder
+    }
+
+    private void copyFileOrDir(String path) {
+	AssetManager assetManager = this.getAssets();
+	String assets[] = null;
+	try {
+	    Log.i(tag, "copyFileOrDir() "+path);
+	    assets = assetManager.list(path);
+	    if (assets.length == 0) {
+		copyFile(path);
+	    } else {
+		String fullPath =  ASSETS_PATH + path;
+		Log.i(tag, "path="+fullPath);
+		File dir = new File(fullPath);
+		if (!dir.exists() && !path.startsWith("images") && !path.startsWith("sounds") && !path.startsWith("webkit"))
+		    if (!dir.mkdirs());
+		Log.i(tag, "could not create dir "+fullPath);
+		for (int i = 0; i < assets.length; ++i) {
+		    String p;
+		    if (path.equals(""))
+			p = "";
+		    else
+			p = path + "/";
+
+		    if (!path.startsWith("images") && !path.startsWith("sounds") && !path.startsWith("webkit"))
+			copyFileOrDir( p + assets[i]);
+		}
+	    }
+	} catch (IOException ex) {
+	    Log.e(tag, "I/O Exception", ex);
+	}
+    }
+
+    private void copyFile(String filename) {
+	AssetManager assetManager = this.getAssets();
+
+	InputStream in = null;
+	OutputStream out = null;
+	String newFileName = null;
+	try {
+	    Log.i(tag, "copyFile() "+filename);
+	    in = assetManager.open(filename);
+	    if (filename.endsWith(".mp3")) // extension was added to avoid compression on APK file
+		newFileName = ASSETS_PATH + filename.substring(0, filename.length()-4);
+	    else
+		newFileName = ASSETS_PATH + filename;
+	    out = new FileOutputStream(newFileName);
+
+	    byte[] buffer = new byte[1024];
+	    int read;
+	    while ((read = in.read(buffer)) != -1) {
+		out.write(buffer, 0, read);
+	    }
+	    in.close();
+	    in = null;
+	    out.flush();
+	    out.close();
+	    out = null;
+	} catch (Exception e) {
+	    Log.e(tag, "Exception in copyFile() of "+newFileName);
+	    Log.e(tag, "Exception in copyFile() "+e.toString());
+	}
+    }    
+
+    ///////////////////////////////////////////////////////////////////////////
     // painting
     
     private class bboxview extends View {
@@ -246,7 +296,8 @@ public class eblearn extends Activity {
 	    Iterator i = bb.iterator();
 	    while (i.hasNext()) {
 		bbox b = (bbox)i.next();
-		canvas.drawRect(b.r, p); 
+		Log.e(tag, "Drawing bbox");
+		canvas.drawRect(b.r, p);
 	    }
 	    p.setColor(Color.WHITE);
 	    canvas.drawText(s, 0, 12, p);
@@ -274,4 +325,6 @@ public class eblearn extends Activity {
 	    add(new bbox(conf, h0, w0, height, width));
 	}
     }
+
+    
 }
