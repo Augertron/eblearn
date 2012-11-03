@@ -51,8 +51,6 @@ extern "C" {
                                   jobject jbb) {
     ////////////////////////////////////////////////////////////////////////////
     // read weight matrix from resources
-    idx<t_net> weights;
-    idx<ubyte> classnames;
     configuration conf;
     std::string conf_name;
     std::string assets_path;
