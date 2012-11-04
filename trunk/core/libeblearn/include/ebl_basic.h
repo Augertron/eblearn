@@ -343,6 +343,9 @@ template <typename T> class thres_module : public module_1_1<T> {
   virtual void bprop1(state<T> &in, state<T> &out);
   //! second-derivative backward propagation from out to in
   virtual void bbprop1(state<T> &in, state<T> &out);
+  //! Returns a deep copy of this module.
+  //! \param p If NULL, the copy points to the same weights as this module.
+  virtual module_1_1<T>* copy(parameter<T> *p = NULL);
   //! Returns a string describing this module and its parameters.
   virtual std::string describe();
 

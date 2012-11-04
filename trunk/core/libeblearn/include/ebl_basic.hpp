@@ -908,8 +908,7 @@ template <typename T>
 void thres_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   this->resize_output(in, out); // resize iff necessary
   idx_aloop2(inx, in, T, outx, out, T) {
-    if (*inx > thres) *outx = *inx;
-    else *outx = val;
+    *outx = (*inx > thres) ? *inx : val;
   }
 }
 
@@ -934,6 +933,11 @@ void thres_module<T>::bbprop1(state<T> &in, state<T> &out) {
   idx_checknelems2_all(in.ddx[0], out.ddx[0]); // must have same dimensions
   // backprop
   idx_add(out.ddx[0], in.ddx[0]);
+}
+
+template <typename T>
+module_1_1<T>* thres_module<T>::copy(parameter<T> *p) {
+  return (module_1_1<T>*) new thres_module<T>(thres, val);
 }
 
 template <typename T>
