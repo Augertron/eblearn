@@ -94,18 +94,18 @@ void print_usage() {
 template <typename T>
 void narrow(string &filename, intg dim, intg size, intg off) {  
   string f2;
-  f2 << filename << "_narrowed.mat";
+  f2 << filename << "_narrowed_" << dim << "_" << size << "_" << off << ".mat";
   if (has_multiple_matrices(filename.c_str())) {
     midx<T> m = load_matrices<T>(filename);
     midx<T> n = m.narrow(dim, size, off);
     cout << "narrowed matrix " << m << " into " << n << endl;
-    cout << "saving matrix to " << f2;
+    cout << "saving matrix to " << f2 << endl;
     save_matrices(n, f2);
   } else {
     idx<T> m = load_matrix<T>(filename);
     idx<T> n = m.narrow(dim, size, off);
     cout << "narrowed matrix " << m << " into " << n << endl;
-    cout << "saving matrix to " << f2;
+    cout << "saving matrix to " << f2 << endl;
     save_matrix(n, f2);
   }
 }

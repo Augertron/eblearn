@@ -682,7 +682,8 @@ template <typename T>
 void merge_module<T>::fprop(state<T> &in, state<T> &out) {
   if (states_list.size() == 0) eblerror("expected non-empty states_list");
   // resize out if necessary
-  out.resize(in, states_list.size());
+  if (out.order() != in.order()) out.reset(in.get_idxdim(), states_list.size());
+  else out.resize(in.get_idxdim(), states_list.size());
   // loop on each merging
   for (uint i = 0; i < states_list.size(); ++i) {
     std::vector<uint> ids = states_list[i];

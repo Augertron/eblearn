@@ -500,7 +500,8 @@ template <typename T>
 void narrow_module<T>::fprop(state<T> &in, state<T> &out) {
   // narrow each tensor of multi-tensor in
   if (narrow_tensors) {
-    out.resize(in);
+    if (out.order() != in.order()) out.reset(in);
+    else out.resize(in);
     for (uint i = 0; i < in.x.size(); ++i)
       fprop1(in.x[i], out.x[i]);
   } else { // narrow multi-state itself

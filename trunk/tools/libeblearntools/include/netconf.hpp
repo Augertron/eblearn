@@ -316,9 +316,11 @@ create_module(const std::string &name, parameter<T> &theparam,
     }
   } else if (!type.compare("rgb_to_yuv"))
     module = (module_1_1<T>*) new rgb_to_yuv_module<T>();
-  else if (!type.compare("rgb_to_y"))
-    module = (module_1_1<T>*) new rgb_to_y_module<T>();
-  else if (!type.compare("rgb_to_rgb")) {
+  else if (!type.compare("rgb_to_y")) {
+    bool globn = true;
+    get_param(conf, name, "global_norm", globn, true);    
+    module = (module_1_1<T>*) new rgb_to_y_module<T>(globn);
+  } else if (!type.compare("rgb_to_rgb")) {
     bool globn = true;
     get_param(conf, name, "global_norm", globn, true);
     module = (module_1_1<T>*) new rgb_to_rgb_module<T>(globn, name.c_str());
@@ -840,7 +842,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     bool learn = false, learn_mean = false, fsum_div = false;
     double cgauss = 2.0, epsilon = NORM_EPSILON, epsilon2 = 0;
     float fsum_split = 1.0;
-    bool valid = false;
+    bool valid = false, af = true, globnorm = false, thres = true;
     if (!get_param(conf, name, "kernel", skernel)) return NULL;
     idxdim ker = string_to_idxdim(skernel);
     // set optional number of features (default is 'thick')
@@ -853,6 +855,9 @@ create_module(const std::string &name, parameter<T> &theparam,
     get_param(conf, name, "epsilon", epsilon, true);
     get_param(conf, name, "epsilon2", epsilon2, true);
     get_param(conf, name, "valid", valid, true);
+    get_param(conf, name, "across_features", af, true);
+    get_param(conf, name, "global_norm", globnorm, true);
+    get_param(conf, name, "threshold", thres, true);
     // normalization modules
     if (!type.compare("wstd") || !type.compare("cnorm")) {
 #ifdef __CUDA__
@@ -862,14 +867,14 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
 	module = (module_1_1<T>*) new cuda_contrast_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), true, false,
-             learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
+            (ker, wthick, conf.exists_true("mirror"), thres, globnorm,
+             learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
              fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m, valid);
       else
 #endif
 	module = (module_1_1<T>*) new contrast_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), true, false,
-             learn ? &theparam : NULL, name.c_str(), true, learn_mean, cgauss,
+            (ker, wthick, conf.exists_true("mirror"), thres, globnorm,
+             learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
              fsum_div, fsum_split, epsilon, epsilon2, valid);
     }
     else if (!type.compare("snorm")) {
@@ -880,14 +885,14 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
 	module = (module_1_1<T>*) new cuda_subtractive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), false,
-             learn ? &theparam : NULL, name.c_str(), true, cgauss,
+            (ker, wthick, conf.exists_true("mirror"), globnorm,
+             learn ? &theparam : NULL, name.c_str(), af, cgauss,
              fsum_div, fsum_split, gpu_id_m, valid);
       else
 #endif
 	module = (module_1_1<T>*) new subtractive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), false,
-             learn ? &theparam : NULL, name.c_str(), true, cgauss,
+            (ker, wthick, conf.exists_true("mirror"), globnorm,
+             learn ? &theparam : NULL, name.c_str(), af, cgauss,
              fsum_div, fsum_split, valid);
     }
     else if (!type.compare("dnorm")) {
@@ -898,14 +903,14 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
 	module = (module_1_1<T>*) new cuda_divisive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), true,
-             learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
+            (ker, wthick, conf.exists_true("mirror"), thres,
+             learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
              fsum_split, epsilon, epsilon2, gpu_id_m);
       else
 #endif
 	module = (module_1_1<T>*) new divisive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), true,
-             learn ? &theparam : NULL, name.c_str(), true, cgauss, fsum_div,
+            (ker, wthick, conf.exists_true("mirror"), thres,
+             learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
              fsum_split, epsilon, epsilon2);
     }
   }
