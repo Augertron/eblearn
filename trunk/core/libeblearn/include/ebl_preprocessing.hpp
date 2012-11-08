@@ -87,7 +87,12 @@ new_norm(idxdim &normker, bool mirror, t_norm norm_mode, int nf,
   switch (norm_mode) {
     case WSTD_NORM:
       return new contrast_norm_module<T>
-          (normker, nf, mirror, false, false, NULL, "chan_cnorm", true, false,
+          (normker, nf, mirror,
+	   false, /* never do thresholding for inputs */
+	   true, /* always do global norm for inputs */
+	   NULL, "chan_cnorm",
+	   true, /* normalize across features */
+	   false,
 	   DEFAULT_GAUSSIAN_COEFF, false, 1.0, epsilon, epsilon2);
       break ;
     case LAPLACIAN_NORM:
@@ -138,8 +143,6 @@ void rgb_to_ynuv_module<T>::fprop1(idx<T> &in, idx<T> &out) {
          << idx_min(out) << " max " << idx_max(out));
   // normalize Y
   this->tmp = out.narrow(0, 1, 0);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   this->norm->fprop1(this->tmp, this->tmp);
   EDEBUG(this->name() << ": out " << out << " min " << idx_min(out)
@@ -183,14 +186,10 @@ void rgb_to_ynuvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   }
   // normalize Y
   this->tmp = out.narrow(0, 1, 0);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   this->norm->fprop1(this->tmp, this->tmp);
   // normalize UV
   this->tmp = out.narrow(0, 2, 1);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   norm2->fprop1(this->tmp, this->tmp);
 }
@@ -198,7 +197,7 @@ void rgb_to_ynuvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 module_1_1<T>* rgb_to_ynuvn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_ynuvn_module<T>(this->normker, this->mirror,
-                                           this->norm_mode, this->globnorm);
+				    this->norm_mode, this->globnorm);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -209,7 +208,7 @@ rgb_to_ynunvn_module<T>::
 rgb_to_ynunvn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
                      bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T>(normker_, mirror, norm_mode, "rgb_to_ynunvn",
-				1, globnorm, epsilon, epsilon2) {
+			 1, globnorm, epsilon, epsilon2) {
 }
 
 template <typename T>
@@ -231,20 +230,14 @@ void rgb_to_ynunvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   }
   // normalize Y
   this->tmp = out.narrow(0, 1, 0);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   this->norm->fprop1(this->tmp, this->tmp);
   // normalize U
   this->tmp = out.narrow(0, 1, 1);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   this->norm->fprop1(this->tmp, this->tmp);
   // normalize V
   this->tmp = out.narrow(0, 1, 2);
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
   // lcn
   this->norm->fprop1(this->tmp, this->tmp);
 }
@@ -252,7 +245,7 @@ void rgb_to_ynunvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
 template <typename T>
 module_1_1<T>* rgb_to_ynunvn_module<T>::copy(parameter<T> *p) {
   return new rgb_to_ynunvn_module<T>(this->normker, this->mirror,
-                                            this->norm_mode, this->globnorm);
+				     this->norm_mode, this->globnorm);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -306,7 +299,7 @@ rgb_to_yuvn_module<T>::
 rgb_to_yuvn_module(idxdim &normker_, bool mirror, t_norm norm_mode,
                    bool globnorm, double epsilon, double epsilon2)
     : channorm_module<T>(normker_, mirror, norm_mode, "rgb_to_yuvn", 3,
-				globnorm, epsilon, epsilon2) {
+			 globnorm, epsilon, epsilon2) {
 }
 
 template <typename T>
@@ -332,8 +325,6 @@ void rgb_to_yuvn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   // normalize YUV
   this->tmp = out;
   this->norm->fprop1(this->tmp, this->tmp); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(out);
 }
 
 template <typename T>
@@ -412,8 +403,6 @@ void rgb_to_rgbn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   this->resize_output(in, out); // resize (iff necessary)
   // normalize RGB
   this->norm->fprop1(in, out); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(out);
 }
 
 template <typename T>
@@ -459,8 +448,8 @@ module_1_1<T>* rgb_to_y_module<T>::copy(parameter<T> *p) {
 
 template <typename T>
 rgb_to_yn_module<T>::rgb_to_yn_module(idxdim &normker, bool mirror,
-                                             t_norm norm_mode, bool globnorm,
-                                             double epsilon, double epsilon2)
+				      t_norm norm_mode, bool globnorm,
+				      double epsilon, double epsilon2)
     : channorm_module<T>(normker, mirror, norm_mode, "rgb_to_yn", 1,
 				globnorm, epsilon, epsilon2) {
 }
@@ -477,8 +466,6 @@ void rgb_to_yn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   if (in.dim(0) != 3) {
     // cerr << "warning: in rgb_to_yn, input is not 3-channel, "
     // 	   << "ignoring color." << endl;
-    // remove global mean and divide by stddev
-    if (this->globnorm) image_global_normalization(this->tmp);
     // convert Y to Yp
     this->norm->fprop1(in, out); // local
   } else {
@@ -486,8 +473,6 @@ void rgb_to_yn_module<T>::fprop1(idx<T> &in, idx<T> &out) {
     idx_eloop2(inx, in, T, tmpx, this->tmp, T) {
       idx_eloop2(inxx, inx, T, tmpxx, tmpx, T) {
         rgb_to_y_1D(inxx, tmpxx); }}
-    // remove global mean and divide by stddev
-    if (this->globnorm) image_global_normalization(this->tmp);
     // convert Y to Yp
     this->norm->fprop1(this->tmp, out); // local
   }
@@ -516,9 +501,8 @@ y_to_yp_module<T>::~y_to_yp_module() {
 
 template <typename T>
 void y_to_yp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-  this->norm->fprop1(in, out); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(out);
+  // lcn
+  this->norm->fprop1(in, out);
 }
 
 template <typename T>
@@ -558,9 +542,8 @@ void bgr_to_ypuv_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   if (this->globnorm) image_global_normalization(uv);
   // convert Y to Yp
   this->tmp = out.narrow(0, 1, 0);
-  this->norm->fprop1(this->tmp, this->tmp); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(this->tmp);
+  // lcn
+  this->norm->fprop1(this->tmp, this->tmp);
 }
 
 template <typename T>
@@ -577,7 +560,7 @@ bgr_to_yp_module<T>::bgr_to_yp_module(idxdim &normker, bool mirror,
                                              t_norm norm_mode, bool globnorm,
                                              double epsilon, double epsilon2)
     : channorm_module<T>(normker, mirror, norm_mode, "bgr_to_yp", 1,
-				globnorm, epsilon, epsilon2) {
+			 globnorm, epsilon, epsilon2) {
 }
 
 template <typename T>
@@ -595,14 +578,12 @@ void bgr_to_yp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
       bgr_to_y_1D(inxx, tmpxx); }}
   // convert Y to Yp
   this->norm->fprop1(this->tmp, out); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(out);
 }
 
 template <typename T>
 module_1_1<T>* bgr_to_yp_module<T>::copy(parameter<T> *p) {
   return new bgr_to_yp_module<T>(this->normker, this->mirror,
-                                        this->norm_mode, this->globnorm);
+				 this->norm_mode, this->globnorm);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -613,7 +594,7 @@ rgb_to_hp_module<T>::rgb_to_hp_module(idxdim &normker, bool mirror,
                                              t_norm norm_mode, bool globnorm,
                                              double epsilon, double epsilon2)
     : channorm_module<T>(normker, mirror, norm_mode, "rgb_to_hp", 1,
-				globnorm, epsilon, epsilon2) {
+			 globnorm, epsilon, epsilon2) {
 }
 
 template <typename T>
@@ -631,8 +612,6 @@ void rgb_to_hp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
       rgb_to_h_1D(inxx, tmpxx); }}
   // convert H to Hp
   this->norm->fprop1(this->tmp, out); // local
-  // remove global mean and divide by stddev
-  if (this->globnorm) image_global_normalization(out);
 }
 
 template <typename T>

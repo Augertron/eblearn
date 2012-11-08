@@ -262,25 +262,25 @@ MAIN_QTHREAD(int, argc, char**, argv) {
     // fixed randomization
     fixed_init_drand();
 
-    // adding test suites
-    runner.addTest(idxIO_test::suite());
-    runner.addTest(idx_test::suite());
-    runner.addTest(idxiter_test::suite());
-    runner.addTest(idxops_test::suite());
-    runner.addTest(idxops_test2::suite());
-#ifdef __IPP__
-    runner.addTest(ippops_test::suite());
-#endif
-#ifdef __TH__
-    runner.addTest(thops_test::suite());
-#endif
-    runner.addTest(ClusterTest::suite());
-    runner.addTest(datasource_test::suite());
-    runner.addTest(ebl_basic_test::suite());
-    runner.addTest(ebl_preprocessing_test::suite());
-    runner.addTest(image_test::suite());
+//     // adding test suites
+//     runner.addTest(idxIO_test::suite());
+//     runner.addTest(idx_test::suite());
+//     runner.addTest(idxiter_test::suite());
+//     runner.addTest(idxops_test::suite());
+//     runner.addTest(idxops_test2::suite());
+// #ifdef __IPP__
+//     runner.addTest(ippops_test::suite());
+// #endif
+// #ifdef __TH__
+//     runner.addTest(thops_test::suite());
+// #endif
+//     runner.addTest(ClusterTest::suite());
+//     runner.addTest(datasource_test::suite());
+//     runner.addTest(ebl_basic_test::suite());
+//     runner.addTest(ebl_preprocessing_test::suite());
+//     runner.addTest(image_test::suite());
     runner.addTest(detector_test::suite());
-    runner.addTest(ebl_machines_test::suite());
+    // runner.addTest(ebl_machines_test::suite());
 #ifdef __GUI3D__
     //   runner.addTest(gui3d_test::suite());
 #endif

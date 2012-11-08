@@ -292,12 +292,10 @@ create_module(const std::string &name, parameter<T> &theparam,
                                     eps, eps2);
     } else if (!type.compare("rgb_to_yp") || !type.compare("rgb_to_yn")) {
       module = (module_1_1<T>*)
-          new rgb_to_yn_module<T>(kernel, mirror, mode, globn,
-                                  eps, eps2);
+          new rgb_to_yn_module<T>(kernel, mirror, mode, globn, eps, eps2);
     } else if (!type.compare("rgb_to_yuvp") || !type.compare("rgb_to_yuvn")) {
       module = (module_1_1<T>*)
-          new rgb_to_yuvn_module<T>(kernel, mirror, mode, globn,
-                                    eps, eps2);
+          new rgb_to_yuvn_module<T>(kernel, mirror, mode, globn, eps, eps2);
     } else if (!type.compare("rgb_to_ypuvp") || !type.compare("rgb_to_ynuvn")) {
       module = (module_1_1<T>*)
           new rgb_to_ynuvn_module<T>(kernel, mirror, mode, globn,
