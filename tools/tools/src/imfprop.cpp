@@ -66,7 +66,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
 int main(int argc, char **argv) { // regular main without gui
 #endif
   cout << "* Generic fprop" << endl;
-  if (argc != 2) {
+  if (argc < 2) {
     cout << "Usage: ./imfprop <config file>" << endl;
     eblerror("config file not specified");
   }
@@ -80,7 +80,7 @@ int main(int argc, char **argv) { // regular main without gui
     configuration conf(argv[1]); // configuration file
     idxdim dims;
     intg nsamples = 0;
-    string outdir = conf.get_string("out");
+    string outdir = conf.try_get_string("out", "./");
     // output synchronization
     bool sync = !conf.exists_false("sync_outputs");
     mutex out_mutex;
@@ -88,11 +88,9 @@ int main(int argc, char **argv) { // regular main without gui
     mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
     ostream &mout = sync ? mutout : cout;
     ostream &merr = sync ? muterr : cerr;
-    uint              ipp_cores     = 1;
-    if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
+    uint ipp_cores = conf.try_get_uint("ipp_cores", 1);
     ipp_init(ipp_cores); // limit IPP (if available) to 1 core
-    uint              skip_frames   = conf.exists("skip_frames") ? 
-      conf.get_uint("skip_frames") : 0;
+    uint skip_frames = conf.try_get_uint("skip_frames", 0);
 
     // camera //////////////////////////////////////////////////////////////////
     string cam_type = conf.try_get_string("camera", "directory");
@@ -244,9 +242,11 @@ int main(int argc, char **argv) { // regular main without gui
       delete *ithreads;
     }
 #ifdef __GUI__
-    mout << "Closing windows..." << endl;
-    quit_gui(); // close all windows
-    mout << "Windows closed." << endl;
+    if (!conf.exists_true("no_gui_quit")) {
+      mout << "Closing windows..." << endl;
+      quit_gui(); // close all windows
+      mout << "Windows closed." << endl;
+    }
 #endif
     mout << "fprop done. Running time: " << gtimer.elapsed() << endl;
   } eblcatcherror();

@@ -249,8 +249,9 @@ std::string divisive_norm_module<T>::describe() {
   std::string desc;
   desc << "divisive_norm module " << this->name() << " with kernel "
        << kerdim << ", using " << (mirror ? "mirror" : "zero") << " padding"
+       << ", " << (across_features ? "" : "not ") << "across features"
        << ", using " << (param ? "learned" : "fixed")
-       << " filter " << gaussian_kernel;
+       << " filter " << gaussian_kernel.info();
   return desc;
 }
 
@@ -426,7 +427,8 @@ template <typename T>
 std::string subtractive_norm_module<T>::describe() {
   std::string desc;
   desc << "subtractive_norm module with " << (param ? "learned" : "fixed")
-       << " mean weighting and kernel " << meanconv->kernel.x[0]
+       << " mean weighting and kernel " << meanconv->kernel.info()
+       << ", " << (across_features ? "" : "not ") << "across features"
        << ", " << (global_norm ? "" : "not ")
        << "using global normalization";
   if (valid) desc << ", and valid";
@@ -519,8 +521,8 @@ module_1_1<T>* contrast_norm_module<T>::copy(parameter<T> *p) {
   contrast_norm_module<T> *d = new contrast_norm_module<T>
       (divnorm->kerdim, divnorm->nfeatures, divnorm->mirror, divnorm->threshold,
        global_norm, p, this->name(), divnorm->across_features, learn_mean,
-       divnorm->cgauss, divnorm->fsum_div, divnorm->fsum_split, divnorm->epsilon,
-       divnorm->epsilon2, subnorm->valid);
+       divnorm->cgauss, divnorm->fsum_div, divnorm->fsum_split,
+       divnorm->epsilon, divnorm->epsilon2, subnorm->valid);
   if (!p) { // assign same parameter state if no parameters were specified
     d->divnorm->divconv->kernel = divnorm->divconv->kernel;
     d->subnorm->meanconv->kernel = subnorm->meanconv->kernel;

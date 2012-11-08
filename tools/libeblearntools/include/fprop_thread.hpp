@@ -210,7 +210,7 @@ void fprop_thread<T>::execute() {
     std::vector<std::string> sclasses;
     answer_module<T> *ans = NULL;
     uint noutputs = 1;
-    intg thick = -1;
+    intg thick = conf.try_get_int("input_thickness", -1);
     if (conf.exists("classes")) {
       classes = load_matrix<ubyte>(conf.get_cstring("classes"));
       sclasses = ubyteidx_to_stringvector(classes);
