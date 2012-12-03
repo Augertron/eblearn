@@ -337,8 +337,11 @@ template<> void idx_std_normalize(idx<float32> &in, idx<float32> &out,
 #endif
   float32 mean = mean_ ? *mean_ : (float32) idx_mean(in);
   idx_addc(in, -mean, out); // remove mean
-  float32 coeff = sqrt(idx_sumsqr(out) / out.nelements()); // std deviation
-  idx_dotc(out, 1 / coeff, out);
+  float32 sumsq = idx_sumsqr(out);
+  if (sumsq != 0) {
+    float32 coeff = sqrt(sumsq / out.nelements()); // std deviation
+    idx_dotc(out, 1 / coeff, out);
+  }
 }
 
 // idx_m2squdotm1 ////////////////////////////////////////////////////////////
