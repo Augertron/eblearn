@@ -169,6 +169,8 @@ template<typename T, typename Tdata> class datasource {
   //! the 'answers' and the 'target' of the model (see set_sample_energy()).
   //! This may be expensive in memory.
   virtual void keep_outputs(bool keep = true);
+  //! Save current answers as CSV file.
+  virtual void save_answers(std::string &filename);
   //! Normalize picking probabilities globally with maximum probability.
   virtual void normalize_all_probas();
   //! Normalize picking probabilities globally with maximum probability.

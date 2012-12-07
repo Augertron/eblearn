@@ -151,6 +151,10 @@ idx<T> load_matrix(FILE *fp, idx<T> *out);
 //!   open and dynamically load each matrix when requested in the midx object.
 template <typename T>
 midx<T> load_matrices(const std::string &filename, bool ondemand = true);
+//! Loads a matrix from a csv file.
+template <typename T>
+  idx<T> load_csv_matrix(const char *filename, bool ignore_first_line = false,
+			 bool ignore_missing_value_lines = true); 
 
 // saving //////////////////////////////////////////////////////////////////////
 
@@ -210,8 +214,10 @@ bool save_matrices(std::list<std::string> &fnames, const std::string &filename);
 //! 'filename'. All matrices must have the same dimensions.
 //! Returns true if successful, false otherwise.
 template <typename T>
-bool save_matrix(std::list<std::string> &fnames, const std::string &filename);
-
+  bool save_matrix(std::list<std::string> &fnames, const std::string &filename);
+//! Save matrix as a CSV file.
+template <typename T>
+  bool save_csv_matrix(idx<T> &m, const std::string &filename);
  
 // to string saving ////////////////////////////////////////////////////////////
 

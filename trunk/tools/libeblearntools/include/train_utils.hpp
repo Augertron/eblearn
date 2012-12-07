@@ -96,7 +96,14 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
                    classifier_meter &testmeter,
                    infer_param &infp, gd_param &gdp, std::string &shortname,
                    long iteration_seconds) {
+  // determine base name of output files
   std::ostringstream wname, wfname;
+  wname.str("");
+  if (conf.exists("job_name")) wname << conf.get_string("job_name");
+  else if (conf.exists("name")) wname << conf.get_string("name");
+  if (wname.str().length() > 0) wname << "_";
+  wname << "net" << std::setfill('0') << std::setw(5) << iter;
+  
   // save samples picking statistics
   if (conf.exists_true("save_pickings")) {
     std::string fname; fname << "pickings_" << iter;
@@ -104,16 +111,11 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
   }
   // test
   test(iter, conf, conffname, theparam, thetrainer, train_ds, test_ds,
-       trainmeter, testmeter, infp, gdp, shortname);
+       trainmeter, testmeter, infp, gdp, shortname, wname.str());
 
   // save weights and confusion matrix for test set
   // (save after test so that the right saved matrix is associated
   // with latest test in logs).
-  wname.str("");
-  if (conf.exists("job_name")) wname << conf.get_string("job_name");
-  else if (conf.exists("name")) wname << conf.get_string("name");
-  if (wname.str().length() > 0) wname << "_";
-  wname << "net" << std::setfill('0') << std::setw(5) << iter;
   wfname.str(""); wfname << wname.str() << ".mat";
   if (conf.exists_false("save_weights"))
     std::cout << "Not saving weights (save_weights set to 0)." << std::endl;
@@ -146,9 +148,9 @@ void test(uint iter, configuration &conf, std::string &conffname,
           supervised_trainer<T,Tdata,Tlabel> &thetrainer,
           labeled_datasource<T,Tdata,Tlabel> &train_ds,
           labeled_datasource<T,Tdata,Tlabel> &test_ds,
-          classifier_meter &trainmeter,
-          classifier_meter &testmeter,
-          infer_param &infp, gd_param &gdp, std::string &shortname) {
+          classifier_meter &trainmeter, classifier_meter &testmeter, 
+          infer_param &infp, gd_param &gdp, std::string &shortname,
+	  const std::string &basename) {
   timer ttest;
   std::ostringstream wname, wfname;
 
@@ -175,13 +177,25 @@ void test(uint iter, configuration &conf, std::string &conffname,
   //       trainmeter.display_average(train_ds.name(), train_ds.lblstr,
   // 				 train_ds.is_test());
   //     }
-  std::cout << "Testing on " << test_ds.size() << " samples..." << std::endl;
+  eblprint("Testing on " << test_ds.size() << " samples...");
   uint maxtest = conf.exists("max_testing") ? conf.get_uint("max_testing") :0;
   ttest.start();
-  if (!conf.exists_true("no_training_test"))
-    thetrainer.test(train_ds, trainmeter, infp, maxtest);	// test
-  if (!conf.exists_true("no_testing_test"))
-    thetrainer.test(test_ds, testmeter, infp, maxtest);	// test
+  if (!conf.exists_true("no_training_test")) {
+    // test
+    thetrainer.test(train_ds, trainmeter, infp, maxtest);
+    // save answers
+    std::string fname;
+    fname << basename << "_" << train_ds.name() << "_answers.csv";
+    if (conf.exists_true("save_answers")) train_ds.save_answers(fname);
+  }
+  if (!conf.exists_true("no_testing_test")) {
+    // test
+    thetrainer.test(test_ds, testmeter, infp, maxtest);
+    // save answers
+    std::string fname;
+    fname << basename << "_" << test_ds.name() << "_answers.csv";
+    if (conf.exists_true("save_answers")) test_ds.save_answers(fname);    
+  }
   std::cout << "testing_time="; ttest.pretty_elapsed(); std::cout << std::endl;
   // detection test
   if (conf.exists_true("detection_test")) {
@@ -227,34 +241,42 @@ void test(uint iter, configuration &conf, std::string &conffname,
     if (show_train_errors) {
       stgui2.display_correctness(true, true, thetrainer, train_ds, infp,
 				 hsample, wsample, show_raw_outputs,
-				 show_energies, show_all_jitter, show_only_images);
+				 show_energies, show_all_jitter,
+				 show_only_images);
       stgui2.display_correctness(true, false, thetrainer, train_ds, infp,
 				 hsample, wsample, show_raw_outputs,
-				 show_energies, show_all_jitter, show_only_images);
+				 show_energies, show_all_jitter,
+				 show_only_images);
     }
     if (show_train_correct) {
       stgui2.display_correctness(false, true, thetrainer, train_ds, infp,
 				 hsample, wsample, show_raw_outputs,
-				 show_energies, show_all_jitter, show_only_images);
+				 show_energies, show_all_jitter,
+				 show_only_images);
       stgui2.display_correctness(false, false, thetrainer, train_ds, infp,
 				 hsample, wsample, show_raw_outputs,
-				 show_energies, show_all_jitter, show_only_images);
+				 show_energies, show_all_jitter,
+				 show_only_images);
     }
     if (show_val_errors) {
       stgui.display_correctness(true, true, thetrainer, test_ds, infp,
 				hsample, wsample, show_raw_outputs,
-				show_energies, show_all_jitter, show_only_images);
+				show_energies, show_all_jitter,
+				show_only_images);
       stgui.display_correctness(true, false, thetrainer, test_ds, infp,
 				hsample, wsample, show_raw_outputs,
-				show_energies, show_all_jitter, show_only_images);
+				show_energies, show_all_jitter,
+				show_only_images);
     }
     if (show_val_correct) {
       stgui.display_correctness(false, true, thetrainer, test_ds, infp,
 				hsample, wsample, show_raw_outputs,
-				show_energies, show_all_jitter, show_only_images);
+				show_energies, show_all_jitter,
+				show_only_images);
       stgui.display_correctness(false, false, thetrainer, test_ds, infp,
 				hsample, wsample, show_raw_outputs,
-				show_energies, show_all_jitter, show_only_images);
+				show_energies, show_all_jitter,
+				show_only_images);
     }
     stgui.display_internals(thetrainer, test_ds, infp, gdp, ninternals);
   }
@@ -307,6 +329,10 @@ create_validation_set(configuration &conf, uint &noutputs,
   if (conf.exists("epoch_show_modulo"))
     val_ds->set_epoch_show(conf.get_uint("epoch_show_modulo"));
   val_ds->keep_outputs(conf.exists_true("keep_outputs"));
+  if (conf.exists_true("save_answers")) {
+    eblprint("Forcing datasource to keep outputs in order to save answers.");
+    val_ds->keep_outputs(true);    
+  }
   return val_ds;
 }
 
@@ -369,6 +395,10 @@ create_training_set(configuration &conf, uint &noutputs, std::string &traindata)
   if (conf.exists("label_coeff"))
     train_ds->set_label_coeff((T)conf.get_double("label_coeff"));
   train_ds->keep_outputs(conf.exists_true("keep_outputs"));
+  if (conf.exists_true("save_answers")) {
+    eblprint("Forcing datasource to keep outputs in order to save answers.");
+    train_ds->keep_outputs(true);    
+  }
   return train_ds;
 }
 

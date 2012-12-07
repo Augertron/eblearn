@@ -114,7 +114,7 @@ int train(configuration &conf, string &conffname) {
     if (test_only) { // testing mode
       cout << "Test only mode..." << endl;
       test(iter++, conf, conffname, theparam, *thetrainer, *train_ds,
-	   *test_ds, trainmeter, testmeter, infp, gdp, shortname);
+	   *test_ds, trainmeter, testmeter, infp, gdp, shortname, shortname);
       cout << "Testing only mode, stopping." << endl;
     } else { // training mode
       // first show classification results without training

@@ -32,6 +32,7 @@
 
 #include "mpijob.h"
 #include "utils.h"
+#include "string_utils.h"
 #include "tools_utils.h"
 
 #define CMD_RUN 0

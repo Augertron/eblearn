@@ -619,6 +619,13 @@ void datasource<T,Tdata>::keep_outputs(bool keep) {
 }
 
 template <typename T, typename Tdata>
+void datasource<T,Tdata>::save_answers(std::string &filename) {
+  if (save_csv_matrix(answers, filename))
+    eblprint("Saved answers to " << filename << std::endl);
+  else eblerror("Failed to save answers to " << filename);  
+}
+
+template <typename T, typename Tdata>
 void datasource<T,Tdata>::save_pickings(const char *name_) {
   // plot file
   std::string name = "pickings";

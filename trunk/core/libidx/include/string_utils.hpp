@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Pierre Sermanet   *
+ *   Copyright (C) 2012 by Pierre Sermanet   *
  *   pierre.sermanet@gmail.com   *
  *   All rights reserved.
  *
@@ -30,8 +30,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef TOOLS_UTILS_HPP_
-#define TOOLS_UTILS_HPP_
+#ifndef STRING_UTILS_HPP_
+#define STRING_UTILS_HPP_
 
 #include <map>
 #include <string>
@@ -40,6 +40,71 @@
 
 namespace ebl {
 
+  template <typename T1, typename T2>
+  std::string map_to_string(std::map<T1,T2> &m) {
+    std::string s;
+    typename std::map<T1,T2>::iterator j;
+    for (j = m.begin(); j != m.end(); ++j)
+      s << "(" << j->first << ", " << j->second << ") ";
+    return s;
+  }
+
+  template <typename T1, typename T2>
+  std::string map_to_string2(std::map<T1,T2> &m) {
+    std::ostringstream s;
+    typename std::map<T1,T2>::iterator j;
+    for (j = m.begin(); j != m.end(); ++j)
+      s << j->first << ": " << j->second << std::endl;
+    return s.str();
+  }
+
+  template <typename T>
+  void list_to_vector(std::list<T> &l, std::vector<T> &v) {
+    v.resize(l.size());
+    typename std::vector<T>::iterator iv = v.begin();
+    typename std::list<T>::iterator il = l.begin();
+    for ( ; il != l.end(); ++iv, ++il) {
+      *iv = *il;
+    }
+  }
+
+  template <typename T>
+  idx<T> string_to_idx(const char *s_, char sep) {
+    idx<T> d(1);
+    std::string s = s_;
+    int k = 0;
+    bool found = false;
+    while (s.size()) {
+      uint j;
+      for (j = 0; j < s.size(); ++j)
+	if (s[j] == sep)
+	  break ;
+      std::string s0 = s.substr(0, j);
+      if (j >= s.size())
+	s = "";
+      else
+	s = s.substr(j + 1, s.size());
+      if (!s0.empty()) {
+	if (!found)
+	  d.set(string_to_number<T>(s0.c_str()), 0); // 1st element
+	else {
+	  d.resize(d.dim(0) + 1);
+	  d.set(string_to_number<T>(s0.c_str()), d.dim(0) - 1);
+	}
+	found = true;
+	k++;
+      }
+    }
+    if (!found)
+      eblerror("expected at least 1 number in: " << s_);
+    return d;
+  }
+
+  template <typename T>
+  T string_to_number(const char *s_) {
+    return (T) string_to_double(s_);
+  }
+
 } // end namespace ebl
 
-#endif /* TOOLS_UTILS_HPP_ */
+#endif /* STRING_UTILS_HPP_ */
