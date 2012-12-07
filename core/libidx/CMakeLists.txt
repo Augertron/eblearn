@@ -35,6 +35,7 @@ add_library (idx SHARED
   src/matlab.cpp
   src/smart.cpp
   src/random.cpp
+  src/string_utils.cpp
   )
 
 # change target name if debugging

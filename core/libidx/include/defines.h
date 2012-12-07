@@ -301,8 +301,8 @@
 #endif /* __WINDOWS__ */
 
 #ifndef __ANDROID__
-#define eblprint(s) do { std::cout << s ; } while(0)
-#define eblprinto(o, s) do { o << s ; } while(0)
+#define eblprint(s) do { std::cout << s; } while(0)
+#define eblprinto(o, s) do { o << s; } while(0)
 #define eblwarn(s) { std::cerr << "Warning: " << s << "." << std::endl; }
 #endif
 /* #ifndef MAX */

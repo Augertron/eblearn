@@ -56,6 +56,7 @@
 
 #include "numerics.h"
 #include "job.h"
+#include "string_utils.h"
 #include "tools_utils.h"
 #include "metaparser.h"
 

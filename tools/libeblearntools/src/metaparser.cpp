@@ -50,6 +50,7 @@
 #include "stl.h"
 #include "numerics.h"
 #include "metaparser.h"
+#include "string_utils.h"
 #include "tools_utils.h"
 
 using namespace std;

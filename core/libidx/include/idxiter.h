@@ -33,6 +33,8 @@
 #ifndef IDXITER_H_
 #define IDXITER_H_
 
+#include <string.h>
+
 namespace ebl {
 
 // forward declarations

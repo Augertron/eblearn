@@ -68,8 +68,7 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
                    supervised_trainer<T,Tdata,Tlabel> &thetrainer,
                    labeled_datasource<T,Tdata,Tlabel> &train_ds,
                    labeled_datasource<T,Tdata,Tlabel> &test_ds,
-                   classifier_meter &trainmeter,
-                   classifier_meter &testmeter,
+                   classifier_meter &trainmeter, classifier_meter &testmeter,
                    infer_param &infp, gd_param &gdp, std::string &shortname,
                    long iteration_seconds = 0);
 
@@ -80,9 +79,9 @@ void test(uint iter, configuration &conf, std::string &conffname,
           supervised_trainer<T,Tdata,Tlabel> &thetrainer,
           labeled_datasource<T,Tdata,Tlabel> &train_ds,
           labeled_datasource<T,Tdata,Tlabel> &test_ds,
-          classifier_meter &trainmeter,
-          classifier_meter &testmeter,
-          infer_param &infp, gd_param &gdp, std::string &shortname);
+          classifier_meter &trainmeter, classifier_meter &testmeter,
+          infer_param &infp, gd_param &gdp, std::string &shortname,
+	  const std::string &basename);
 
 //! A function that create/loads a validation set given configuration 'conf'.
 //! \param noutputs The number of outputs will be modified according

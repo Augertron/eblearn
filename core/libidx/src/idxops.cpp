@@ -492,4 +492,10 @@ template <> void idx_modulo(idx<float> &m, float mod) {
   idx_aloopf1(e, m, float, { *e = fmod(*e, mod); });
 }
 
+template <> ubyte idx_max(idx<ubyte> &m) {
+  ubyte v = *(m.idx_ptr());
+  idx_aloopf1(i, m, ubyte, { if (*i > v) v = *i; });
+  return v;
+}
+
 } // end namespace ebl

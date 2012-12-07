@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "string_utils.h"
 #include "tools_utils.h"
 #include "configuration.h"
 

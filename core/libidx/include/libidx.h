@@ -55,5 +55,6 @@
 #include "matlab.h"
 #include "smart.h"
 #include "random.h"
+#include "string_utils.h"
 
 #endif /* LIBIDX_H_ */

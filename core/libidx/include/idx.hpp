@@ -33,6 +33,8 @@
 #ifndef IDX_HPP_
 #define IDX_HPP_
 
+#include <string.h>
+
 namespace ebl {
 
 // forward declarations ////////////////////////////////////////////////////////
@@ -793,7 +795,8 @@ void idx<T>::printElems_impl(int indent, stream& out, bool newline) const {
     tab << " ";
   // printing a 0-dimensional tensor
   if (order() == 0)
-    eblprinto(out, lbrace << "@" << sep << printElems_impl_cast(get()) <<sep<< rbrace);
+    eblprinto(out, lbrace << "@" << sep << printElems_impl_cast(get())
+	      << sep << rbrace);
   else if (order() == 1) { // printing a 1-D tensor
     std::stringstream outstring;
     outstring <<  lbrace << sep;
