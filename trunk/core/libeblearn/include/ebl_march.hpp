@@ -661,7 +661,12 @@ module_1_1<T>* arch_narrow(module_1_1<T> *m, Tcast *c, bool included, bool post,
   layers<T> *l = dynamic_cast<layers<T>*>(m);
   if (l) return (module_1_1<T>*) arch_narrow(l, c, included, post, found);
   ms_module<T> *ms = dynamic_cast<ms_module<T>*>(m);
-  if (ms) return (module_1_1<T>*) arch_narrow(ms, c, included, post, found);
+  if (ms) {
+    module_1_1<T> * narrowed = (module_1_1<T>*) 
+      arch_narrow(ms, c, included, post, found);
+    delete ms;
+    return narrowed;
+  }
   // postfix narrow and haven't found pivot module yet, do not add
   if (!*found && post) return NULL;
   // prefix narrow and haven't found pivot module yet, add it

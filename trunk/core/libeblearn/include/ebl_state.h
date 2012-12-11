@@ -40,6 +40,40 @@ namespace ebl {
 // forward declarations
 template <typename T> class parameter;
 
+// state_forwardvector /////////////////////////////////////////////////////////
+//! A state_forwardvector is aware that it's first element is also its
+//! parent and makes sure that it doesn't unlock its first element
+//! even when clearing it, as it would self-collapse if it does that
+template <typename T> 
+class EXPORT state_forwardvector : public svector<T> {
+public:
+  //! Default constructor.
+  state_forwardvector();
+  //! Construct from another state_forwardvector.
+  state_forwardvector(const state_forwardvector<T> &other);
+  //! Constructs a vector of n empty elements.
+  state_forwardvector(uint n);
+  virtual ~state_forwardvector();
+
+  //! Unlocks all elements (except x[0]) 
+  //! and clears the pointers in this vector.
+  virtual void clear();
+  //! Unlocks element 'i' and set it to empty (NULL).
+  virtual void clear(uint i);
+   //! Unlock all idx contained in this midx.
+   void unlock_all();
+
+  virtual void remove_without_unlock(uint i);
+
+ //! Unlocks element at index 'n' and replace it with 'e' (and lock it).
+  virtual void set(T& e, uint n);
+  //! Unlocks element at index 'n' and replace it with a new 'e'(and lock it).
+  virtual void set_new(T& e, uint n);
+
+  void *parent;
+  
+};
+
 // state ///////////////////////////////////////////////////////////////////////
 
 //! A state carries information between layers.
@@ -52,9 +86,9 @@ template <typename T> class parameter;
 //! idx<T> t;    // my tensor
 //! state<T> s;  // a state
 //! t = s;       // the first forward tensor
-//! t = s.f[0];  // the first forward tensor
-//! t = s.f[1];  // the second forward tensor
-//! t = s.b[0];  // the first backward tensor
+//! t = s.x[0];  // the first forward tensor
+//! t = s.x[1];  // the second forward tensor
+//! t = s.dx[0];  // the first backward tensor
 //! t = s.ddx[0]; // the first 2nd order backward tensor.
 template <typename T> class state : public idx<T> {
  public:
@@ -113,6 +147,7 @@ template <typename T> class state : public idx<T> {
   //! This is just a failsafe for users to check they don't unintentinally
   //! allocate more tensors than intended/needed.
   void set_forward_only();
+
 
   // Data manipulation methods /////////////////////////////////////////////////
 
@@ -258,6 +293,10 @@ template <typename T> class state : public idx<T> {
   //! Returns a string with statistics about all internal tensors (min/max/mean)
   virtual std::string info();
 
+  //// Overwritten virtual methods ////////////////////////////////////////
+  //! Decrements reference counter and deallocates this if it reaches zero.
+   virtual int unlock();
+
   // internal methods ////////////////////////////////////////////////////////
  protected:
   //! Initialize defaults.
@@ -293,7 +332,7 @@ template <typename T> class state : public idx<T> {
 
   // member variables //////////////////////////////////////////////////////////
  public:
-  svector<idx<T> > x; //!< Forward tensors.
+  state_forwardvector<idx<T> > x; //!< Forward tensors.
   svector<idx<T> > dx; //!< Backward tensors.
   svector<idx<T> > ddx; //!< 2nd order backward tensors.
  private:

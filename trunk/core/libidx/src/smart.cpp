@@ -78,18 +78,18 @@ int smart_pointer::unlock() {
   //     if (refcount == 0) std::cerr << " (deleting)";
   //     std::cerr << std::endl;
   // #endif
-      if (refcount < 0) {
-        eblerror("idx negative reference counter: " << refcount);
-        return refcount;
-      } else {
-        if (refcount == 0) {
-          DEBUG_LOW("------------ deleting " << this);// << " (" << *this << ")");
-          delete this;
-          return 0;
-        } else {
-          return refcount;
-        }
-      }
+  if (refcount < 0) {
+    eblerror("idx negative reference counter: " << refcount);
+    return refcount;
+  } else {
+    if (refcount == 0) {
+      DEBUG_LOW("------------ deleting " << this);// << " (" << *this << ")");
+      delete this;
+      return 0;
+    } else {
+      return refcount;
+    }
+  }
 }
 
 int smart_pointer::lock() {

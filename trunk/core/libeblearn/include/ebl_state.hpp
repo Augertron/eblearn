@@ -32,17 +32,96 @@
 
 namespace ebl {
 
+// state_forwardvector ////////////////////////////////////////////////////
+template <class T>
+state_forwardvector<T>::state_forwardvector() : svector<T>() {
+}
+
+template <class T>
+state_forwardvector<T>::state_forwardvector(const 
+					    state_forwardvector<T> &other) 
+  : svector<T>() {
+  this->copy(other);
+}
+
+template <class T>
+state_forwardvector<T>::state_forwardvector(uint n) 
+  : svector<T>(n) {
+}
+
+template <class T>
+state_forwardvector<T>::~state_forwardvector() {
+  clear();
+}
+
+template <class T>
+void state_forwardvector<T>::unlock_all() {
+  for (this->it = this->begin(); this->it != this->end(); this->it++)
+    if (*(this->it) != NULL && parent != *(this->it)) {
+      (*(this->it))->unlock();
+    }
+}
+
+template <class T>
+void state_forwardvector<T>::clear() {
+  this->unlock_all();
+  std::vector<T*>::clear();
+}
+
+template <class T>
+void state_forwardvector<T>::clear(uint i) {
+  T *e = std::vector<T*>::operator[](i);
+  if (e && (i != 0|| (i == 0 && parent != this->at_ptr(0))))
+    e->unlock();
+  std::vector<T*>::operator[](i) = NULL;
+}
+
+template <class T>
+void state_forwardvector<T>::remove_without_unlock(uint i) {
+  if (i >= this->size())
+    eblerror("cannot remove element " << i << " when vector has only "
+             << this->size() << " elements");
+  this->it = this->begin() + i;
+  this->erase(this->it);
+}
+
+template <class T>
+void state_forwardvector<T>::set(T &o, uint i) {
+  T* &e = this->at(i);
+  if (e && (parent != this->at_ptr(i)))
+     {
+       e->unlock();
+     }
+  if (parent != &o)
+    o.lock();
+  e = &o;
+}
+
+template <class T>
+void state_forwardvector<T>::set_new(T &o, uint i) {
+  T* &e = this->at(i);
+  if (e && (parent != e))
+    e->unlock();
+  T *n = new T(o);
+  if (parent != n)
+    n->lock();
+  e = n;
+}
+
 // state /////////////////////////////////////////////////////////////////////
 
 template<typename T>
 state<T>::~state() {
+  if(x.at_ptr(0) == x.parent)
+    x.remove_without_unlock(0);
+  this->refcount--;
   // remove x[0] which is linked to main tensor, so that it calls unlock()
   // on it before we decrease refcount. otherwise, unlock is called
   // after refcount-- which then tries to delete this twice.
-  x.remove(0);
+  //x.remove_without_unlock(0);
   // because we're already deleting this object, just decrease refcount
   // rather than calling unlock() which would attempt to delete this again.
-  this->refcount--;
+  //this->refcount--;
 }
 
 template<typename T>
@@ -635,10 +714,23 @@ std::string state<T>::info() {
 // protected methods /////////////////////////////////////////////////////////
 
 template<typename T>
+int state<T>::unlock() {
+#ifdef __DEBUGMEM__
+  this->locks--;
+#endif
+  this->refcount--;
+  if (this->refcount == 1) {
+    delete this;
+  }
+  return 0;
+}
+
+template<typename T>
 void state<T>::init() {
-  this->lock();
+  // this->lock();
   forward_only = false;
   // add main tensor as x[0]
+  x.parent = this;
   x.push_back(this);
 }
 
