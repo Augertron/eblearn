@@ -62,7 +62,7 @@ public:
   virtual void clear(uint i);
    //! Unlock all idx contained in this midx.
    void unlock_all();
-
+   //! removes the element at i without calling unlock on the element.
   virtual void remove_without_unlock(uint i);
 
  //! Unlocks element at index 'n' and replace it with 'e' (and lock it).
@@ -74,7 +74,7 @@ public:
   void push_back(T *e);
   //! Lock and push an element 'e' to the end of this vector.
   void push_back(T &e);
-
+  //! Memory location of the parent state
   void *parent;
   
 };
@@ -152,6 +152,14 @@ template <typename T> class state : public idx<T> {
   //! This is just a failsafe for users to check they don't unintentinally
   //! allocate more tensors than intended/needed.
   void set_forward_only();
+
+  // Overloaded assignment operators ///////////////////////////////////////
+  //! Overloaded assignment operator for state<T>
+  state<T> & operator=(const state<T> &other);
+  //! Overloaded assignment operator for idx<T>. 
+  //! Clears all buffers and assigns the idx to the state
+  state<T> & operator=(const idx<T> &other);
+
 
 
   // Data manipulation methods /////////////////////////////////////////////////

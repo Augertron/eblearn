@@ -71,7 +71,7 @@ void state_forwardvector<T>::clear() {
 template <class T>
 void state_forwardvector<T>::clear(uint i) {
   T *e = std::vector<T*>::operator[](i);
-  if (e && (i != 0|| (i == 0 && parent != this->at_ptr(0))))
+  if (e && (parent != this->at_ptr(i)))
     e->unlock();
   std::vector<T*>::operator[](i) = NULL;
 }
@@ -207,6 +207,31 @@ state<T>::state(const idx<T> &ft) : idx<T>() {
   init();
   x.clear();
   add_x_new(ft);
+}
+
+template<typename T>
+state<T> & state<T>::operator=(const state<T> &s) {
+  forward_only = s.forward_only;
+  x.clear();
+  // forward
+  for (uint i = 0; i < s.x.size(); ++i)
+    if (s.x.exists(i)) add_x_new(s.x.at_const(i));
+  // backward
+  for (uint i = 0; i < s.dx.size(); ++i)
+    if (s.dx.exists(i)) dx.push_back_new(s.dx.at_const(i));
+  // bbackward
+  for (uint i = 0; i < s.ddx.size(); ++i)
+    if (s.ddx.exists(i)) ddx.push_back_new(s.ddx.at_const(i));
+  return *this;
+}
+
+template<typename T>
+state<T> & state<T>::operator=(const idx<T> &other) {
+  // clear existing stuff
+  clear_all();
+  forward_only = true;
+  add_x_new(other);
+  return *this;
 }
 
 template<typename T>
