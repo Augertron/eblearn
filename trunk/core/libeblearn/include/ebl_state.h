@@ -70,6 +70,11 @@ public:
   //! Unlocks element at index 'n' and replace it with a new 'e'(and lock it).
   virtual void set_new(T& e, uint n);
 
+  //! Lock and push an element 'e' to the end of this vector.
+  void push_back(T *e);
+  //! Lock and push an element 'e' to the end of this vector.
+  void push_back(T &e);
+
   void *parent;
   
 };
@@ -295,7 +300,7 @@ template <typename T> class state : public idx<T> {
 
   //// Overwritten virtual methods ////////////////////////////////////////
   //! Decrements reference counter and deallocates this if it reaches zero.
-   virtual int unlock();
+  // virtual int unlock();
 
   // internal methods ////////////////////////////////////////////////////////
  protected:

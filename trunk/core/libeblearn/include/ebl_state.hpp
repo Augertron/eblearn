@@ -34,19 +34,19 @@ namespace ebl {
 
 // state_forwardvector ////////////////////////////////////////////////////
 template <class T>
-state_forwardvector<T>::state_forwardvector() : svector<T>() {
+state_forwardvector<T>::state_forwardvector() : svector<T>(), parent(NULL) {
 }
 
 template <class T>
 state_forwardvector<T>::state_forwardvector(const 
 					    state_forwardvector<T> &other) 
-  : svector<T>() {
+  : svector<T>(), parent(NULL) {
   this->copy(other);
 }
 
 template <class T>
 state_forwardvector<T>::state_forwardvector(uint n) 
-  : svector<T>(n) {
+  : svector<T>(n), parent(NULL) {
 }
 
 template <class T>
@@ -89,9 +89,7 @@ template <class T>
 void state_forwardvector<T>::set(T &o, uint i) {
   T* &e = this->at(i);
   if (e && (parent != this->at_ptr(i)))
-     {
        e->unlock();
-     }
   if (parent != &o)
     o.lock();
   e = &o;
@@ -108,20 +106,26 @@ void state_forwardvector<T>::set_new(T &o, uint i) {
   e = n;
 }
 
+template <class T>
+void state_forwardvector<T>::push_back(T *e) {
+  if (e && (e != parent)) e->lock();
+  std::vector<T*>::push_back(e);
+}
+
+template <class T>
+void state_forwardvector<T>::push_back(T &e) {
+  if (&e != parent)
+    e.lock();
+  std::vector<T*>::push_back(&e);
+}
+
+
 // state /////////////////////////////////////////////////////////////////////
 
 template<typename T>
 state<T>::~state() {
   if(x.at_ptr(0) == x.parent)
     x.remove_without_unlock(0);
-  this->refcount--;
-  // remove x[0] which is linked to main tensor, so that it calls unlock()
-  // on it before we decrease refcount. otherwise, unlock is called
-  // after refcount-- which then tries to delete this twice.
-  //x.remove_without_unlock(0);
-  // because we're already deleting this object, just decrease refcount
-  // rather than calling unlock() which would attempt to delete this again.
-  //this->refcount--;
 }
 
 template<typename T>
@@ -714,20 +718,7 @@ std::string state<T>::info() {
 // protected methods /////////////////////////////////////////////////////////
 
 template<typename T>
-int state<T>::unlock() {
-#ifdef __DEBUGMEM__
-  this->locks--;
-#endif
-  this->refcount--;
-  if (this->refcount == 1) {
-    delete this;
-  }
-  return 0;
-}
-
-template<typename T>
 void state<T>::init() {
-  // this->lock();
   forward_only = false;
   // add main tensor as x[0]
   x.parent = this;
