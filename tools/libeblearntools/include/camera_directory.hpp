@@ -106,6 +106,7 @@ namespace ebl {
     // if (fl) delete fl;
     // fl = new files_list(n);
     // get all file names
+    if (fl) delete fl;
     fl = find_files(directory, file_pattern, NULL,
 		    randomize ? false : true, true, randomize);
     if (!fl) {

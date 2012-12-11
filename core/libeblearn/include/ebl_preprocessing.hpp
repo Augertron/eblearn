@@ -1178,7 +1178,7 @@ void resizepp_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   if (pp) { // no preprocessing if NULL module
     EDEBUG_MAT(pp->name() << ": in", resized);
     inpp = resized;
-    pp->fprop1(inpp, outpp);
+    pp->fprop1(resized, outpp);
     resized = outpp;
     EDEBUG_MAT(pp->name() << ": out", resized);
   }

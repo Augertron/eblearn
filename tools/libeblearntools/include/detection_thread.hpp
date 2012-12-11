@@ -371,6 +371,7 @@ void detection_thread<T>::execute() {
     mout << "detection finished. Execution time: " << toverall.elapsed()<<std::endl;
     // free variables
     if (net) delete net;
+    if (ans) delete ans;
   } eblcatcherror();
 }
 

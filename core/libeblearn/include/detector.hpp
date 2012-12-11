@@ -107,7 +107,14 @@ detector<T>::detector(module_1_1<T> &thenet_, std::vector<std::string> &labels_,
 
 template <typename T>
 detector<T>::~detector() {
+  ppinputs.clear();
+  outputs.clear();
+  answers.clear();
+  actual_scales.clear();
   if (resizepp_delete && resizepp) delete resizepp;
+  if (thenet_nopp) delete thenet_nopp;
+  if (tmp) delete tmp;
+  if (minput) delete minput;
   if (pnms) delete pnms;
 }
 
@@ -147,13 +154,15 @@ void detector<T>::set_resolutions(const std::vector<midxdim> &scales_) {
   if (manual_scales.size() == 0)
     eblerror("expected at least 1 scale but found 0");
   // add the feature dimension for each scale
-  for (uint i = 0; i < manual_scales.size(); ++i) {
-    midxdim &sc = manual_scales[i];
-    for (uint j = 0; j < sc.size(); ++j) {
-      idxdim &d = sc[j];
-      d.insert_dim(0, 1);
-    }
-  }
+  // makes it single channel wrongly
+  // for (uint i = 0; i < manual_scales.size(); ++i) {
+  //   midxdim &sc = manual_scales[i];
+    
+  //   // for (uint j = 0; j < sc.size(); ++j) {
+  //   //   idxdim &d = sc[j];
+  //   //   d.insert_dim(0, 1);
+  //   // }
+  // }
   eblprinto(mout, "Using manual scales specification: " << manual_scales << std::endl);
 }
 
@@ -444,14 +453,19 @@ void detector<T>::init(idxdim &dsample, const char *frame_name, int frame_id) {
     idxdim order(mindim);
     order.setdims(1); // minimum dims
     for (uint i = 0; i < scales.size(); ++i) {
+      //state<T> *tmpst = new state<T>();
+      //state<T> tmpst2;
+      //idx<T> *tmpidxx = new idx<T>();
       ppinputs.push_back(new state<T>());
       ppinputs[i].set_forward_only();
-      ppinputs[i].add_x(new idx<T>(order));
+      idx<T> tmpidx(order);
+      ppinputs[i].add_x_new(tmpidx);
       outputs.push_back(new state<T>());
       outputs[i].set_forward_only();
-      outputs[i].add_x(new idx<T>(order));
+      outputs[i].add_x_new(tmpidx);
       answers.push_back(new state<T>());
     }
+
     DEBUGMEM_PRETTY("detector end of init scales");
     // copy ideal scales to actual scales vector (to be modified later)
     actual_scales.copy(scales);
@@ -480,16 +494,17 @@ compute_scales(midxdim &scales, idxdim &netdim, idxdim &mindim,
     case MANUAL:
       if (!silent)
 	eblprinto(mout, "Manual specification of each scale size");
-      if (frame_id >= 0) {
-	uint sc = std::min((uint)frame_id, (uint)manual_scales.size());
-	scales = manual_scales[sc];
-	if (!silent) eblprinto(mout, " for image "
-                               << frame_id << " from scales set "
-                               << sc << ":" << scales << std::endl);
-      } else {
-	scales = manual_scales[0];
-	if (!silent) eblprinto(mout, " to: " << std::endl);
-      }
+      // TODO: frame_id mechanism broken?? segfaults
+      // if (frame_id >= 0) {
+      // 	uint sc = std::min((uint)frame_id, (uint)manual_scales.size());
+      // 	scales = manual_scales[sc];
+      // 	if (!silent) eblprinto(mout, " for image "
+      //                          << frame_id << " from scales set "
+      //                          << sc << ":" << scales << std::endl);
+      // } else {
+      scales = manual_scales[0];
+      if (!silent) eblprinto(mout, " to: " << std::endl);
+      //}
       break ;
     case SCALES:
       if (!silent)

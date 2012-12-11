@@ -138,9 +138,11 @@ void read_cast_matrix(FILE *fp, idx<T2> &out) {
 
 template <typename T>
 void read_matrix_body(FILE *fp, idx<T> &m) {
-  size_t ret = 0;
+  size_t read_count;
   idx_aloop1(i, m, T) {
-    ret = fread(&(*i), sizeof (T), 1, fp);
+    read_count = fread(&(*i), sizeof (T), 1, fp);
+    if (read_count != 1)
+      eblerror("Read incorrect number of bytes ");
   }
 }
 
