@@ -1575,12 +1575,23 @@ bool class_datasource<T,Tdata,Tlabel>::next_train() {
 
 template <typename T, typename Tdata, typename Tlabel>
 void class_datasource<T,Tdata,Tlabel>::next_balanced_class() {
-  class_it_it++;
-  if (class_it_it >= class_order.size()) {
-    class_it_it = 0;
-    reset_class_order();
+  // classes have custom chances to be picked
+  if (class_probabilities.size() > 0) {
+    float r = (float) drand(); // random number in [0,1]
+    float total = 0; 
+    for (class_it = 0; r > total && class_it < class_probabilities.size(); 
+	 ++class_it) {
+      total += class_probabilities[class_it];
+    }
+    class_it--;
+  } else { // all classes have equal chance
+    class_it_it++;
+    if (class_it_it >= class_order.size()) {
+      class_it_it = 0;
+      reset_class_order();
+    }
+    class_it = class_order[class_it_it];
   }
-  class_it = class_order[class_it_it];
   if (bexclusion && excluded[class_it])
     return next_balanced_class();
 }
@@ -1630,6 +1641,24 @@ void class_datasource<T,Tdata,Tlabel>::set_random_class_order(bool ran) {
   random_class_order = ran;
   std::cout << "Classes order is " << (random_class_order ? "" : "not")
             << " random." << std::endl;
+}
+
+template <typename T, typename Tdata, typename Tlabel>
+void class_datasource<T,Tdata,Tlabel>::
+set_class_probabilities(std::vector<float> &probas) {
+  // check that there are as many probas as classes
+  if (probas.size() != nclasses) 
+    eblerror("expected as many class probabilities as classes but got "
+	     << probas.size() << " probabilities for " << nclasses
+	     << " classes");
+  // normalize probas
+  float total = 0;
+  for (uint i = 0; i < probas.size(); ++i) total += probas[i];
+  class_probabilities.clear();
+  for (uint i = 0; i < probas.size(); ++i) 
+    class_probabilities.push_back(probas[i]/total);
+  eblprint(_name << ": classes are picked with following probabilities: " 
+	   << class_probabilities << std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>

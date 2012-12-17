@@ -362,6 +362,11 @@ create_training_set(configuration &conf, uint &noutputs, std::string &traindata)
     if (conf.exists("limit_classes"))
       ds->limit_classes(conf.get_int("limit_classes"), 0,
 			conf.exists_true("limit_classes_random"));
+    if (conf.exists("class_probabilities")) {
+      std::string s = conf.get_string("class_probabilities");
+      std::vector<float> v = string_to_floatvector(s.c_str());
+      ds->set_class_probabilities(v);
+    }
     noutputs = ds->get_nclasses();
     train_ds = ds;
   } else { // regression task
