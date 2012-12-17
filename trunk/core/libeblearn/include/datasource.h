@@ -632,6 +632,13 @@ class class_datasource : public labeled_datasource<T, Tdata, Tlabel> {
   //! If 'ran' is true, then the order in which classes are presented during
   //! balanced training is randomized.
   virtual void set_random_class_order(bool ran);
+  //! Specifies probabilities for each class to be picked. If not specified
+  //! and training is balanced, each class is shown one after the other.
+  //! If probabilities are specified, each class has its own probability to
+  //! be picked. The vector of probabilities does not need to sum to 1,
+  //! all probabilities will be normalized. E.g. with [1,1,2], classes 0 and
+  //! 1 have 25% chance and class 2 has 50% chance to be picked.
+  virtual void set_class_probabilities(std::vector<float> &probas);
   //! Excludes use of classes other than ones in [offset, offset + n] range.
   //! \param random If true, keep only n classes at random.
   virtual void limit_classes(intg n, intg offset = 0, bool random = false);
@@ -720,11 +727,11 @@ class class_datasource : public labeled_datasource<T, Tdata, Tlabel> {
   using datasource<T,Tdata>::_name;
   // classes
   intg		 nclasses;	//!< Number of classes.
-  std::vector<std::string*>	*lblstr;	//!< Name of each class.
-  std::vector<std::string*>	 clblstr;	//!< Name of each class, may differ.
-  bool                 bexclusion;    //!< Exclusion is used.
-  std::vector<bool>         excluded;      //!< Vector of excluded classes.
-  intg                 included;      //!< Number of included classes.
+  std::vector<std::string*> *lblstr;	//!< Name of each class.
+  std::vector<std::string*> clblstr;	//!< Name of each class, may differ.
+  bool           bexclusion;    //!< Exclusion is used.
+  std::vector<bool> excluded;   //!< Vector of excluded classes.
+  intg           included;      //!< Number of included classes.
   // data
   using datasource<T,Tdata>::data;
   using labeled_datasource<T,Tdata,Tlabel>::labels;
@@ -743,9 +750,10 @@ class class_datasource : public labeled_datasource<T, Tdata, Tlabel> {
   using datasource<T,Tdata>::epoch_done_counters;
   bool		 balance;	//!< Balance iterating or not.
   std::vector<std::vector<intg> > bal_indices;	//!< Balanced iterating indices.
-  std::vector<uint>	 bal_it;	//!< Sample iterators for each class.
-  std::vector<uint>	 class_order;	//!< Order in which to balance classes.
-  bool                 random_class_order;
+  std::vector<uint> bal_it;	//!< Sample iterators for each class.
+  std::vector<uint> class_order;	//!< Order in which to balance classes.
+  std::vector<float> class_probabilities;
+  bool           random_class_order;
   uint		 class_it;	//!< Iterator on classes.
   uint		 class_it_it;	//!< Iterator on classes iterator.
   // sample picking with probabilities
