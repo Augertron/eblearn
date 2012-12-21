@@ -20,8 +20,13 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/scripts
   ${CMAKE_BINARY_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 # Extra compilation flags
-SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}  -Werror=overloaded-virtual"
-  CACHE STRING "CMAKE CXX flags " FORCE )
+IF (WINDOWS)
+   SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}"
+   CACHE STRING "CMAKE CXX flags " FORCE )
+ELSE (WINDOWS)
+     SET(CMAKE_CXX_FLAGS "$ENV{EBLFLAGS}  -Werror=overloaded-virtual"
+     CACHE STRING "CMAKE CXX flags " FORCE )
+ENDIF (WINDOWS)
 
 # use STL or not
 ################################################################################
