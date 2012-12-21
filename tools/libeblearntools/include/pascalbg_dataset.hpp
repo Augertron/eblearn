@@ -413,7 +413,7 @@ display_patch(midx<Tdata> &patch, idx<Tdata> &img,
     // display
     //idx<Tdata> im3 = patch.shift_dim(2, 0);
     uint h = 47, w = 0;
-    display_added(patch, img, &cname, image_filename.c_str(), NULL,
+    this->display_added(patch, img, &cname, image_filename.c_str(), NULL,
                   &r, false, NULL, NULL, NULL, NULL, NULL, NULL, &w);
     // draw patch bboxes
     std::vector<rect<int> >::iterator ibb;
