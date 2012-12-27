@@ -207,10 +207,12 @@ namespace ebl {
     //!                  conf file otherwise.
     //! \param maxjobs Limit the number of concurrent jobs to maxjobs. If -1,
     //!                defaut, use conf's 'meta_max_jobs' instead if defined.
-    virtual bool read_metaconf(const char *fname, const std::string *tstamp = NULL,
-			       const char *resume_name = NULL,
-			       bool resumedir = false,
-			       bool nomax = false, int maxjobs = -1);
+    virtual bool read_metaconf(const char *fname,
+															 const std::string *tstamp = NULL,
+															 const char *resume_name = NULL,
+															 bool resumedir = false,
+															 bool nomax = false, int maxjobs = -1,
+															 const std::string *extra = NULL);
     //! Enable recursive copy of this path into jobs folders.
     virtual void set_copy(const std::string &path);
     //! Prepare all jobs (create folders and copy/create files).

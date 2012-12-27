@@ -66,15 +66,23 @@ template <typename T, typename Tdata>
 datasource<T,Tdata>::
 datasource(const char *data_fname, const char *name_) {
   try {
-    if (has_multiple_matrices(data_fname)) {
-      multimat = true;
-      midx<Tdata> datas_ = load_matrices<Tdata>(data_fname);
-      init(datas_, name_);
-    } else {
+		// try to load as csv if file is not a matrix
+		if (!is_matrix(data_fname)) {
       multimat = false;
-      idx<Tdata> data_ = load_matrix<Tdata>(data_fname);
+      idx<Tdata> data_ = load_csv_matrix<Tdata>(data_fname);
       init(data_, name_);
-    }
+		} else {
+			// matrix format
+			if (has_multiple_matrices(data_fname)) {
+				multimat = true;
+				midx<Tdata> datas_ = load_matrices<Tdata>(data_fname);
+				init(datas_, name_);
+			} else {
+				multimat = false;
+				idx<Tdata> data_ = load_matrix<Tdata>(data_fname);
+				init(data_, name_);
+			}
+		}
     init_epoch();
     pretty(); // print information about the dataset
   } eblcatcherror();
@@ -899,7 +907,11 @@ init(const char *data_fname, const char *labels_fname,
   // load labels
   idx<Tlabel> lab;
   try {
-    lab = load_matrix<Tlabel>(labels_fname);
+		// try to load as csv if file is not a matrix
+		if (!is_matrix(data_fname))
+			lab = load_csv_matrix<Tlabel>(labels_fname);
+		else // regular format
+			lab = load_matrix<Tlabel>(labels_fname);
   } eblcatcherror_msg("Failed to load dataset file");
   // limit number of samples
   if (max_size > 0) {

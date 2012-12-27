@@ -514,14 +514,18 @@ namespace ebl {
   }
 
   configuration::configuration(const char *filename, bool replquotes,
-                               bool silent_, bool bresolve) : silent(silent_) {
-    if (!read(filename, bresolve, replquotes, silent_))
+                               bool silent_, bool bresolve,
+															 const std::string *extra)
+		: silent(silent_) {
+    if (!read(filename, bresolve, replquotes, silent_, NULL, extra))
       eblerror("failed to open configuration file");
   }
 
   configuration::configuration(const std::string &filename, bool replquotes,
-                               bool silent_, bool bresolve) : silent(silent_) {
-    if (!read(filename.c_str(), bresolve, replquotes, silent_))
+                               bool silent_, bool bresolve,
+															 const std::string *extra)
+		: silent(silent_) {
+    if (!read(filename.c_str(), bresolve, replquotes, silent_, NULL, extra))
       eblerror("failed to open configuration file");
   }
 
@@ -541,13 +545,15 @@ namespace ebl {
   }
 
   bool configuration::read(const char *fname, bool bresolve,
-                           bool replacequotes, bool silent_, const char *outdir) {
+                           bool replacequotes, bool silent_, const char *outdir,
+													 const string *extra) {
     silent = silent_;
     // extract conf name from from filename
     name = basename(fname, ".conf");
     // read file and extract all variables and values
     if (!silent) eblprint("loading configuration file: " << fname << std::endl);
     std::string content = file_to_string(fname);
+	  if (extra) content += *extra;
     return read(content, bresolve, replacequotes, silent_, outdir, fname);
   }
 
@@ -855,11 +861,15 @@ namespace ebl {
 
   bool meta_configuration::read(const char *fname, bool bresolve,
                                 const std::string *stamp, bool replacequotes,
-                                const char *resume_name, bool silent) {
+                                const char *resume_name, bool silent,
+																const string *extra) {
     if (!silent)
       eblprint("Reading meta configuration file: " << fname << std::endl);
     // read file and extract all variables and values
     std::string content = file_to_string(fname);
+		// enqueue extra content
+	  if (extra) content += *extra;
+		// extract variables
     if (!extract_variables(content, smap, otxt, NULL, bresolve, replacequotes,
                            silent))
       return false;

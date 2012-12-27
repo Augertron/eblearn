@@ -88,12 +88,16 @@ public:
   configuration(const configuration &other);
   //! load configuration found in filename.
   //! \param resolve If true, replace all referenced variables by their value.
+	//! \param extra Adds extra variables as a string at the end of configuration.
   configuration(const char *filename, bool replquotes = false,
-                bool silent = false, bool resolve = true);
+                bool silent = false, bool resolve = true,
+								const std::string *extra = NULL);
   //! load configuration found in filename.
   //! \param resolve If true, replace all referenced variables by their value.
+	//! \param extra Adds extra variables as a string at the end of configuration.
   configuration(const std::string &filename, bool replquotes = false,
-                bool silent = false, bool resolve = true);
+                bool silent = false, bool resolve = true,
+								const std::string *extra = NULL);
   //! Load configuration from already loaded map of variables, name and
   //! output directory.
   //! \param txt Original text lines of configuration.
@@ -106,13 +110,16 @@ public:
 
   //! load configuration from file fname.
   //! \param resolve If true, replace all referenced variables by their value.
+	//! \param extra Adds extra variables as a string at the end of configuration.
   bool read(const char *fname, bool resolve = true, bool replquotes = true,
-            bool silent = false, const char *outdir = NULL);
+            bool silent = false, const char *outdir = NULL,
+						const std::string *extra = NULL);
   //! load configuration from string 's'.
   //! \param resolve If true, replace all referenced variables by their value.
+	//! \param extra Adds extra variables as a string at the end of configuration.
   bool read(const std::string &s, bool resolve = true, bool replquotes = true,
             bool silent = false, const char *outdir = NULL,
-            const char *name = NULL);
+						const char *name = NULL);
   //! save configuration into file fname.
   bool write(const char *fname);
   //! resolve variables names in variables
@@ -325,7 +332,8 @@ public:
             const std::string *tstamp = NULL,
             bool replace_quotes = false,
             const char *resume_name = NULL,
-            bool silent = false);
+            bool silent = false,
+						const std::string *extra = NULL);
 
   // accessors
 
