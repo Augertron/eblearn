@@ -263,6 +263,7 @@ int main(int argc, char **argv) { // regular main without gui
     if (!file_exists(conffname.c_str()))
       eblerror("configuration file not found: " << conffname);
     configuration conf(conffname, true, true, false); // configuration file
+		if (conf.exists_true("show_configuration")) conf.pretty();
     if (conf.exists_true("fixed_randomization"))
       cout << "Using fixed seed: " << fixed_init_drand() << endl;
     else

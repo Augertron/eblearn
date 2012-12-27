@@ -42,20 +42,20 @@
 #include "tools_utils.h"
 #include "eblapp.h"
 
-////////////////////////////////////////////////////////////////
-// global variables
+// global variables ////////////////////////////////////////////////////////////
 
-string 	copy_path     = ""; 	// path to copy to target folder
-string 	manual_tstamp = ""; 	// tstamp string prefix to the experiment name
-bool 	resume 	      = false;  // resume metajob or not
-bool 	resumedir     = false;  // resume metajob or not
-bool 	resume_other  = false;  // resume from metajob or not
+string 	copy_path				= ""; 	// path to copy to target folder
+string 	manual_tstamp		= ""; 	// tstamp string prefix to the experiment name
+bool		resume					= false;				// resume metajob or not
+bool		resumedir				= false;				// resume metajob or not
+bool		resume_other		= false;				// resume from metajob or not
 string  other_directory = "";
-bool 	create 	      = false;  // create metajob directories only
-bool    monitor       = false;  // monitor jobs from existing directories
-int     maxjobs       = -1;     // max concurrent number of jobs
-bool    reset_progress = false; // ignore existing progress in target dir
-bool    force_start   = false;  // ignore timeout wait if true.
+bool		create					= false;				// create metajob directories only
+bool    monitor					= false;				// monitor jobs from existing directories
+int     maxjobs					= -1;   // max concurrent number of jobs
+bool    reset_progress	= false;				// ignore existing progress in target dir
+bool    force_start			= false;				// ignore timeout wait if true.
+string  extra           = ""; // extra configuration
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -73,22 +73,22 @@ bool parse_args(int argc, char **argv) {
     if (strcmp(argv[i], "-copy") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting string after -copy." << endl;
-	return false;
+				cerr << "input error: expecting string after -copy." << endl;
+				return false;
       }
       copy_path = argv[i];
     } else if (strcmp(argv[i], "-tstamp") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting string after -tstamp." << endl;
-	return false;
+				cerr << "input error: expecting string after -tstamp." << endl;
+				return false;
       }
       manual_tstamp = argv[i];
     } else if (strcmp(argv[i], "-maxjobs") == 0) {
       ++i;
       if (i >= argc) {
-	cerr << "input error: expecting number after -maxjobs." << endl;
-	return false;
+				cerr << "input error: expecting number after -maxjobs." << endl;
+				return false;
       }
       maxjobs = string_to_int(argv[i]);
     } else if (strcmp(argv[i], "-resumedir") == 0) {
@@ -107,6 +107,13 @@ bool parse_args(int argc, char **argv) {
       reset_progress = true;
     } else if (strcmp(argv[i], "-force_start") == 0) {
       force_start = true;
+    } else if (strcmp(argv[i], "-extra") == 0) {
+      ++i;
+      if (i >= argc) {
+				cerr << "input error: expecting string after -extra." << endl;
+				return false;
+      }
+      extra << argv[i] << "\n";
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -148,6 +155,9 @@ void print_usage() {
        << "      Remove previous progress and finished files." << endl;
   cout << "  -force_start" << endl
        << "      Ignore timeout wait and starts all jobs." << endl;
+  cout << "  -extra <string>" << endl
+       << "      Adds extra variables at end of configuration." << endl
+			 << "      example: -extra \"a=1\" -extra \"b=2\"" << endl;
 }
 
 int main(int argc, char **argv) {
@@ -171,7 +181,7 @@ int main(int argc, char **argv) {
   } else { // use MPI env
     if (mjm->is_master()) {
       cout << "Found MPI world of size " << mjm->world_size()
-	   << ", executing in MPI mode." << endl;
+					 << ", executing in MPI mode." << endl;
     }
     jm = mjm;
   }
@@ -191,8 +201,8 @@ int main(int argc, char **argv) {
     jm->monitor(metaconf.c_str());
   else { 
     jm->read_metaconf(metaconf.c_str(), &manual_tstamp, 
-		      (resume_name.empty() ? NULL : resume_name.c_str()), 
-		      resumedir, false, maxjobs);
+											(resume_name.empty() ? NULL : resume_name.c_str()), 
+											resumedir, false, maxjobs, &extra);
     jm->set_copy(copy_path);
     if (resume_other) jm->initialize_other(other_directory);
     // jm->prepare(reset_progress);    

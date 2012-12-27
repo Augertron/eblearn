@@ -160,10 +160,11 @@ namespace ebl {
   }
 
   bool mpijob_manager::read_metaconf(const char *fname, const std::string *tstamp,
-				     const char *resume_name, bool resumedir,
-				     bool nomax, int maxjobs) {
+																		 const char *resume_name, bool resumedir,
+																		 bool nomax, int maxjobs, const string *extra) {
     if (is_master()) { // only read metaconf if we are the master
-      job_manager::read_metaconf(fname, tstamp, resume_name, resumedir, true);
+      job_manager::read_metaconf(fname, tstamp, resume_name, resumedir, true,
+																 maxjobs, extra);
     }
 //       mconf_fullfname = fname;
 //       size_t pos = mconf_fullfname.find_last_of('/');

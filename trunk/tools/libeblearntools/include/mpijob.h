@@ -90,9 +90,10 @@ namespace ebl {
     //!                  conf file otherwise.
     virtual bool read_metaconf(const char *fname,
                                const std::string *tstamp = NULL,
-			       const char *resume_name = NULL,
-			       bool resumedir = false,
-			       bool nomax = false, int maxjobs = -1);
+															 const char *resume_name = NULL,
+															 bool resumedir = false,
+															 bool nomax = false, int maxjobs = -1,
+															 const std::string *extra = NULL);
     //! Prepare all jobs (create folders and copy/create files).
     virtual void prepare(bool reset_progress = false);
     //! Run all jobs (assumes a call to prepare() beforehand).

@@ -514,15 +514,17 @@ job_manager::~job_manager() {
 
 bool job_manager::read_metaconf(const char *fname, const std::string *tstamp,
 																const char *resume_name,
-																bool resumedir, bool nomax, int maxjobs) {
+																bool resumedir, bool nomax, int maxjobs,
+																const string *extra) {
 	mconf_fullfname = fname;
 	mconf_fname = basename(mconf_fullfname.c_str());
 	// read meta configuration
 	if (!mconf.read(mconf_fullfname.c_str(), false, tstamp, false,
-									resume_name, true))
+									resume_name, true, extra))
 		return false;
 	// read meta configuration as a simple configuration, to be resolved
-	rmconf.read(mconf_fullfname.c_str(), true, tstamp, true, resume_name, true);
+	rmconf.read(mconf_fullfname.c_str(), true, tstamp, true, resume_name, true,
+							extra);
 	// set resolved elements into unresolved mconf
 	mconf.set_output_dir(rmconf.get_output_dir());
 	mconf.set_name(rmconf.get_name());
