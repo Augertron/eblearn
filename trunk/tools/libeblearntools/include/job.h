@@ -60,7 +60,7 @@ namespace ebl {
     //! \param resume If true, find latest saved parameters and start
     //!        from them.
     job(configuration &conf, const char *oconffname = NULL,
-	bool resume = false);
+				bool resume = false);
     //! Destructor.
     virtual ~job();
 
@@ -141,8 +141,8 @@ namespace ebl {
     //! \param additional Additional string the user may want to put in progress
     //!   such as resuming information.
     static void write_progress(uint i, uint total,
-			       const char *additional = NULL,
-			       const char *root = NULL);
+															 const char *additional = NULL,
+															 const char *root = NULL);
     //! Returns the filename where progress info is written by write_progress().
     static std::string get_progress_filename(const char *root = NULL);
     //! Write the file 'finished' in current directory or in root directory
