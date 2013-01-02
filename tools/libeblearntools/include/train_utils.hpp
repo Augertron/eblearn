@@ -103,7 +103,7 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
   else if (conf.exists("name")) wname << conf.get_string("name");
   if (wname.str().length() > 0) wname << "_";
   wname << "net" << std::setfill('0') << std::setw(5) << iter;
-  
+
   // save samples picking statistics
   if (conf.exists_true("save_pickings")) {
     std::string fname; fname << "pickings_" << iter;
@@ -124,6 +124,7 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
     theparam.save_x(wfname.str().c_str()); // save trained network
     std::cout << "saved=" << wfname.str() << std::endl;
   }
+	std::cout << "save_pattern=" << wname.str() << std::endl;
 
   // set retrain to next iteration with current saved weights
   std::ostringstream progress;

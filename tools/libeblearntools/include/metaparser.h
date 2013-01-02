@@ -272,6 +272,10 @@ public:
 										 int *maxiter_common = NULL,
 										 varmaplist *best_common = NULL);
 
+	//! Save best files from best list to directory dir/dir2.
+	void save_best(configuration &conf, const std::string &dir, const char *dir2,
+								 varmaplist &best, bool use_conf_name);
+
 	//! Send an email reporting the status of the runs.
 	//! \param besteach An optional list of best results for each job.
 	void send_report(configuration &conf, const std::string dir,
