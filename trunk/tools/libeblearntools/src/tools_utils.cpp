@@ -66,7 +66,6 @@ files_list *find_files(const std::string &dir, const char *pattern,
 #else
   if (sort && randomize)
     eblerror("it makes no sense to sort and randomize at the same time");
-  boost::cmatch what;
   boost::regex r(pattern);
   boost::filesystem::path p(dir);
   if (!exists(p))
@@ -78,11 +77,11 @@ files_list *find_files(const std::string &dir, const char *pattern,
   // first process all elements of current directory
   for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
     if (!boost::filesystem::is_directory(itr->status()) &&
-        boost::regex_match(itr->path().filename().c_str(), what, r)) {
+        boost::regex_match(itr->path().filename().string(), r)) {
       // found an match, add it to the list
       fl->push_back(pair<std::string,std::string>
 		    (itr->path().branch_path().string(),
-		     itr->path().filename().c_str()));
+		     itr->path().filename().string()));
     }
   }
   // then explore subdirectories
@@ -124,7 +123,6 @@ find_fullfiles(const std::string &dir, const char *pattern,
 #ifndef __BOOST__
   eblerror("boost not installed, install and recompile");
 #else
-  boost::cmatch what;
   boost::regex r(pattern);
   boost::filesystem::path p(dir);
   if (!boost::filesystem::exists(p))
@@ -139,8 +137,8 @@ find_fullfiles(const std::string &dir, const char *pattern,
       bool match;
       // apply pattern on full name or leaf only
       if (fullpattern)
-	match = regex_match(itr->path().string().c_str(), what, r);
-      else match = regex_match(itr->path().filename().c_str(), what, r);
+	match = regex_match(itr->path().string().c_str(), r);
+      else match = regex_match(itr->path().filename().string(), r);
       if ((finddirs || !is_directory(itr->status())) && match) {
         // found an match, add it to the list
         fl->push_back(itr->path().string());
@@ -184,7 +182,6 @@ uint count_files(const std::string &dir, const char *pattern) {
 #ifndef __BOOST__
   eblerror("boost not installed, install and recompile");
 #else
-  boost::cmatch what;
   boost::regex r(pattern);
   boost::filesystem::path p(dir);
   if (!exists(p))
@@ -193,7 +190,7 @@ uint count_files(const std::string &dir, const char *pattern) {
   for (boost::filesystem::directory_iterator itr(p); itr != end_itr; ++itr) {
     if (boost::filesystem::is_directory(itr->status()))
       total += count_files(itr->path().string(), pattern);
-    else if (boost::regex_match(itr->path().filename().c_str(), what, r)) {
+    else if (boost::regex_match(itr->path().filename().string(), r)) {
       // found file matching pattern, increment counter
       total++;
     }
@@ -234,8 +231,8 @@ bool tar(const std::string &dir, const std::string &tgtdir) {
   std::string cmd;
   boost::filesystem::path p(dir);
   cmd << "tar cz -C " << dir << "/../ -f " << tgtdir << "/"
-      << p.filename().c_str()
-      << ".tgz " << p.filename().c_str();// << " 2> /dev/null";
+      << p.filename().string()
+      << ".tgz " << p.filename().string();// << " 2> /dev/null";
   int ret = std::system(cmd.c_str());
   if (ret < 0) {
     eblwarn("tar failed." << std::endl);

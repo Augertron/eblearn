@@ -2,12 +2,7 @@
 #include "libidx.h"
 #include "tools_utils.h"
 
-#ifdef __WINDOWS__
-#define TEST_FILE "C:/Windows/Temp/eblearn_tester_matrix.mat"
-#else
-//#define TEST_FILE "/tmp/eblearn_tester_matrix_2.mat"
 #define TEST_FILE "./eblearn_tester_matrix_2.mat"
-#endif
 
 extern std::string *gl_data_dir;
 extern std::string *gl_data_errmsg;
@@ -105,7 +100,7 @@ void idxIO_test::test_save_load_matrix_matrix() {
     sim1 << root << "/barn.png";
     sim2 << root << "/lena.png";
     sim3 << root << "/2008_007714.jpg";
-    sall << root << "/all.mat";
+    sall << root << "/all.mat"; 
     idx<float> im1 = load_image<float>(sim1);
     idx<float> im2 = load_image<float>(sim2);
     idx<float> im3 = load_image<float>(sim3);

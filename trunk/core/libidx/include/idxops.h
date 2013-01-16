@@ -655,7 +655,7 @@ template <typename T> void rev_idx2_tr (idx<T> &m, idx<T> &n);
 //! returns largest element in m
 template <typename T> T idx_max(idx<T> &m);
 //! returns largest element in m
-template <> ubyte idx_max(idx<ubyte> &m);
+template <> ubyte EXPORT idx_max(idx<ubyte> &m);
 //! Copy maximum between each element of in1 and in2 into in2.
 template <typename T> void idx_max(idx<T> &in1, idx<T> &in2);
 //! Copy maximum between each element of in1 and in2 into out.

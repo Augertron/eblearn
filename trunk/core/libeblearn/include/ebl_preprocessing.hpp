@@ -861,8 +861,9 @@ rect<int> resize_module<T>::compute_regions(idx<T> &in) {
                        r.width / (float) outrect.width);
     wwratio = hhratio;
   } else {
-    height = (intg) round(r.height * hratio);
-    width = (intg) round(r.width * wratio);
+	// no round function in vc++, so instead using floor(x+0.5) to simulate it.
+    height = (intg) floor((r.height * hratio) + 0.5);
+    width = (intg) floor((r.width * wratio) + 0.5);
     outrect = rect<int>(0, 0, height, width);
   }
   // apply scale jitter (keeping same center)
