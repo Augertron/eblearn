@@ -21,10 +21,10 @@ void detector_test::tearDown() {
 }
 
 void detector_test::test_face() {
-#ifdef __WINDOWS__
+/*#ifdef __WINDOWS__
   cerr << "not implemented for windows" << endl;
   CPPUNIT_ASSERT(false);
-#else
+#else*/
   try {
     typedef float t_net;
     CPPUNIT_ASSERT_MESSAGE(*gl_data_errmsg, gl_data_dir != NULL);
@@ -38,6 +38,7 @@ void detector_test::test_face() {
     idx<ubyte> im = load_image<ubyte>(imagename);
     configuration conf;
     conf.read(confname.c_str(), false, false, true);
+	conf.set("display_sleep","2000");
     conf.set("root2", root.c_str());
     conf.set("current_dir", root.c_str());
     conf.set("ebl", ebl.c_str());
@@ -58,17 +59,17 @@ void detector_test::test_face() {
 			    processed_fname);
       millisleep(5);
     }
-    sleep(2);
+    millisleep(2);
     dt.stop(true);
 
     // tests
     CPPUNIT_ASSERT_EQUAL((size_t) 17, bboxes.size()); // 16 faces to be found
-    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 7.89,
+    CPPUNIT_ASSERT_DOUBLES_EQUAL((double) 7.47,
     				 bboxes[0].confidence, .01);
     CPPUNIT_ASSERT_EQUAL((int) 1, bboxes[0].class_id);
   }
   catch(string &err) { cerr << err << endl; }
-#endif
+// #endif
 }
 
 // void detector_test::test_norb() {

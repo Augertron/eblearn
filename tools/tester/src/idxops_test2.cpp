@@ -18,7 +18,7 @@ template <typename T> bool EQUAL_UTEST(T a1, T a2) {
     amax = (float64)a1;
     amin = (float64)a2;
   }
-  if (std::isinf(std::abs(amax)))
+  if (isinf(std::abs(amax)))
     return amin == amax;
   if (std::abs(amax) > 1e-30)
     return (1.0 - epsilon < amin / amax) && (amin / amax < 1.0 + epsilon);

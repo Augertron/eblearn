@@ -994,7 +994,7 @@ namespace ebl {
   // TODO: check for tmp size incompatibilities
   template <typename T>
   void image_global_normalization(idx<T> &in) {
-    idx_std_normalize(in, in);
+    idx_std_normalize(in, in, (T *)NULL);
     // problem with code below: it separates by channels which are assumed to
     // be in last dimension. this can lead to nasty bugs.
     // switch (in.order()) {

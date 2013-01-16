@@ -712,8 +712,13 @@ void secsleep(long seconds) {
 }
 
 std::string timer::eta(uint n, uint total) {
+#ifdef __WINDOWS__
+	return elapsed((long)((total - n)
+                        * (elapsed_seconds() / (float)max((uint)1,n))));
+#else
   return elapsed((long)((total - n)
                         * (elapsed_seconds() / (float)std::max((uint)1,n))));
+#endif
 }
 
 // process utilities ///////////////////////////////////////////////////////////
@@ -725,7 +730,7 @@ std::string timer::eta(uint n, uint total) {
 
 int pid() {
 #ifdef __WINDOWS__
-  eblwarn( "pid() not implemented for Windows" << endl);
+  eblwarn( "pid() not implemented for Windows" << std::endl);
   return 0;
 #else
   return (int) getpid();

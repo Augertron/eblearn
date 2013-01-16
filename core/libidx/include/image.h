@@ -391,7 +391,7 @@ namespace ebl {
   //////////////////////////////////////////////////////////////////////////////
 
   //! This returns 0, 1 or 2 if type contains "bilinear", "gaussian" or "mean".
-  uint get_resize_type(const char *type);
+  EXPORT uint get_resize_type(const char *type);
   
 } // end namespace ebl
 
