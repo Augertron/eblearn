@@ -1,6 +1,7 @@
 #include "idxops_test2.h"
 
 using namespace ebl;
+using namespace std;
 
 void idxops_test2::setUp() {
 }
