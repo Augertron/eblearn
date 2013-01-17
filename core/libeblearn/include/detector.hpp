@@ -60,7 +60,7 @@ detector<T>::detector(module_1_1<T> &thenet_, std::vector<std::string> &labels_,
       bboxes_off(false), adapt_scales(adapt_scales_), answer(answer_),
       ignore_outsiders(false), corners_inference(0), corners_infered(false),
       pre_threshold(0), outputs_threshold(-1), outputs_threshold_val(-1),
-      bbox_decision(0), scale_remove_pad(false) {
+      bbox_decision(0), scale_remove_pad(false), tmp(NULL) {
   // // make sure the top module is an answer module
   // module_1_1<T> *last = thenet.last_module();
   // if (!dynamic_cast<answer_module<T>*>(last))
