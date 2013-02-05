@@ -39,7 +39,7 @@ namespace ebl {
 
 template <typename T, typename Tds1, typename Tds2>
 answer_module<T,Tds1,Tds2>::answer_module(uint nfeatures_, const char *name_)
-    : module_1_1<T>(name_), nfeatures(nfeatures_) {
+	: module_1_1<T>(name_), nfeatures(nfeatures_) {
 }
 
 template <typename T, typename Tds1, typename Tds2>
@@ -131,11 +131,12 @@ template <typename T, typename Tds1, typename Tds2>
 class_answer<T,Tds1,Tds2>::
 class_answer(uint nclasses, double target_factor, bool binary_target_,
              t_confidence conf, bool apply_tanh_, const char *name_,
-             int force, int single, idxdim *kerd, double sigma_scale)
-    : answer_module<T,Tds1,Tds2>(binary_target_?1:nclasses, name_),
-      conf_type(conf), binary_target(binary_target_), resize_output(true),
-      apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force),
-      single_output(single) {
+             int force, int single, idxdim *kerd, double sigma_scale,
+						 bool silent)
+	: answer_module<T,Tds1,Tds2>(binary_target_?1:nclasses, name_),
+		conf_type(conf), binary_target(binary_target_), resize_output(true),
+		apply_tanh(apply_tanh_), tmp(1,1,1), force_class(force),
+		single_output(single) {
   // create 1-of-n targets with target 1.0 for shown class, -1.0 for the rest
   targets = create_target_matrix<T>(nclasses, (T)1.0);
   // binary target
@@ -154,7 +155,7 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
   }
   // target factor
   idx_dotc(targets, target_factor, targets);
-  print_targets(targets);
+  if (!silent) print_targets(targets);
   // set min/max of target
   target_min = idx_min(targets);
   target_max = idx_max(targets);
@@ -162,45 +163,50 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
   // set confidence parameters
   T max_dist;
   switch (conf_type) {
-    case confidence_sqrdist:
-      max_dist = target_max - target_min;
-      conf_ratio = targets.dim(0) * max_dist * max_dist;
-      // shift value to be subtracted before dividing by conf_ratio
-      conf_shift = target_min;
-      eblprint( "Using sqrdist confidence formula with normalization ratio "
-                << conf_ratio << " and shift value " << conf_shift << std::endl);
-      break ;
-    case confidence_single:
-      conf_ratio = target_max - target_min;
-      // shift value to be subtracted before dividing by conf_ratio
-      conf_shift = target_min;
-      eblprint( "Using single output confidence with normalization ratio "
-                << conf_ratio << " and shift value " << conf_shift << std::endl);
-      break ;
-    case confidence_max:
-      if (force >= 0) {
-	conf_ratio = target_max - target_min;
-	conf_shift = -conf_ratio;
-	conf_ratio *= 2;
-      } else {
-	conf_ratio = target_max - target_min;
-	conf_shift = 0; // no shift needed, the difference min is 0.
-      }
-      eblprint( "Using max confidence formula with normalization ratio "
-                << conf_ratio << std::endl);
-      break ;
-    default:
-      eblerror("confidence type " << conf_type << " undefined");
+	case confidence_sqrdist:
+		max_dist = target_max - target_min;
+		conf_ratio = targets.dim(0) * max_dist * max_dist;
+		// shift value to be subtracted before dividing by conf_ratio
+		conf_shift = target_min;
+		if (!silent)
+			eblprint( "Using sqrdist confidence formula with normalization ratio "
+								<< conf_ratio << " and shift value " << conf_shift << std::endl);
+		break ;
+	case confidence_single:
+		conf_ratio = target_max - target_min;
+		// shift value to be subtracted before dividing by conf_ratio
+		conf_shift = target_min;
+		if (!silent)
+			eblprint( "Using single output confidence with normalization ratio "
+								<< conf_ratio << " and shift value " << conf_shift << std::endl);
+		break ;
+	case confidence_max:
+		if (force >= 0) {
+			conf_ratio = target_max - target_min;
+			conf_shift = -conf_ratio;
+			conf_ratio *= 2;
+		} else {
+			conf_ratio = target_max - target_min;
+			conf_shift = 0; // no shift needed, the difference min is 0.
+		}
+		if (!silent)
+			eblprint( "Using max confidence formula with normalization ratio "
+								<< conf_ratio << std::endl);
+		break ;
+	default:
+		eblerror("confidence type " << conf_type << " undefined");
   }
   if (kerd && kerd->order() == 2)
     smoothing_kernel =
-	create_mexican_hat2<T>(kerd->dim(0), kerd->dim(1), 1,
-			       sigma_scale);
+			create_mexican_hat2<T>(kerd->dim(0), kerd->dim(1), 1,
+														 sigma_scale);
   else
     smoothing_kernel =
-	create_mexican_hat2<T>(9, 9, 1, sigma_scale);
-                eblprint( "smoothing kernel:" << std::endl);
-  smoothing_kernel.print();
+			create_mexican_hat2<T>(9, 9, 1, sigma_scale);
+	if (!silent) {
+		eblprint( "smoothing kernel:" << std::endl);
+		smoothing_kernel.print();
+	}
 }
 
 template <typename T, typename Tds1, typename Tds2>
@@ -255,34 +261,34 @@ void class_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
         intg p;
         bool ini = false;
         switch (conf_type) {
-	  case confidence_sqrdist: // squared distance to target
-	    target = targets.select(0, classid);
-	    conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift)
-			       / conf_ratio));
-	    oo.set(conf, 1);
-	    break ;
-	  case confidence_single: // simply return class' out (normalized)
-	    conf = (T) ((ii.get(classid) - conf_shift) / conf_ratio);
-	    oo.set(conf, 1);
-	    break ;
-	  case confidence_max: // distance with 2nd max answer
-	    conf = std::max(target_min, std::min(target_max, ii.get(classid)));
-	    for (p = 0; p < ii.dim(0); ++p) {
-	      if (p != classid) {
-		if (!ini) {
-		  max2 = ii.get(p);
-		  ini = true;
-		} else {
-		  if (ii.get(p) > max2)
-		    max2 = ii.get(p);
-		}
-	      }
-	    }
-	    max2 = std::max(target_min, std::min(target_max, max2));
-	    oo.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
-	    break ;
-	  default:
-	    eblerror("confidence type " << conf_type << " undefined");
+				case confidence_sqrdist: // squared distance to target
+					target = targets.select(0, classid);
+					conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift)
+														 / conf_ratio));
+					oo.set(conf, 1);
+					break ;
+				case confidence_single: // simply return class' out (normalized)
+					conf = (T) ((ii.get(classid) - conf_shift) / conf_ratio);
+					oo.set(conf, 1);
+					break ;
+				case confidence_max: // distance with 2nd max answer
+					conf = std::max(target_min, std::min(target_max, ii.get(classid)));
+					for (p = 0; p < ii.dim(0); ++p) {
+						if (p != classid) {
+							if (!ini) {
+								max2 = ii.get(p);
+								ini = true;
+							} else {
+								if (ii.get(p) > max2)
+									max2 = ii.get(p);
+							}
+						}
+					}
+					max2 = std::max(target_min, std::min(target_max, max2));
+					oo.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
+					break ;
+				default:
+					eblerror("confidence type " << conf_type << " undefined");
         }
       }
     });
@@ -385,12 +391,12 @@ scalerclass_answer(uint nclasses, double target_factor, bool binary_target,
                    uint joffset_, float mgauss, bool predict_conf_,
                    bool predict_bconf_, idx<T> *biases_,
                    idx<T> *coeffs_, const char *name_)
-    : class_answer<T,Tds1,Tds2>(nclasses, target_factor, binary_target,
-                                conf, apply_tanh_, name_),
-      jitter(1, 1), out_class(1), jsize(jsize_), joffset(joffset_),
-      scale_mgauss(mgauss), predict_conf(predict_conf_),
-      predict_bconf(predict_bconf_), pconf_offset(0), biases(NULL),
-      coeffs(NULL) {
+	: class_answer<T,Tds1,Tds2>(nclasses, target_factor, binary_target,
+															conf, apply_tanh_, name_),
+		jitter(1, 1), out_class(1), jsize(jsize_), joffset(joffset_),
+		scale_mgauss(mgauss), predict_conf(predict_conf_),
+																															 predict_bconf(predict_bconf_), pconf_offset(0), biases(NULL),
+																															 coeffs(NULL) {
   resize_output = false;
   this->nfeatures += jsize;
   if (predict_conf) {
@@ -526,46 +532,46 @@ fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   { idx_bloop1(tgt, out, T) {
       T s = tgt.gget(jitt_offset); // scale
       if (s != 0) {
-	// compute target box
-	T h = tgt.gget(jitt_offset + 1); // height offset
-	T w = tgt.gget(jitt_offset + 2); // width offset
-	rect<float> r(netrec);
-	r.h0 += h * netrec.height;
-	r.w0 += w * netrec.height;
-	r.scale_centered(1 / s, 1 / s);
-	// compute visibility ratio
-	float vis = r.overlap_ratio(netrec);
-	// compute confidence given visibility (output is [0,1])
-	// gnuplot: set yrange[0:1];set xrange[0:1]; plot tanh(x*20 - 18)/1.4+.33
-	T visconf = (T) (tanh(vis * 20 - 18) / 1.4 + .33);
-	// compute confidence given scale (output is [0,1])
-	// gnuplot: set yrange[0:1];set xrange[0:3];plot (exp(-(x-1.5)*(x-1.5)/(2 * .2)) * 4 - 1)/2+.5
-	T sconf = std::min((T) 1.0, (T)
-			   ((exp(-(s - scale_mgauss) * (s - scale_mgauss)
-				 / (2 * .2)) * 4 - 1)/2+.5));
-	// compute distance to center (the closer the higher the conf)
-	// set xrange[-1:1];set yrange[-1:1];plot exp(-2*sqrt(x*x))
-	//T dconf = (T) (exp(-2 * sqrt((double) h*h + w*w)));
-	// take minimum of all confs for final confidence
-	//	T final_conf = std::min(visconf, std::min(dconf, sconf));
-	T final_conf = std::min(visconf, sconf);
-	EDEBUG("s: " << s << " h: " << h << " w: " << w << " sconf: " << sconf
+				// compute target box
+				T h = tgt.gget(jitt_offset + 1); // height offset
+				T w = tgt.gget(jitt_offset + 2); // width offset
+				rect<float> r(netrec);
+				r.h0 += h * netrec.height;
+				r.w0 += w * netrec.height;
+				r.scale_centered(1 / s, 1 / s);
+				// compute visibility ratio
+				float vis = r.overlap_ratio(netrec);
+				// compute confidence given visibility (output is [0,1])
+				// gnuplot: set yrange[0:1];set xrange[0:1]; plot tanh(x*20 - 18)/1.4+.33
+				T visconf = (T) (tanh(vis * 20 - 18) / 1.4 + .33);
+				// compute confidence given scale (output is [0,1])
+				// gnuplot: set yrange[0:1];set xrange[0:3];plot (exp(-(x-1.5)*(x-1.5)/(2 * .2)) * 4 - 1)/2+.5
+				T sconf = std::min((T) 1.0, (T)
+													 ((exp(-(s - scale_mgauss) * (s - scale_mgauss)
+																 / (2 * .2)) * 4 - 1)/2+.5));
+				// compute distance to center (the closer the higher the conf)
+				// set xrange[-1:1];set yrange[-1:1];plot exp(-2*sqrt(x*x))
+				//T dconf = (T) (exp(-2 * sqrt((double) h*h + w*w)));
+				// take minimum of all confs for final confidence
+				//	T final_conf = std::min(visconf, std::min(dconf, sconf));
+				T final_conf = std::min(visconf, sconf);
+				EDEBUG("s: " << s << " h: " << h << " w: " << w << " sconf: " << sconf
                << " visconf: " << visconf
                //	      << " dconf: " << dconf
                << " final: " << final_conf);
-	// update confidence target
-	if (predict_conf) { // fill additional confidence feature
-	  if (predict_bconf) { // target conf is binary
-	    if (final_conf < .5)
-	      tgt.sset((T)0, pconf_offset);
-	    else
-	      tgt.sset((T)1, pconf_offset);
-	  } else // target conf is continuous
-	    tgt.sset(final_conf, pconf_offset);
-	} else { // modulate positive object's target directly
-	  ds.fprop_label(label); // get positive offset
-	  tgt.sset(final_conf, (int)label.get());
-	}
+				// update confidence target
+				if (predict_conf) { // fill additional confidence feature
+					if (predict_bconf) { // target conf is binary
+						if (final_conf < .5)
+							tgt.sset((T)0, pconf_offset);
+						else
+							tgt.sset((T)1, pconf_offset);
+					} else // target conf is continuous
+						tgt.sset(final_conf, pconf_offset);
+				} else { // modulate positive object's target directly
+					ds.fprop_label(label); // get positive offset
+					tgt.sset(final_conf, (int)label.get());
+				}
       }
     }}
 }
@@ -659,10 +665,10 @@ template <typename T, typename Tds1, typename Tds2>
 scaler_answer<T,Tds1,Tds2>::
 scaler_answer(uint negative_id_, uint positive_id_, bool raw_confidence_,
               float threshold_, bool spatial_, const char *name_)
-    : answer_module<T,Tds1,Tds2>(spatial_ ? 3 : 1, name_),
-      negative_id(negative_id_), positive_id(positive_id_),
-      raw_confidence(raw_confidence_), jitter(1), threshold((T) threshold_),
-      spatial(spatial_), jsize(answer_module<T,Tds1,Tds2>::nfeatures) {
+	: answer_module<T,Tds1,Tds2>(spatial_ ? 3 : 1, name_),
+		negative_id(negative_id_), positive_id(positive_id_),
+		raw_confidence(raw_confidence_), jitter(1), threshold((T) threshold_),
+		spatial(spatial_), jsize(answer_module<T,Tds1,Tds2>::nfeatures) {
 }
 
 template <typename T, typename Tds1, typename Tds2>
@@ -709,8 +715,8 @@ void scaler_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
             ooo.set(iii.get(1), 3); // h answer
             ooo.set(iii.get(2), 4); // w answer
           }
-	  //ooo.set((T) std::min((T) 1, std::max((T) 0, i / 2 + 1)), 1); // conf
-	  //	  ooo.set(std::max((T) 0, i + 1), 1); // conf
+					//ooo.set((T) std::min((T) 1, std::max((T) 0, i / 2 + 1)), 1); // conf
+					//	  ooo.set(std::max((T) 0, i + 1), 1); // conf
         }
       }
     }
@@ -749,8 +755,8 @@ std::string scaler_answer<T,Tds1,Tds2>::describe() {
 template <typename T, typename Tds1, typename Tds2>
 regression_answer<T,Tds1,Tds2>::
 regression_answer(uint nfeatures_, float64 threshold_, const char *name_)
-    : answer_module<T,Tds1,Tds2>(nfeatures_, name_),
-      threshold(threshold_) {
+	: answer_module<T,Tds1,Tds2>(nfeatures_, name_),
+		threshold(threshold_) {
 }
 
 template <typename T, typename Tds1, typename Tds2>
@@ -801,8 +807,8 @@ template <typename T, typename Tds1, typename Tds2>
 vote_answer<T,Tds1,Tds2>::
 vote_answer(uint nclasses, double target_factor, bool binary_target_,
             t_confidence conf, bool apply_tanh_, const char *name_)
-    : class_answer<T,Tds1,Tds2>(nclasses, target_factor, binary_target_,
-                                conf, apply_tanh_, name_) {
+	: class_answer<T,Tds1,Tds2>(nclasses, target_factor, binary_target_,
+															conf, apply_tanh_, name_) {
 }
 
 template <typename T, typename Tds1, typename Tds2>
@@ -851,8 +857,8 @@ trainable_module<T,Tds1,Tds2>::
 trainable_module(ebm_2<T> &energy_, module_1_1<T> &mod1_,
                  module_1_1<T> *mod2_, answer_module<T,Tds1,Tds2> *dsmod_,
                  const char *name_, const char *switcher)
-    : energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod(dsmod_),
-      ms_switch(NULL) {
+	: energy_mod(energy_), mod1(mod1_), mod2(mod2_), dsmod(dsmod_),
+		ms_switch(NULL) {
   // try to find switcher module in mod1
   if (switcher) {
     std::vector<ms_module<T>*> all = arch_find_all(&mod1, ms_switch);
@@ -1016,7 +1022,7 @@ const state<T>& trainable_module<T,Tds1,Tds2>::compute_answers() {
 
 template <typename T, typename Tds1, typename Tds2>
 bool trainable_module<T,Tds1,Tds2>::correct(state<T> &answer,
-                                                          state<T> &label) {
+																						state<T> &label) {
   if (!dsmod) eblerror("dsmod must be defined to compute correctness");
   return dsmod->correct(answer, label);
 }
@@ -1041,7 +1047,7 @@ compute_targets(labeled_datasource<T,Tds1,Tds2> &ds) {
   if (!dsmod)
     eblerror("answer module dsmod must be defined to compute targets");
   scalerclass_energy<T> *sce =
-      dynamic_cast<scalerclass_energy<T>*>(&energy_mod);
+		dynamic_cast<scalerclass_energy<T>*>(&energy_mod);
   if (sce) targets = sce->last_target_raw;
   else dsmod->fprop_ds2(ds, targets);
   return targets;
@@ -1053,7 +1059,7 @@ get_target(const Tds2 &label) {
   if (!dsmod)
     eblerror("answer module dsmod must be defined to compute targets");
   class_answer<T,Tds1,Tds2> *ans =
-      dynamic_cast<class_answer<T,Tds1,Tds2>*>(dsmod);
+		dynamic_cast<class_answer<T,Tds1,Tds2>*>(dsmod);
   if (!ans) eblerror("expected a class_answer module");
   return ans->get_target(label);
 }

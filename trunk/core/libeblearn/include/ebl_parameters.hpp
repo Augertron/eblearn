@@ -34,9 +34,10 @@ namespace ebl {
 
 // parameter /////////////////////////////////////////////////////////////////
 
-template <typename T> parameter<T>::parameter(intg initial_size)
+template <typename T> parameter<T>::parameter(intg initial_size, bool silent_)
     : state<T>(initial_size),
-      deltax(initial_size), epsilons(initial_size), ddeltax(initial_size) {
+      deltax(initial_size), epsilons(initial_size), ddeltax(initial_size),
+			silent(silent_) {
   // this class is not meant to be used for training
   this->set_forward_only();
   // clear buffers
@@ -93,8 +94,9 @@ bool parameter<T>::load_x(std::vector<std::string> &files) {
       idx<T> tmp = load_matrix<T>(files[i]);
       w = idx_concat(w, tmp);
     }
-    eblprint( "Concatenated " << files.size() << " matrices into 1: "
-              << w << " from " << files << std::endl);
+    if (!silent)
+			eblprint( "Concatenated " << files.size() << " matrices into 1: "
+								<< w << " from " << files << std::endl);
     load_x(w);
     return true;
   } eblcatcherror_msg("failed to load weights");
@@ -112,7 +114,8 @@ bool parameter<T>::load_x(const char *s) {
                << " parameters");
     this->resize_parameter(m.dim(0));
     idx_copy(m, *this);
-    eblprint( "Loaded weights from " << s << ": " << *this << std::endl);
+    if (!silent)
+			eblprint( "Loaded weights from " << s << ": " << *this << std::endl);
     return true;
   } eblcatcherror_msg("failed to load weights");
   return false;
@@ -128,7 +131,8 @@ bool parameter<T>::load_x(idx<T> &m) {
   }
   this->resize_parameter(m.dim(0));
   idx_copy(m, *this);
-  eblprint( "Loaded weights from " << m << ": " << *this << std::endl);
+  if (!silent)
+		eblprint( "Loaded weights from " << m << ": " << *this << std::endl);
   return true;
 }
 
@@ -235,8 +239,8 @@ void parameter<T>::update_deltax(T knew, T kold) {
 
 // dparameter /////////////////////////////////////////////////////////////////
 
-template <typename T> dparameter<T>::dparameter(intg initial_size)
-    : parameter<T>(initial_size) {
+template <typename T> dparameter<T>::dparameter(intg initial_size, bool silent_)
+	: parameter<T>(initial_size, silent_) {
   // initialize backward tensors
   this->dx.push_back(new idx<T>(this->get_idxdim()));
   this->resize_parameter(0);
@@ -259,8 +263,9 @@ dparameter<T>::~dparameter() {
 
 // ddparameter /////////////////////////////////////////////////////////////////
 
-template <typename T> ddparameter<T>::ddparameter(intg initial_size)
-    : parameter<T>(initial_size) {
+template <typename T> ddparameter<T>::ddparameter(intg initial_size,
+																									bool silent_)
+	: parameter<T>(initial_size, silent_) {
   // initialize backward tensors
   this->dx.push_back(new idx<T>(this->get_idxdim()));
   this->ddx.push_back(new idx<T>(this->get_idxdim()));

@@ -115,6 +115,62 @@ DECLARE_REPLICABLE_MODULE_1_1(linear_module_replicable,
                                const char *name = "linear_replicable"),
                               (p, in, out, name));
 
+/* // sparse_linear_module //////////////////////////////////////////////////////// */
+
+/* //! This module applies a linear combination of the input <in> */
+/* //! with its internal weight matrix w and puts the result in the output. */
+/* //! Contrarily to linear_module, not all inputs are used for the linear */
+/* //! combination, as defined by a connection table. */
+/* //! Note that this module is slower than a regular linear because it involves */
+/* //! looping through the connection table. */
+/* //! This module has a replicable order of 1, if the input has a bigger order, */
+/* //! use the replicable version of this module: linear_module_replicable. */
+/* //! \brief Module: \f$\vec{out} = W \vec{in}\f$. */
+/* //! \ingroup network_modules */
+/* template <typename T> class sparse_linear_module: public module_1_1<T> { */
+/*  public: */
+/*   //! Constructor. */
+/*   //! \param p is used to store all parametric variables in a single place. */
+/*   //!        If p is null, a local buffer will be used. */
+/*   //! \param table A connection table determining the size of inputs/outputs */
+/* 	//!   as well as which input is connected to which output. */
+/*   sparse_linear_module(parameter<T> *p, idx<intg> &table, */
+/* 											 const char *name ="sparse_linear"); */
+/*   //! destructor */
+/*   virtual ~sparse_linear_module(); */
+/*   //! forward propagation from in to out */
+/*   virtual void fprop1(idx<T> &in, idx<T> &out); */
+/*   //! backward propagation from out to in */
+/*   virtual void bprop1(state<T> &in, state<T> &out); */
+/*   //! second-derivative backward propagation from out to in */
+/*   virtual void bbprop1(state<T> &in, state<T> &out); */
+/*   //! forgetting weights by replacing with random values */
+/*   virtual void forget(forget_param_linear &fp); */
+/*   //! normalize */
+/*   virtual void normalize(); */
+/*   //! Return dimensions that are compatible with this module. */
+/*   //! See module_1_1_gen's documentation for more details. */
+/*   virtual fidxdim fprop1_size(fidxdim &i_size); */
+/*   //! Return dimensions compatible with this module given output dimensions. */
+/*   //! See module_1_1_gen's documentation for more details. */
+/*   virtual fidxdim bprop1_size(const fidxdim &o_size); */
+/*   //! Returns a deep copy of this module. */
+/*   //! \param p If NULL, reuse current parameter space, otherwise allocate new */
+/*   //!   weights on parameter 'p'. */
+/*   virtual module_1_1<T>* copy(parameter<T> *p = NULL); */
+/*   //! Copy passed weights into x component of internal weights. */
+/*   virtual void load_x(idx<T> &weights); */
+/*   //! Returns a string describing this module and its parameters. */
+/*   virtual std::string describe(); */
+/*   //! Calls fprop and then dumps internal buffers, inputs and outputs */
+/*   //! into files. This can be useful for debugging. */
+/*   virtual void fprop1_dump(idx<T> &in, idx<T> &out); */
+
+/*   // members */
+/*  public: */
+/*   state<T> w; */
+/* }; */
+
 // convolution_module //////////////////////////////////////////////////////////
 
 /**
@@ -140,7 +196,7 @@ template <typename T> class convolution_module : public module_1_1<T> {
   //! \param table is the convolution connection table.
   //!        This means a \f$ n \times 2 \f$ integer idx, where table[i,0] is
   //!        the source field and table[i,1] is the destinataion connection.
-  //!  
+  //!
   //! \param crop If true, crop input when it does not match with the kernel.
   //!          This allows to feed any input size to this module.
   convolution_module(parameter<T> *p, idxdim &ker, idxdim &stride,

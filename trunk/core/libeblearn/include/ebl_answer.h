@@ -140,7 +140,8 @@ class class_answer : public answer_module<T,Tds1,Tds2> {
                t_confidence conf = confidence_max,
                bool apply_tanh = false, const char *name = "class_answer",
                int force_class = -1, int single_output = -1,
-               idxdim *kerd = NULL, double sigma_scale = 3);
+               idxdim *kerd = NULL, double sigma_scale = 3,
+							 bool silent = false);
   virtual ~class_answer();
 
   //! Produce a vector of answers given input 'in'. 'out' contains answers

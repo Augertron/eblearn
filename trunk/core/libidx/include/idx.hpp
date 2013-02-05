@@ -762,6 +762,26 @@ std::string idx<T>::str() const {
 }
 
 template <typename T>
+std::string idx<T>::csv(bool flat) const {
+  std::string s;
+  char separator = ',';
+  if (this->order() == 1) {
+    for(uint i = 0; i < this->dim(0); ++i) {
+			s << this->get(i) << separator;
+			if (!flat) s << "\n";
+		}
+  } else if (this->order() == 2) {
+    for(uint i = 0; i < this->dim(0); ++i) {
+			for(uint j = 0; j < this->dim(1); ++j) {
+				s << this->get(i, j) << separator;
+			}
+      if (!flat) s << "\n";
+    }
+  } else eblerror("expected a vector or matrix only: " << *this);
+  return s;
+}
+
+template <typename T>
 std::string idx<T>::info() {
   std::string s;
   s << "(" << this->spec;

@@ -167,8 +167,9 @@ init2(const char *name_) {
   seek_begin_train();
   epoch_sz = size(); //get_lowest_common_size();
   epoch_mode = 1;
-  std::cout << _name << ": Each training epoch sees " << epoch_sz
-            << " samples." << std::endl;
+  if (!silent)
+		std::cout << _name << ": Each training epoch sees " << epoch_sz
+							<< " samples." << std::endl;
   not_picked = 0;
   epoch_show = 50; // print epoch count message every epoch_show
   epoch_show_printed = -1; // last epoch count we have printed
@@ -247,7 +248,8 @@ std::string& datasource<T,Tdata>::name() {
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::set_test() {
   test_set = true;
-  std::cout << _name << ": This is a testing set only." << std::endl;
+  if (!silent)
+		std::cout << _name << ": This is a testing set only." << std::endl;
 }
 
 template <typename T, typename Tdata>
@@ -464,10 +466,11 @@ void datasource<T,Tdata>::seek_begin_train() {
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::set_shuffle_passes(bool activate) {
   shuffle_passes = activate;
-  std::cout << _name
-            << ": Shuffling of samples (training only) after each pass is "
-            << (shuffle_passes ? "activated" : "deactivated") << "."
-            << std::endl;
+	if (!silent)
+		std::cout << _name
+							<< ": Shuffling of samples (training only) after each pass is "
+							<< (shuffle_passes ? "activated" : "deactivated") << "."
+							<< std::endl;
 }
 
 template <typename T, typename Tdata>
@@ -622,15 +625,16 @@ void datasource<T,Tdata>::set_sample_energy(double e, bool correct_,
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::keep_outputs(bool keep) {
   bkeep_outputs = keep;
-  std::cout << (bkeep_outputs ? "Keeping" : "Not keeping")
-            << " model outputs for each sample." << std::endl;
+	if (!silent)
+		std::cout << (bkeep_outputs ? "Keeping" : "Not keeping")
+							<< " model outputs for each sample." << std::endl;
 }
 
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::save_answers(std::string &filename) {
   if (save_csv_matrix(answers, filename))
     eblprint("Saved answers to " << filename << std::endl);
-  else eblerror("Failed to save answers to " << filename);  
+  else eblerror("Failed to save answers to " << filename);
 }
 
 template <typename T, typename Tdata>
@@ -697,26 +701,29 @@ set_weigh_samples(bool activate, bool hardest_focus_, bool perclass_norm_,
   hardest_focus = hardest_focus_;
   perclass_norm = perclass_norm_;
   sample_min_proba = MIN(1.0, min_proba);
-  std::cout << _name
-            << ": Weighing of samples (training only) based on classification is "
-            << (weigh_samples ? "activated" : "deactivated") << "." << std::endl;
-  if (activate) {
-    std::cout << _name << ": learning is focused on "
-              << (hardest_focus ? "hardest" : "easiest")
-              << " misclassified samples" << std::endl;
-    if (!_ignore_correct && !hardest_focus)
-      std::cerr << "Warning: correct samples are not ignored and focus is on "
-                << "easiest samples, this may not be optimal" << std::endl;
-    std::cout << "Sample picking probabilities are normalized "
-              << (perclass_norm ? "per class" : "globally")
-              << " with minimum probability " << sample_min_proba << std::endl;
-  }
+	if (!silent) {
+		std::cout << _name
+							<< ": Weighing of samples (training only) based on classification is "
+							<< (weigh_samples ? "activated" : "deactivated") << "." << std::endl;
+		if (activate) {
+			std::cout << _name << ": learning is focused on "
+								<< (hardest_focus ? "hardest" : "easiest")
+								<< " misclassified samples" << std::endl;
+			if (!_ignore_correct && !hardest_focus)
+				std::cerr << "Warning: correct samples are not ignored and focus is on "
+									<< "easiest samples, this may not be optimal" << std::endl;
+			std::cout << "Sample picking probabilities are normalized "
+								<< (perclass_norm ? "per class" : "globally")
+								<< " with minimum probability " << sample_min_proba << std::endl;
+		}
+	}
 }
 
 // pretty methods //////////////////////////////////////////////////////////////
 
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::pretty_progress(bool newline) {
+	if (silent) return ;
   // train pretty
   intg i = epoch_cnt, sz = epoch_sz;
   std::string pre = "training: ";
@@ -742,6 +749,7 @@ void datasource<T,Tdata>::pretty_progress(bool newline) {
 
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::pretty() {
+	if (silent) return ;
   std::cout << _name << ": dataset \"" << _name << "\" contains " << data.dim(0)
             << " samples of dimension " << sampledims
             << " and defines an epoch as " << epoch_sz << " samples." << std::endl;
@@ -749,6 +757,11 @@ void datasource<T,Tdata>::pretty() {
   if (multimat) { EDEBUG("datasource::data : " << datas.info()); }
   else EDEBUG("datasource::data : " << data.info());
 #endif
+}
+
+template <typename T, typename Tdata>
+void datasource<T,Tdata>::set_silent(bool s) {
+	this->silent = s;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -779,8 +792,9 @@ void datasource<T,Tdata>::restore_state() {
 
 template <typename T, typename Tdata>
 void datasource<T,Tdata>::set_epoch_show(uint modulo) {
-  std::cout << _name << ": Print training count every " << modulo
-            << " samples." << std::endl;
+  if (!silent)
+		std::cout << _name << ": Print training count every " << modulo
+							<< " samples." << std::endl;
   epoch_show = modulo;
 }
 
@@ -903,7 +917,8 @@ init(const char *data_fname, const char *labels_fname,
       jitters = load_matrices<float>(jitters_fname);
       jitters_maxdim = jitters.get_maxdim();
     } eblcatchwarn();
-  } else std::cout << "No jitter information loaded." << std::endl;
+  } else
+		if (!silent) std::cout << "No jitter information loaded." << std::endl;
   // load labels
   idx<Tlabel> lab;
   try {
@@ -915,7 +930,8 @@ init(const char *data_fname, const char *labels_fname,
   } eblcatcherror_msg("Failed to load dataset file");
   // limit number of samples
   if (max_size > 0) {
-    std::cout << "Limiting " << name_<< " to " << max_size << " samples." <<std::endl;
+    std::cout << "Limiting " << name_<< " to " << max_size
+							<< " samples." << std::endl;
     //      lab = lab.narrow(0, std::min((intg) max_size, lab.dim(0)), 0);
   }
   // load data
@@ -946,7 +962,8 @@ init(const char *data_fname, const char *labels_fname,
       scales_loaded = true;
 #endif
     } eblcatchwarn();
-  } else std::cout << "No scale information loaded." << std::endl;
+  } else
+		if (!silent) std::cout << "No scale information loaded." << std::endl;
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -1052,6 +1069,7 @@ intg labeled_datasource<T,Tdata,Tlabel>::count_included_samples() {
 
 template <typename T, typename Tdata, typename Tlabel>
 void labeled_datasource<T, Tdata, Tlabel>::pretty() {
+	if (silent) return ;
   std::cout << _name << ": (regression) labeled dataset \"" << _name
             << "\" contains "
             << data.dim(0) << " samples of dimension " << sampledims
@@ -1353,7 +1371,8 @@ init(const char *data_fname, const char *labels_fname,
       classes_found = true;
     } eblcatchwarn();
   } else
-    std::cout << "No category names found, using numbers." << std::endl;
+    if (!silent)
+			std::cout << "No category names found, using numbers." << std::endl;
   // classes names are optional, use numbers by default if not specified
   if (classes_found) {
     this->lblstr = new std::vector<std::string*>;
@@ -1617,12 +1636,14 @@ void class_datasource<T,Tdata,Tlabel>::reset_class_order() {
 template <typename T, typename Tdata, typename Tlabel>
 void class_datasource<T,Tdata,Tlabel>::set_balanced(bool bal) {
   balance = bal;
-  if (!balance) // unbalanced
-    std::cout << _name << ": Setting training as unbalanced (not taking class "
-              << "distributions into account)." << std::endl;
-  else { // balanced
-    std::cout << _name << ": Setting training as balanced (taking class "
-              << "distributions into account)." << std::endl;
+  if (!balance) { // unbalanced
+    if (!silent)
+			std::cout << _name << ": Setting training as unbalanced (not taking class "
+								<< "distributions into account)." << std::endl;
+	} else { // balanced
+		if (!silent)
+			std::cout << _name << ": Setting training as balanced (taking class "
+								<< "distributions into account)." << std::endl;
     // compute vector of sample indices for each class
     bal_indices.clear();
     bal_it.clear();
@@ -1984,6 +2005,7 @@ void class_datasource<T,Tdata,Tlabel>::restore_state() {
 
 template <typename T, typename Tdata, typename Tlabel>
 void class_datasource<T,Tdata,Tlabel>::pretty_progress(bool newline) {
+	if (silent) return ;
   if (this->is_test())
     datasource<T,Tdata>::pretty_progress(newline);
   else {
@@ -2004,6 +2026,7 @@ void class_datasource<T,Tdata,Tlabel>::pretty_progress(bool newline) {
 
 template <typename T, typename Tdata, typename Tlabel>
 void class_datasource<T, Tdata, Tlabel>::pretty() {
+	if (silent) return ;
   std::cout << _name << ": classification dataset \"" << _name
             << "\" contains "
             << data.dim(0) << " samples of dimension " << sampledims

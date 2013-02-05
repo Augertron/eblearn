@@ -79,7 +79,7 @@ namespace ebl {
 
   ////////////////////////////////////////////////////////////////
 
-  void load_gd_param(configuration &conf, gd_param &gdp) {
+void load_gd_param(configuration &conf, gd_param &gdp, bool silent) {
     // mandatory learning parameters
     gdp.eta = conf.get_double("eta");
     // optional learning parameters
@@ -98,7 +98,7 @@ namespace ebl {
     if (conf.exists("gradient_threshold"))
       gdp.gradient_threshold = conf.get_double("gradient_threshold");
     // printing parameters
-    eblprint(gdp << std::endl);
+    if (!silent) eblprint(gdp << std::endl);
   }
 
 } /* namespace ebl */

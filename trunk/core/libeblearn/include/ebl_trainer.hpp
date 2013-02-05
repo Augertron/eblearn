@@ -39,15 +39,16 @@ namespace ebl {
 
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T, Tdata, Tlabel>::
-supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, ddparameter<T> &p)
+supervised_trainer(trainable_module<T,Tdata,Tlabel> &m, ddparameter<T> &p,
+									 bool silent_)
     : machine(m), param(p), energy(), answers(NULL), label(NULL), age(0),
       iteration(-1), iteration_ptr(NULL), prettied(false), progress_cnt(0),
-      test_running(false), test_display_modulo(0) {
+      test_running(false), test_display_modulo(0), silent(silent_) {
   energy.resize_dx();
   energy.resize_ddx();
   energy.dx[0].set(1.0); // d(E)/dE is always 1
   energy.ddx[0].set(0.0); // dd(E)/dE is always 0
-  eblprint( "Training with: " << m.describe() << std::endl);
+  if (!silent) eblprint( "Training with: " << m.describe() << std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -129,14 +130,16 @@ test(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
     ds.set_sample_energy((double) energy.get(), correct, machine.out1,
                          *answers, target);
     ds.pretty_progress();
-    if (test_display_modulo > 0 && i % test_display_modulo == 0)
+    if (!silent && test_display_modulo > 0 && i % test_display_modulo == 0)
       log.display(iteration, ds.name(), &lblstr, ds.is_test());
     update_progress(); // tell the outside world we're still running
     TIMING2("sample test (" << machine.msin1 << ")");
   } while (ds.next() && i++ < ntest);
   ds.normalize_all_probas();
-  log.display(iteration, ds.name(), &lblstr, ds.is_test());
-  eblprint( std::endl);
+	if (!silent) {
+		log.display(iteration, ds.name(), &lblstr, ds.is_test());
+		eblprint( std::endl);
+	}
 }
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -197,7 +200,7 @@ train(labeled_datasource<T, Tdata, Tlabel> &ds, classifier_meter &log,
     eblprint( std::endl);
     // report accuracy on trained sample
     if (test_running) {
-      eblprint( "Training running test:" << std::endl);
+      if (!silent) eblprint( "Training running test:" << std::endl);
       // TODO: simplify this
       class_datasource<T,Tdata,Tlabel> *cds =
 	  dynamic_cast<class_datasource<T,Tdata,Tlabel>*>(&ds);
@@ -262,8 +265,9 @@ pretty(labeled_datasource<T, Tdata, Tlabel> &ds) {
   if (!prettied) {
     // pretty sizes of input/output for each module the first time
     mfidxdim d(ds.sample_mfdims());
-    eblprint( "machine sizes: " << d << machine.mod1.pretty(d) << std::endl
-              << "trainable parameters: " << param << std::endl);
+    if (!silent)
+			eblprint( "machine sizes: " << d << machine.mod1.pretty(d) << std::endl
+								<< "trainable parameters: " << param << std::endl);
     prettied = true;
   }
 }
@@ -272,7 +276,8 @@ template <typename T, typename Tdata, typename Tlabel>
 void supervised_trainer<T, Tdata, Tlabel>::
 set_progress_file(const std::string &f) {
   progress_file = f;
-  eblprint( "Setting progress file to \"" << f << "\"" << std::endl);
+  if (!silent)
+		eblprint( "Setting progress file to \"" << f << "\"" << std::endl);
 }
 
 template <typename T, typename Tdata, typename Tlabel>

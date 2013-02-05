@@ -60,7 +60,7 @@ namespace ebl {
   //! Initialize ipp to ncores, or without core limit by default,
   //! then print how many cores are enabled. If not compiled with IPP,
   //! this will print a message.
-  inline void ipp_init(int ncores = -1);
+  inline void ipp_init(int ncores = -1, bool silent = false);
   
 #ifdef __IPP__
 
