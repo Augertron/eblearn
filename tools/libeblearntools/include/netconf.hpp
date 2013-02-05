@@ -84,7 +84,8 @@ module_1_1<T>*
 create_network(parameter<T> &theparam, configuration &conf,
                intg &thick, int nout, const char *varname, int tid,
                std::map<std::string,module_1_1<T>*> *shared_,
-               std::map<std::string,module_1_1<T>*> *loaded_) {
+               std::map<std::string,module_1_1<T>*> *loaded_,
+							 bool silent) {
   std::map<std::string,module_1_1<T>*> *shared = shared_;
   std::map<std::string,module_1_1<T>*> *loaded = loaded_;
   if (!shared) shared = new std::map<std::string,module_1_1<T>*>;
@@ -93,20 +94,21 @@ create_network(parameter<T> &theparam, configuration &conf,
   uint arch_size = arch.size();
   layers<T>* l = new layers<T>(true, varname);
   // info
-  eblprint("Creating a network with " << nout << " outputs and "
-            << arch_size << " modules (input thickness is " << thick
-           << "): " << conf.get_string(varname) << std::endl);
+	if (!silent)
+		eblprint("Creating a network with " << nout << " outputs and "
+						 << arch_size << " modules (input thickness is " << thick
+						 << "): " << conf.get_string(varname) << std::endl);
   try {
     // loop over each module
     for (uint i = 0; i < arch_size; ++i) {
-      eblprint(varname << " " << i << ": ");
+			if (!silent) eblprint(varname << " " << i << ": ");
       // get first module name of the list and remove it from list
       std::string name = arch.front(); arch.pop_front();
       int errid = 0; // id of error thrown by create_module
       module_1_1<T> *module = NULL;
       try {
         module = create_module<T>
-            (name, theparam, conf, nout, thick, *shared, *loaded, tid);
+					(name, theparam, conf, nout, thick, *shared, *loaded, tid, silent);
       } catch (int err) {
 #ifdef __NOEXCEPTIONS__
         eblerror("expections disabled");
@@ -118,15 +120,15 @@ create_network(parameter<T> &theparam, configuration &conf,
       if (module) {
         // add the module
         l->add_module(module);
-        eblprint("Added " << module->describe() << " (#params "
-                  << theparam.nelements() << ", thickness " << thick
-                 << ")" << std::endl);
+        if (!silent) eblprint("Added " << module->describe() << " (#params "
+															<< theparam.nelements() << ", thickness " << thick
+															<< ")" << std::endl);
       } else {
         switch (errid) {
-          case 1: eblwarn("ignoring module " << name);
-            arch_size--; // decrease expected size of architecture
-            break ;
-          default: eblerror("failed to load module " << name); break ;
+				case 1: eblwarn("ignoring module " << name);
+					arch_size--; // decrease expected size of architecture
+					break ;
+				default: eblerror("failed to load module " << name); break ;
         }
       }
     }
@@ -134,7 +136,8 @@ create_network(parameter<T> &theparam, configuration &conf,
       eblerror("Some error occurred when loading modules, expected to load "
                << arch_size << " modules but only " << l->size()
                << " were successfully loaded");
-    eblprint(varname << ": loaded " << l->size() << " modules." << std::endl);
+    if (!silent)
+			eblprint(varname << ": loaded " << l->size() << " modules." << std::endl);
   } eblcatcherror();
   if (!shared_) delete shared; // shared was allocated here, we can delete it
   if (!loaded_) delete loaded; // loaded was allocated here, we can delete it
@@ -147,7 +150,8 @@ module_1_1<T>*
 create_module(const std::string &name, parameter<T> &theparam,
               configuration &conf, int &nout, intg &thick,
               std::map<std::string,module_1_1<T>*> &shared,
-              std::map<std::string,module_1_1<T>*> &loaded, int tid) {
+              std::map<std::string,module_1_1<T>*> &loaded, int tid,
+							bool silent) {
 #ifdef __CUDA__
   // set some cuda variables
   bool use_gpu = conf.exists_bool("use_gpu");
@@ -170,7 +174,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     bshared = (bool) string_to_int(sshared);
   // check if we already have it in stock
   typename std::map<std::string,module_1_1<T>*>::iterator i =
-      shared.find(name);
+		shared.find(name);
   if (i != shared.end()) bshared_exists = true; // module already allocated
   // merge ///////////////////////////////////////////////////////////////
   if (!type.compare("merge")) {
@@ -192,7 +196,7 @@ create_module(const std::string &name, parameter<T> &theparam,
       // create module
       if (states.size() > 0)
         module = (module_1_1<T>*)
-            new merge_module<T>(states, concat_dim, name.c_str());
+					new merge_module<T>(states, concat_dim, name.c_str());
       else eblerror("expected a _states id list to be concatenated");
       // update thickness after merging if specified by hand
       get_param(conf, name, "thickness", thick, true);
@@ -219,20 +223,20 @@ create_module(const std::string &name, parameter<T> &theparam,
         get_param(conf, name, "gpu_id", gpu_id_m, true);
         if (use_gpu_m)
           module = (module_1_1<T>*)
-              new cuda_linear_merge_module<T>(bshared_exists? NULL : &theparam,
-                                              lout, bin, bstride,
-                                              name.c_str(), pscales, gpu_id_m);
+						new cuda_linear_merge_module<T>(bshared_exists? NULL : &theparam,
+																						lout, bin, bstride,
+																						name.c_str(), pscales, gpu_id_m);
         else
 #endif
           module = (module_1_1<T>*)
-              new linear_merge_module<T>(bshared_exists? NULL : &theparam,
-                                         lout, bin, bstride,
-                                         name.c_str(), pscales);
+						new linear_merge_module<T>(bshared_exists? NULL : &theparam,
+																			 lout, bin, bstride,
+																			 name.c_str(), pscales);
         thick = lout; // update thickness
       } else {
         module = (module_1_1<T>*)
-            new flat_merge_module<T>(bin, bstride, name.c_str(),
-                                     pscales);
+					new flat_merge_module<T>(bin, bstride, name.c_str(),
+																	 pscales);
       }
     } else eblerror("unknown merge_type " << type);
   }
@@ -288,29 +292,29 @@ create_module(const std::string &name, parameter<T> &theparam,
     // create modules
     if (!type.compare("rgb_to_ypuv") || !type.compare("rgb_to_ynuv")) {
       module = (module_1_1<T>*)
-          new rgb_to_ynuv_module<T>(kernel, mirror, mode, globn,
-                                    eps, eps2);
+				new rgb_to_ynuv_module<T>(kernel, mirror, mode, globn,
+																	eps, eps2);
     } else if (!type.compare("rgb_to_yp") || !type.compare("rgb_to_yn")) {
       module = (module_1_1<T>*)
-          new rgb_to_yn_module<T>(kernel, mirror, mode, globn, eps, eps2);
+				new rgb_to_yn_module<T>(kernel, mirror, mode, globn, eps, eps2);
     } else if (!type.compare("rgb_to_yuvp") || !type.compare("rgb_to_yuvn")) {
       module = (module_1_1<T>*)
-          new rgb_to_yuvn_module<T>(kernel, mirror, mode, globn, eps, eps2);
+				new rgb_to_yuvn_module<T>(kernel, mirror, mode, globn, eps, eps2);
     } else if (!type.compare("rgb_to_ypuvp") || !type.compare("rgb_to_ynuvn")) {
       module = (module_1_1<T>*)
-          new rgb_to_ynuvn_module<T>(kernel, mirror, mode, globn,
-                                     eps, eps2);
+				new rgb_to_ynuvn_module<T>(kernel, mirror, mode, globn,
+																	 eps, eps2);
     } else if (!type.compare("rgb_to_ypupvp") || !type.compare("rgb_to_ynunvn")) {
       module = (module_1_1<T>*)
-          new rgb_to_ynunvn_module<T>(kernel, mirror, mode, globn,
-                                      eps, eps2);
+				new rgb_to_ynunvn_module<T>(kernel, mirror, mode, globn,
+																		eps, eps2);
     } else if (!type.compare("rgb_to_rgbp") || !type.compare("rgb_to_rgbn")) {
       module = (module_1_1<T>*)
-          new rgb_to_rgbn_module<T>(kernel, mirror, mode, globn,
-                                    eps, eps2);
+				new rgb_to_rgbn_module<T>(kernel, mirror, mode, globn,
+																	eps, eps2);
     } else if (!type.compare("y_to_yp") || !type.compare("y_to_yn")) {
       module = (module_1_1<T>*)
-          new y_to_yp_module<T>(kernel, mirror, mode, globn, eps, eps2);
+				new y_to_yp_module<T>(kernel, mirror, mode, globn, eps, eps2);
     }
   } else if (!type.compare("rgb_to_yuv"))
     module = (module_1_1<T>*) new rgb_to_yuv_module<T>();
@@ -329,7 +333,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (!get_param(conf, name, "nstates", snstates)) return NULL;
     uint nstates = string_to_uint(snstates);
     module = (module_1_1<T>*)
-	new mschan_module<T>(nstates, name.c_str());
+			new mschan_module<T>(nstates, name.c_str());
   }
   // ms ////////////////////////////////////////////////////////////////
   else if (!type.compare("ms") || !type.compare("msc")) {
@@ -344,7 +348,8 @@ create_module(const std::string &name, parameter<T> &theparam,
       std::string sp = matches[i];
       if (conf.exists(sp)) {
         module_1_1<T>* m = create_network<T>(theparam, conf, thick2, nout,
-                                             sp.c_str(), tid, &shared, &loaded);
+                                             sp.c_str(), tid, &shared, &loaded,
+																						 silent);
         // check the module was created
         if (!m) {
           eblwarn("expected a module in " << spipe << std::endl);
@@ -378,7 +383,7 @@ create_module(const std::string &name, parameter<T> &theparam,
       bool replicate_inputs = false;
       get_param(conf, name, "replicate_inputs", replicate_inputs, true);
       ms_module<T> *ms =
-          new ms_module<T>(pipes, replicate_inputs, name.c_str());
+				new ms_module<T>(pipes, replicate_inputs, name.c_str());
       ms->set_switch(switches);
       module = (module_1_1<T>*) ms;
     } else if (!type.compare("msc")) { // msc
@@ -387,7 +392,7 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "nsize2", nsize2, true);
       get_param(conf, name, "stride", stride, true);
       msc_module<T> *msc = new msc_module<T>
-          (pipes, nsize, stride, nsize2, name.c_str());
+				(pipes, nsize, stride, nsize2, name.c_str());
       msc->set_switch(switches);
       module = (module_1_1<T>*) msc;
     }
@@ -403,7 +408,7 @@ create_module(const std::string &name, parameter<T> &theparam,
       std::vector<uint> sides = string_to_uintvector(szpad.c_str());
       if (sides.size() != 4) eblerror("expected 4 sides but got " << sides);
       module = (module_1_1<T>*)
-          new zpad_module<T>(sides[0], sides[1], sides[2], sides[3]);
+				new zpad_module<T>(sides[0], sides[1], sides[2], sides[3]);
     } else eblerror("no padding defined");
   }
   // mirrorpad /////////////////////////////////////////////////////////
@@ -451,7 +456,8 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (!get_param(conf, name, "pp", pps)) return NULL;
     std::string pps_type = strip_last_num(pps);
     module_1_1<T> *pp =
-	create_module<T>(pps, theparam, conf, nout, thick, shared, loaded, tid);
+			create_module<T>(pps, theparam, conf, nout, thick, shared, loaded, tid,
+											 silent);
     if (!pp) {
       eblwarn("expected a preprocessing module in " << name << std::endl);
       return NULL;
@@ -468,17 +474,17 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (get_param(conf, name, "size", ssize, true)) {
       size = string_to_idxdim(ssize);
       module = (module_1_1<T>*)
-          new resizepp_module<T>(size, mode, pp, true, &zpad,
-                                 preserve_ratio, name.c_str());
+				new resizepp_module<T>(size, mode, pp, true, &zpad,
+															 preserve_ratio, name.c_str());
     } else if (get_param(conf, name, "fovea", sfovea, true)) {
       //TODO: might have to add fovea_scale_size
       std::vector<double> fovea = string_to_doublevector(sfovea);
       module = (module_1_1<T>*)
-          new fovea_module<T>(fovea, false, mode, pp, true,&zpad);
+				new fovea_module<T>(fovea, false, mode, pp, true,&zpad);
     } else
       module = (module_1_1<T>*)
-          new resizepp_module<T>(mode, pp, true, &zpad,
-                                 preserve_ratio, name.c_str());
+				new resizepp_module<T>(mode, pp, true, &zpad,
+															 preserve_ratio, name.c_str());
   }
   // resize /////////////////////////////////////////////////////////
   else if (!type.compare("resize")) {
@@ -501,25 +507,25 @@ create_module(const std::string &name, parameter<T> &theparam,
       idxdim size = string_to_idxdim(ssize);
       // find module by name
       typename std::map<std::string,module_1_1<T>*>::iterator i =
-          loaded.find(smod);
+				loaded.find(smod);
       if (i != loaded.end()) {
         eblprint("resizing as found module " << i->second->name() << std::endl);
         module = (module_1_1<T>*)
-            new resize_module<T>(i->second, size, mode, &pad,
-                                 name.c_str());
+					new resize_module<T>(i->second, size, mode, &pad,
+															 name.c_str());
       } else
         eblerror("resizing as module " << smod << ", module not found");
     } else
       module = (module_1_1<T>*)
-          new resize_module<T>(resizeh, resizew, mode, &pad,
-                               preserve_ratio, name.c_str());
+				new resize_module<T>(resizeh, resizew, mode, &pad,
+														 preserve_ratio, name.c_str());
   }
   // resize /////////////////////////////////////////////////////////
   else if (!type.compare("lpyramid")) {
     uint nscales = 0;
     std::string pp, skernels, sscalings, szpad;
     bool globnorm = true, locnorm = true, locnorm2 = false,
-	color_lnorm = false, cnorm_across = true;
+			color_lnorm = false, cnorm_across = true;
     midxdim zpads;
     double eps = NORM_EPSILON, eps2 = 0;
     if (!get_param(conf, name, "nscales", nscales)) return NULL;
@@ -541,12 +547,12 @@ create_module(const std::string &name, parameter<T> &theparam,
       scalings = string_to_floatvector(sscalings.c_str());
     // create module
     module = (module_1_1<T>*)
-	create_preprocessing<T>(pp.c_str(), kernels, zpads, "bilinear",
-                                true, nscales, NULL, NULL, globnorm,
-                                locnorm, locnorm2, color_lnorm,
-                                cnorm_across, 1.0, 1.0,
-                                scalings.size() > 0 ? &scalings : NULL,
-                                name.c_str(), eps, eps2);
+			create_preprocessing<T>(pp.c_str(), kernels, zpads, "bilinear",
+															true, nscales, NULL, NULL, globnorm,
+															locnorm, locnorm2, color_lnorm,
+															cnorm_across, 1.0, 1.0,
+															scalings.size() > 0 ? &scalings : NULL,
+															name.c_str(), eps, eps2);
   }
   // convolution /////////////////////////////////////////////////////////
   else if (!type.compare("conv") || !type.compare("convl")) {
@@ -571,22 +577,22 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
         module = (module_1_1<T>*)
-            new cuda_convolution_module<T>
-            (bshared_exists? NULL : &theparam, kernel, stride, table,
-             name.c_str(), crop, gpu_id_m);
+					new cuda_convolution_module<T>
+					(bshared_exists? NULL : &theparam, kernel, stride, table,
+					 name.c_str(), crop, gpu_id_m);
       else
 #endif
         module = (module_1_1<T>*)
-            //		new convolution_module_replicable<T>
-            new convolution_module<T>
-            (bshared_exists? NULL : &theparam, kernel, stride, table,
-             name.c_str(), crop);
+					//		new convolution_module_replicable<T>
+					new convolution_module<T>
+					(bshared_exists? NULL : &theparam, kernel, stride, table,
+					 name.c_str(), crop);
     }
     else if (!type.compare("convl")) // conv layer
       module = (module_1_1<T>*)
-          new convolution_layer<T>
-          (bshared_exists? NULL : &theparam, kernel, stride, table,
-           true /* tanh */, name.c_str());
+				new convolution_layer<T>
+				(bshared_exists? NULL : &theparam, kernel, stride, table,
+				 true /* tanh */, name.c_str());
   }
   // subsampling ///////////////////////////////////////////////////////
   else if (!type.compare("subs") || !type.compare("subsl")
@@ -599,17 +605,17 @@ create_module(const std::string &name, parameter<T> &theparam,
     // create module
     if (!type.compare("subs")) // subsampling module
       module = (module_1_1<T>*)
-          new subsampling_module_replicable<T>
-          (bshared_exists? NULL : &theparam, thick, kernel, stride,
-           name.c_str());
+				new subsampling_module_replicable<T>
+				(bshared_exists? NULL : &theparam, thick, kernel, stride,
+				 name.c_str());
     else if (!type.compare("subsl"))
       module = (module_1_1<T>*)
-          new subsampling_layer<T>
-          (bshared_exists? NULL : &theparam, thick, kernel, stride, true,
-           name.c_str());
+				new subsampling_layer<T>
+				(bshared_exists? NULL : &theparam, thick, kernel, stride, true,
+				 name.c_str());
     else if (!type.compare("maxss"))
       module = (module_1_1<T>*)
-          new maxss_module<T>(thick, kernel, stride, name.c_str());
+				new maxss_module<T>(thick, kernel, stride, name.c_str());
   }
   // subsampling ///////////////////////////////////////////////////////
   else if (!type.compare("avg_pyramid")) {
@@ -617,8 +623,8 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (!get_param(conf, name, "strides", sstride)) return NULL;
     midxdim strides = string_to_idxdimvector(sstride.c_str());
     module = (module_1_1<T>*)
-	new average_pyramid_module<T>
-	(bshared_exists? NULL : &theparam, thick, strides, name.c_str());
+			new average_pyramid_module<T>
+			(bshared_exists? NULL : &theparam, thick, strides, name.c_str());
   }
   // wavg_pooling ////////////////////////////////////////////////////////////
   else if (!type.compare("wavgpool")) {
@@ -628,7 +634,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     idxdim kernel = string_to_idxdim(skernel);
     idxdim stride = string_to_idxdim(sstride);
     module = (module_1_1<T>*)
-	new wavg_pooling_module<T>(thick, kernel, stride, name.c_str());
+			new wavg_pooling_module<T>(thick, kernel, stride, name.c_str());
   }
   // l1pooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("l1pool")) {
@@ -640,7 +646,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 1, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 1, name.c_str());
   }
   // l2pooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("l2pool")) {
@@ -659,14 +665,14 @@ create_module(const std::string &name, parameter<T> &theparam,
     get_param(conf, name, "gpu_id", gpu_id_m, true);
     if (use_gpu_m)
       module = (module_1_1<T>*)
-          new cuda_lppooling_module<T>(th, kernel, stride,
-                                       2, name.c_str(), crop,
-                                       gpu_id);
+				new cuda_lppooling_module<T>(th, kernel, stride,
+																		 2, name.c_str(), crop,
+																		 gpu_id);
     else
 #endif
       module = (module_1_1<T>*)
-          new lppooling_module<T>(th, kernel, stride, 2,
-                                  name.c_str(), crop);
+				new lppooling_module<T>(th, kernel, stride, 2,
+																name.c_str(), crop);
   }
   // l4pooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("l4pool")) {
@@ -678,7 +684,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 4, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 4, name.c_str());
   }
   // l6pooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("l6pool")) {
@@ -690,7 +696,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 6, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 6, name.c_str());
   }
   // l8pooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("l8pool")) {
@@ -702,7 +708,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 8, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 8, name.c_str());
   }
   // l10pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l10pool")) {
@@ -714,7 +720,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 10, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 10, name.c_str());
   }
   // l12pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l12pool")) {
@@ -726,7 +732,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 12, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 12, name.c_str());
   }
   // l14pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l14pool")) {
@@ -738,7 +744,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 14, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 14, name.c_str());
   }
   // l16pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l16pool")) {
@@ -750,7 +756,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 16, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 16, name.c_str());
   }
   // l32pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l32pool")) {
@@ -762,7 +768,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 32, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 32, name.c_str());
   }
   // l64pooling //////////////////////////////////////////////////////////////
   else if (!type.compare("l64pool")) {
@@ -774,7 +780,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, 64, name.c_str());
+			new lppooling_module<T>(th, kernel, stride, 64, name.c_str());
   }
   // lppooling ///////////////////////////////////////////////////////////////
   else if (!type.compare("lppool")) {
@@ -788,8 +794,8 @@ create_module(const std::string &name, parameter<T> &theparam,
     intg th = thick;
     get_param(conf, name, "thickness", th, true);
     module = (module_1_1<T>*)
-	new lppooling_module<T>(th, kernel, stride, pool_power,
-                                name.c_str());
+			new lppooling_module<T>(th, kernel, stride, pool_power,
+															name.c_str());
   }
   // linear //////////////////////////////////////////////////////////////////
   else if (!type.compare("linear") || !type.compare("linear_replicable")) {
@@ -799,10 +805,10 @@ create_module(const std::string &name, parameter<T> &theparam,
     // create module
     if (!type.compare("linear"))
       module = (module_1_1<T>*) new linear_module<T>
-          (bshared_exists? NULL : &theparam, lin, lout, name.c_str());
+				(bshared_exists? NULL : &theparam, lin, lout, name.c_str());
     else
       module = (module_1_1<T>*) new linear_module_replicable<T>
-          (bshared_exists? NULL : &theparam, lin, lout, name.c_str());
+				(bshared_exists? NULL : &theparam, lin, lout, name.c_str());
     thick = lout; // update thickness
   }
   // addc ////////////////////////////////////////////////////////////////////
@@ -814,24 +820,24 @@ create_module(const std::string &name, parameter<T> &theparam,
     get_param(conf, name, "gpu_id", gpu_id_m, true);
     if (use_gpu_m)
       module = (module_1_1<T>*) new cuda_addc_module<T>
-          (bshared_exists? NULL : &theparam, thick, name.c_str(), gpu_id_m);
+				(bshared_exists? NULL : &theparam, thick, name.c_str(), gpu_id_m);
     else
 #endif
       module = (module_1_1<T>*) new addc_module<T>
-          (bshared_exists? NULL : &theparam, thick, name.c_str());
+				(bshared_exists? NULL : &theparam, thick, name.c_str());
   }
   // diag ////////////////////////////////////////////////////////////////////
   else if (!type.compare("diag"))
     module = (module_1_1<T>*) new diag_module<T>
-	(bshared_exists? NULL : &theparam, thick, name.c_str());
+			(bshared_exists? NULL : &theparam, thick, name.c_str());
   // copy ////////////////////////////////////////////////////////////////////
   else if (!type.compare("copy"))
     module = (module_1_1<T>*) new copy_module<T>
-	(name.c_str());
+			(name.c_str());
   // printer /////////////////////////////////////////////////////////////////
   else if (!type.compare("printer"))
     module = (module_1_1<T>*) new printer_module<T>
-	(name.c_str());
+			(name.c_str());
   // normalization ///////////////////////////////////////////////////////////
   else if (!type.compare("wstd") || !type.compare("cnorm")
            || !type.compare("snorm") || !type.compare("dnorm")) {
@@ -864,16 +870,16 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
-	module = (module_1_1<T>*) new cuda_contrast_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), thres, globnorm,
-             learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
-             fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m, valid);
+				module = (module_1_1<T>*) new cuda_contrast_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), thres, globnorm,
+					 learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
+					 fsum_div, fsum_split, epsilon, epsilon2, gpu_id_m, valid);
       else
 #endif
-	module = (module_1_1<T>*) new contrast_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), thres, globnorm,
-             learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
-             fsum_div, fsum_split, epsilon, epsilon2, valid);
+				module = (module_1_1<T>*) new contrast_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), thres, globnorm,
+					 learn ? &theparam : NULL, name.c_str(), af, learn_mean, cgauss,
+					 fsum_div, fsum_split, epsilon, epsilon2, valid);
     }
     else if (!type.compare("snorm")) {
 #ifdef __CUDA__
@@ -882,16 +888,16 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
-	module = (module_1_1<T>*) new cuda_subtractive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), globnorm,
-             learn ? &theparam : NULL, name.c_str(), af, cgauss,
-             fsum_div, fsum_split, gpu_id_m, valid);
+				module = (module_1_1<T>*) new cuda_subtractive_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), globnorm,
+					 learn ? &theparam : NULL, name.c_str(), af, cgauss,
+					 fsum_div, fsum_split, gpu_id_m, valid);
       else
 #endif
-	module = (module_1_1<T>*) new subtractive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), globnorm,
-             learn ? &theparam : NULL, name.c_str(), af, cgauss,
-             fsum_div, fsum_split, valid);
+				module = (module_1_1<T>*) new subtractive_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), globnorm,
+					 learn ? &theparam : NULL, name.c_str(), af, cgauss,
+					 fsum_div, fsum_split, valid);
     }
     else if (!type.compare("dnorm")) {
 #ifdef __CUDA__
@@ -900,16 +906,16 @@ create_module(const std::string &name, parameter<T> &theparam,
       get_param(conf, name, "use_gpu", use_gpu_m, true);
       get_param(conf, name, "gpu_id", gpu_id_m, true);
       if (use_gpu_m)
-	module = (module_1_1<T>*) new cuda_divisive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), thres,
-             learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
-             fsum_split, epsilon, epsilon2, gpu_id_m);
+				module = (module_1_1<T>*) new cuda_divisive_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), thres,
+					 learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
+					 fsum_split, epsilon, epsilon2, gpu_id_m);
       else
 #endif
-	module = (module_1_1<T>*) new divisive_norm_module<T>
-            (ker, wthick, conf.exists_true("mirror"), thres,
-             learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
-             fsum_split, epsilon, epsilon2);
+				module = (module_1_1<T>*) new divisive_norm_module<T>
+					(ker, wthick, conf.exists_true("mirror"), thres,
+					 learn ? &theparam : NULL, name.c_str(), af, cgauss, fsum_div,
+					 fsum_split, epsilon, epsilon2);
     }
   }
   // smooth shrink ///////////////////////////////////////////////////////////
@@ -921,7 +927,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (get_param(conf, name, "bias", bias, true))
       bias = (T) string_to_double(sbias);
     module = (module_1_1<T>*) new smooth_shrink_module<T>
-	(bshared_exists? NULL : &theparam, thick, beta, bias);
+			(bshared_exists? NULL : &theparam, thick, beta, bias);
   }
   // linear shrink ///////////////////////////////////////////////////////////
   else if (!type.compare("lshrink")) {
@@ -930,14 +936,14 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (get_param(conf, name, "bias", sbias, true))
       bias = (T) string_to_double(sbias);
     module = (module_1_1<T>*) new linear_shrink_module<T>
-	(bshared_exists? NULL : &theparam, thick, bias);
+			(bshared_exists? NULL : &theparam, thick, bias);
   }
   // linear shrink ///////////////////////////////////////////////////////////
   else if (!type.compare("tshrink")) {
     bool diags = false;
     get_param(conf, name, "coefficients", diags, true);
     module = (module_1_1<T>*) new tanh_shrink_module<T>
-	(bshared_exists? NULL : &theparam, thick, diags);
+			(bshared_exists? NULL : &theparam, thick, diags);
     // tanh ///////////////////////////////////////////////////////////////
   } else if (!type.compare("tanh")) {
     double linear = 0;
@@ -965,7 +971,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     double threshold = 0;
     get_param(conf, name, "threshold", threshold, true);
     module = (module_1_1<T>*)
-        new thres_module<T>(threshold, threshold, name.c_str());
+			new thres_module<T>(threshold, threshold, name.c_str());
   }
   // abs //////////////////////////////////////////////////////////////
   else if (!type.compare("abs"))
@@ -980,7 +986,7 @@ create_module(const std::string &name, parameter<T> &theparam,
     if (!get_param(conf, name, "proba", drop_proba)) return NULL;
     if (!get_param(conf, name, "test_time", test_time)) return NULL;
     module = (module_1_1<T>*)
-        new dropout_module<T>(drop_proba, test_time, name.c_str());
+			new dropout_module<T>(drop_proba, test_time, name.c_str());
   }
   // lua ///////////////////////////////////////////////////////////////////////
   else if (!type.compare("lua")) {
@@ -993,7 +999,7 @@ create_module(const std::string &name, parameter<T> &theparam,
   if (module && bshared) { // this module is shared with others
     // check if we already have it in stock
     typename std::map<std::string,module_1_1<T>*>::iterator i =
-	shared.find(name);
+			shared.find(name);
     if (i != shared.end()) { // already exist
       delete module;
       module = i->second->copy(); // load a shared copy instead
@@ -1034,7 +1040,7 @@ ebm_1<T>* create_ebm1(const std::string &name, configuration &conf) {
 
 template <typename T, typename Tds1, typename Tds2>
 answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
-                                          const char *varname) {
+                                          const char *varname, bool silent) {
   std::string name = conf.get_string(varname);
   std::string type = strip_last_num(name);
   answer_module<T,Tds1,Tds2> *module = NULL;
@@ -1057,8 +1063,8 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
     if (get_param(conf, name, "kernel", kerd_name, true))
       kerd = string_to_idxdim(kerd_name);
     module = new class_answer<T,Tds1,Tds2>
-	(noutputs, factor, binary, (t_confidence) tconf, btanh, name.c_str(),
-	 force, single, &kerd, sigma_scale);
+			(noutputs, factor, binary, (t_confidence) tconf, btanh, name.c_str(),
+			 force, single, &kerd, sigma_scale, silent);
     //////////////////////////////////////////////////////////////////////////
   } else if (!type.compare("vote_answer")) {
     std::string factor_name, binary_name, tconf_name, tanh_name;
@@ -1074,7 +1080,7 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
     if (get_param(conf, name, "tanh", tanh_name, true))
       btanh = (bool) string_to_uint(tanh_name);
     module = new vote_answer<T,Tds1,Tds2>
-	(noutputs, factor, binary, tconf, btanh, name.c_str());
+			(noutputs, factor, binary, tconf, btanh, name.c_str());
     //////////////////////////////////////////////////////////////////////////
   } else if (!type.compare("regression_answer")) {
     std::string threshold_name;
@@ -1082,7 +1088,7 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
     if (get_param(conf, name, "threshold", threshold_name, true))
       threshold = (float64) string_to_double(threshold_name);
     module = new regression_answer<T,Tds1,Tds2>
-	(noutputs, threshold, name.c_str());
+			(noutputs, threshold, name.c_str());
     //////////////////////////////////////////////////////////////////////////
   } else if (!type.compare("scaler_answer")) {
     std::string negative_name, raw_name, threshold_name, spatial_name;
@@ -1096,15 +1102,15 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
     if (get_param(conf, name, "spatial", spatial_name, true))
       spatial = (bool) string_to_uint(spatial_name);
     module = new scaler_answer<T,Tds1,Tds2>
-	(1, 0, raw_conf, threshold, spatial, name.c_str());
+			(1, 0, raw_conf, threshold, spatial, name.c_str());
     //////////////////////////////////////////////////////////////////////////
   } else if (!type.compare("scalerclass_answer")) {
     std::string factor_name, binary_name, tconf_name, tanh_name,
-	jsize_name, joff_name, mgauss_name, pconf_name, pbconf_name,
-	coeffs_name, biases_name;
+			jsize_name, joff_name, mgauss_name, pconf_name, pbconf_name,
+			coeffs_name, biases_name;
     t_confidence tconf = confidence_max;
     bool binary = false, btanh = false,
-	predict_conf = false, predict_bconf = false;
+			predict_conf = false, predict_bconf = false;
     float factor = 1.0, mgauss = 1.5;
     uint jsize = 1, joff = 0;
     idx<T> coeffs, biases;
@@ -1136,10 +1142,10 @@ answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint noutputs,
       biases_set = true;
     }
     module =
-	new scalerclass_answer<T,Tds1,Tds2>
-	(noutputs, factor, binary, tconf, btanh, jsize, joff, mgauss,
-	 predict_conf, predict_bconf, biases_set ? &biases : NULL,
-	 coeffs_set ? &coeffs : NULL, name.c_str());
+			new scalerclass_answer<T,Tds1,Tds2>
+			(noutputs, factor, binary, tconf, btanh, jsize, joff, mgauss,
+			 predict_conf, predict_bconf, biases_set ? &biases : NULL,
+			 coeffs_set ? &coeffs : NULL, name.c_str());
     //////////////////////////////////////////////////////////////////////////
   } else
     eblwarn("unknown answer type " << type << std::endl);
@@ -1169,7 +1175,7 @@ create_trainer(configuration &conf, module_1_1<T> &net,
       energy = new cross_entropy_energy<T>(energy_name.c_str());
     } else if (!energy_type.compare("scalerclass_energy")) {
       std::string tanh_name, jsize_name, jselection_name, dist_name, scale_name,
-          pconf_name, pbconf_name, coeffs_name, biases_name;
+				pconf_name, pbconf_name, coeffs_name, biases_name;
       bool apply_tanh = false, predict_conf = false, predict_bconf = false;
       uint jsize = 1, jselection = 0;
       float dist_coeff = 1.0, scale_coeff = 1.0;
@@ -1198,12 +1204,12 @@ create_trainer(configuration &conf, module_1_1<T> &net,
         biases_set = true;
       }
       energy =
-          new scalerclass_energy<T>(apply_tanh, jsize, jselection,
-                                    dist_coeff, scale_coeff,
-                                    predict_conf, predict_bconf,
-                                    biases_set ? &biases : NULL,
-                                    coeffs_set ? &coeffs : NULL,
-                                    energy_name.c_str());
+				new scalerclass_energy<T>(apply_tanh, jsize, jselection,
+																	dist_coeff, scale_coeff,
+																	predict_conf, predict_bconf,
+																	biases_set ? &biases : NULL,
+																	coeffs_set ? &coeffs : NULL,
+																	energy_name.c_str());
     } else if (!energy_type.compare("scaler_energy")) {
       energy = new scaler_energy<T>(energy_name.c_str());
     } else
@@ -1211,7 +1217,7 @@ create_trainer(configuration &conf, module_1_1<T> &net,
 
     // allocate trainer module
     module = new trainable_module<T,Tds1,Tds2>
-	(*energy, net, NULL, &answer, name.c_str(), switcher.c_str());
+			(*energy, net, NULL, &answer, name.c_str(), switcher.c_str());
   }
   if (!module)
     eblerror("no trainer module found");
@@ -1231,9 +1237,9 @@ create_preprocessing(uint height, uint width, const char *ppchan,
   midxdim kers;
   kers.push_back(kersz);
   return create_preprocessing<T>
-      (height, width, ppchan, kers, resize_method, keep_aspect_ratio, lpyramid,
-       fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
+		(height, width, ppchan, kers, resize_method, keep_aspect_ratio, lpyramid,
+		 fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
+		 cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
 }
 
 template <typename T>
@@ -1265,24 +1271,24 @@ create_preprocessing(midxdim &dims, const char *ppchan,
   // create channel preprocessing module
   if (!strcmp(ppchan, "YpUV") || !strcmp(ppchan, "YnUV")) {
     chanmodule =
-	new rgb_to_ynuv_module<T>(kersz, mir, tn, globnorm, e, e2);
+			new rgb_to_ynuv_module<T>(kersz, mir, tn, globnorm, e, e2);
   } else if (!strcmp(ppchan, "Yp") || !strcmp(ppchan, "Yn")) {
     chanmodule =
-	new rgb_to_yn_module<T>(kersz, mir, tn, globnorm, e, e2);
+			new rgb_to_yn_module<T>(kersz, mir, tn, globnorm, e, e2);
   } else if (!strcmp(ppchan, "YnUVn")) {
     chanmodule =
-	new rgb_to_ynuvn_module<T>(kersz, mir, tn,globnorm, e, e2);
+			new rgb_to_ynuvn_module<T>(kersz, mir, tn,globnorm, e, e2);
   } else if (!strcmp(ppchan, "YnUnVn")) {
     chanmodule =
-	new rgb_to_ynunvn_module<T>(kersz, mir,tn,globnorm, e, e2);
+			new rgb_to_ynunvn_module<T>(kersz, mir,tn,globnorm, e, e2);
   } else if (!strcmp(ppchan, "YUVn")) {
     chanmodule =
-	new rgb_to_yuvn_module<T>(kersz, mir, tn, globnorm, e, e2);
+			new rgb_to_yuvn_module<T>(kersz, mir, tn, globnorm, e, e2);
   } else if (!strcmp(ppchan, "RGB")) {
     chanmodule = new rgb_to_rgb_module<T>(globnorm);
   } else if (!strcmp(ppchan, "RGBn")) {
     chanmodule =
-	new rgb_to_rgbn_module<T>(kersz, mir, tn, globnorm, e, e2);
+			new rgb_to_rgbn_module<T>(kersz, mir, tn, globnorm, e, e2);
   } else if (!strcmp(ppchan, "YUV")) {
     chanmodule = new rgb_to_yuv_module<T>(globnorm);
   } else if (!strcmp(ppchan, "HSV")) {
@@ -1305,9 +1311,9 @@ create_preprocessing(midxdim &dims, const char *ppchan,
     name << "_fovea" << fovea->size();
   } else if (lpyramid > 0) { // laplacian pyramid resize
     laplacian_pyramid_module<T> *pyr =
-	new laplacian_pyramid_module<T>
-	(lpyramid, kers, dims, resiz, chanmodule, false, NULL, globnorm,
-	 locnorm, locnorm2, color_lnorm, cnorm_across, keep_aspect_ratio);
+			new laplacian_pyramid_module<T>
+			(lpyramid, kers, dims, resiz, chanmodule, false, NULL, globnorm,
+			 locnorm, locnorm2, color_lnorm, cnorm_across, keep_aspect_ratio);
     if (scalings) pyr->set_scalings(*scalings);
     ppmodule = pyr;
     if (!locnorm) name << "_nolnorm";
@@ -1340,9 +1346,9 @@ create_preprocessing(const char *ppchan,
   midxdim d;
   d.push_back(idxdim(0, 0));
   return create_preprocessing<T>
-      (d, ppchan, kers, zpads, resize_method, keep_aspect_ratio, lpyramid,
-       fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
-       cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
+		(d, ppchan, kers, zpads, resize_method, keep_aspect_ratio, lpyramid,
+		 fovea, fovea_scale_size, globnorm, locnorm, locnorm2, color_lnorm,
+		 cnorm_across, hscale, wscale, scalings, name, epsilon, epsilon2);
 }
 
 // select network based on configuration, using old-style variables
@@ -1353,7 +1359,7 @@ module_1_1<T>* create_network_old(parameter<T> &theparam,
   // load custom tables if defined
   std::string mname;
   idx<intg> t0(1,1), t1(1,1), t2(1,1),
-      *table0 = NULL, *table1 = NULL, *table2 = NULL;
+		*table0 = NULL, *table1 = NULL, *table2 = NULL;
   intg thick = -1;
   mname = "conv0";
   if (load_table(conf, mname, t0, thick, noutputs))
@@ -1368,51 +1374,51 @@ module_1_1<T>* create_network_old(parameter<T> &theparam,
   // cscscf ////////////////////////////////////////////////////////////////
   if (!strcmp(net_type.c_str(), "cscscf")) {
     return (module_1_1<T>*) new lenet<T>
-	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
-	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
-	 conf.get_uint("net_full"), noutputs,
-	 conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
-	 table0, table1, table2);
+			(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
+			 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
+			 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+			 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
+			 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
+			 conf.get_uint("net_full"), noutputs,
+			 conf.get_bool("absnorm"), conf.get_bool("color"),
+			 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
+			 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
+			 table0, table1, table2);
     // cscsc ////////////////////////////////////////////////////////////////
   } else if (!strcmp(net_type.c_str(), "cscsc")) {
     return (module_1_1<T>*) new lenet_cscsc<T>
-	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
-	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-	 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
-	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
-	 conf.exists_true("norm_pos"), table0, table1, table2);
+			(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
+			 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
+			 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+			 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
+			 conf.get_uint("net_s2h"), conf.get_uint("net_s2w"),
+			 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
+			 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
+			 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
+			 conf.exists_true("norm_pos"), table0, table1, table2);
     // cscf ////////////////////////////////////////////////////////////////
   } else if (!strcmp(net_type.c_str(), "cscf")) {
     return (module_1_1<T>*) new lenet_cscf<T>
-	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
-	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
-	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
-	 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
-	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
-	 table0, table1);
+			(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
+			 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"),
+			 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+			 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"),
+			 noutputs, conf.get_bool("absnorm"), conf.get_bool("color"),
+			 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
+			 conf.exists_true("use_shrink"), conf.exists_true("use_diag"),
+			 table0, table1);
     // cscc ////////////////////////////////////////////////////////////////
   } else if (!strcmp(net_type.c_str(), "cscc")) {
     if (!table0 || !table1 || !table2)
       eblerror("undefined connection tables");
     return (module_1_1<T>*) new net_cscc<T>
-	(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
-	 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"), *table0,
-	 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
-	 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"), *table1,
-	 *table2, noutputs, conf.get_bool("absnorm"),
-	 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
-	 conf.exists_true("use_shrink"), conf.exists_true("use_diag"));
+			(theparam, conf.get_uint("net_ih"), conf.get_uint("net_iw"),
+			 conf.get_uint("net_c1h"), conf.get_uint("net_c1w"), *table0,
+			 conf.get_uint("net_s1h"), conf.get_uint("net_s1w"),
+			 conf.get_uint("net_c2h"), conf.get_uint("net_c2w"), *table1,
+			 *table2, noutputs, conf.get_bool("absnorm"),
+			 conf.get_bool("mirror"), conf.get_bool("use_tanh"),
+			 conf.exists_true("use_shrink"), conf.exists_true("use_diag"));
   } else {
     eblwarn("network type: " << net_type << std::endl);
     eblerror("unknown network type");
@@ -1430,11 +1436,11 @@ bool load_module(configuration &conf, module_1_1<T> &m,
   std::string name = module_name; name << "_weights";
   if (!conf.exists(name)) return false; // do nothing if variable not found
   std::vector<std::string> filenames =
-      string_to_stringvector(conf.get_string(name.c_str()));
+		string_to_stringvector(conf.get_string(name.c_str()));
   idx<T> w = load_matrix<T>(filenames, 0);
   m.load_x(w);
   eblprint("Loaded weights " << w << " into " << module_name << " from "
-            << filenames << " (dims " << w << " min " << idx_min(w) << " max "
+					 << filenames << " (dims " << w << " min " << idx_min(w) << " max "
            << idx_max(w) << " mean " << idx_mean(w) << ")" << std::endl);
   return true;
 }
@@ -1457,7 +1463,7 @@ uint manually_load_network(layers<T> &l, configuration &conf,
     // switch on each possible type of module
     if (!type.compare("conv"))
       n += load_module<convolution_module<T>,T>
-          (conf, *m, name, type);
+				(conf, *m, name, type);
     else if (!type.compare("addc"))
       n += load_module<addc_module<T>,T>(conf, *m, name, type);
     else if (!type.compare("linear"))

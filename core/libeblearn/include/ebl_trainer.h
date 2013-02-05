@@ -55,7 +55,7 @@ class supervised_trainer {
  public:
   //! constructor.
   supervised_trainer(trainable_module<T,Tdata,Tlabel> &m,
-                     ddparameter<T> &p);
+                     ddparameter<T> &p, bool silent = false);
   //! destructor.
   virtual ~supervised_trainer();
 
@@ -149,6 +149,7 @@ class supervised_trainer {
   intg            progress_cnt;         //!< A count for updating progress.
   bool            test_running;         //!< Show test on trained.
   intg            test_display_modulo;  //!< Modulo at which to display.
+	bool            silent;
 };
 
 } // namespace ebl {

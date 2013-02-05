@@ -73,8 +73,9 @@ std::ostream& operator<<(std::ostream &out, const gd_param &p) {
 
 // forget_param_linear /////////////////////////////////////////////////////////
 
-forget_param_linear::forget_param_linear(double v, double e, bool random_seed)
-    : generator(0) {
+forget_param_linear::forget_param_linear(double v, double e, bool random_seed,
+																				 bool silent)
+	: generator(0, silent) {
   value = v;
   exponent = e;
   if (e == 0)

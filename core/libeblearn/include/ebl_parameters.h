@@ -92,7 +92,8 @@ public:
   //! from [-v/(fanin**exponent), +v/(fanin**exponent)].
 	//! \param random_seed If true, use time as random seed, otherwise
 	//!   use a fixed seed of 0. For better randomization use seed().
-  forget_param_linear(double v, double e, bool random_seed);
+  forget_param_linear(double v, double e, bool random_seed,
+											bool silent = false);
 
   //! Initialize seed from current time and the sum of all characters of s.
   //! This can be useful if several programs are called at the
@@ -115,7 +116,7 @@ public:
 template <typename T> class parameter : public state<T> {
  public:
   //! initialize the bbparameter with size initial_size.
-  parameter(intg initial_size = 100);
+  parameter(intg initial_size = 100, bool silent = false);
   //! initialize the bbparameter with a previously saved x component.
   parameter(const char *param_filename);
   //! destructor
@@ -178,6 +179,7 @@ template <typename T> class parameter : public state<T> {
   using state<T>::x;
   using state<T>::dx;
   using state<T>::ddx;
+	bool silent;
 };
 
 // dparameter ////////////////////////////////////////////////////////////////
@@ -186,7 +188,7 @@ template <typename T> class parameter : public state<T> {
 template <typename T> class dparameter : public parameter<T> {
  public:
   //! initialize the ddparameter with size initial_size.
-  dparameter(intg initial_size = 100);
+  dparameter(intg initial_size = 100, bool silent = false);
   //! initialize the ddparameter with a previously saved x component.
   dparameter(const char *param_filename);
   //! destructor
@@ -199,7 +201,7 @@ template <typename T> class dparameter : public parameter<T> {
 template <typename T> class ddparameter : public parameter<T> {
  public:
   //! initialize the bddparameter with size initial_size.
-  ddparameter(intg initial_size = 100);
+  ddparameter(intg initial_size = 100, bool silent = false);
   //! initialize the bddparameter with a previously saved x component.
   ddparameter(const char *param_filename);
   //! destructor

@@ -38,49 +38,61 @@
 namespace ebl {
 
 template <typename T, typename Tdata, typename Tlabel>
-supervised_trainer<T,Tdata,Tlabel>*
-create_trainable_network(ddparameter<T> &theparam, configuration &conf,
-                         uint noutputs, module_1_1<T> **network, uint &iter) {
+trainable_module<T,Tdata,Tlabel> *
+create_trainable_module(ddparameter<T> &theparam, configuration &conf,
+												uint noutputs, module_1_1<T> **network, bool silent) {
   answer_module<T,Tdata,Tlabel> *answer =
-      create_answer<T,Tdata,Tlabel>(conf, noutputs);
+		create_answer<T,Tdata,Tlabel>(conf, noutputs, "answer", silent);
   if (!answer) eblerror("no answer module found");
-  std::cout << "Answering module: " << answer->describe() << std::endl;
+	if (!silent)
+		std::cout << "Answering module: " << answer->describe() << std::endl;
   // update number of outputs given the answer module
   noutputs = answer->get_nfeatures();
   intg inthick = conf.try_get_int("input_thickness", -1);
   //! create the network weights, network and trainer
   module_1_1<T> *net = create_network<T>(theparam, conf, inthick, noutputs,
-					 "arch");
+																				 "arch", -1, NULL, NULL, silent);
   *network = net;
   if (!net) eblerror("failed to create network");
   if (((layers<T>*)net)->size() == 0) eblerror("0 modules in network");
-  trainable_module<T,Tdata,Tlabel> *train =
-      create_trainer<T,Tdata,Tlabel>(conf, *net, *answer);
-  supervised_trainer<T,Tdata,Tlabel> *thetrainer =
-      new supervised_trainer<T,Tdata,Tlabel>(*train, theparam);
-  thetrainer->set_progress_file(job::get_progress_filename());
+	trainable_module<T,Tdata,Tlabel> *machine =
+		create_trainer<T,Tdata,Tlabel>(conf, *net, *answer);
   // initialize the network weights
   bool fixed_random = conf.try_get_bool("fixed_randomization", false);
-  forget_param_linear fgp(1, 0.5, !fixed_random);
+  forget_param_linear fgp(1, 0.5, !fixed_random, silent);
   if (!fixed_random) fgp.seed(conf.str());
-  iter = 0;
   if (conf.exists_true("retrain")) {
     if (!conf.exists("retrain_weights"))
       eblerror("retrain_weights variable not defined");
     // concatenate weights if multiple ones
     std::vector<std::string> w =
-	string_to_stringvector(conf.get_string("retrain_weights"));
+			string_to_stringvector(conf.get_string("retrain_weights"));
     theparam.load_x(w);
-    if (conf.exists("retrain_iteration")) {
-      iter = std::max(0, conf.get_int("retrain_iteration") - 1);
-      thetrainer->set_iteration(iter - 1);
-    }
   } else {
-    std::cout << "Initializing weights from random." << std::endl;
-    train->forget(fgp);
+    if (!silent) std::cout << "Initializing weights from random." << std::endl;
+    machine->forget(fgp);
   }
   if (!conf.exists_true("retrain") && conf.exists_true("manual_load"))
     manually_load_network(*((layers<T>*)net), conf);
+	return machine;
+}
+
+
+template <typename T, typename Tdata, typename Tlabel>
+supervised_trainer<T,Tdata,Tlabel>*
+create_trainable_network(ddparameter<T> &theparam, configuration &conf,
+                         uint noutputs, module_1_1<T> **network, uint &iter,
+												 bool silent) {
+  trainable_module<T,Tdata,Tlabel> *train =
+		create_trainable_module(theparam, conf, noutputs, network, silent);
+  supervised_trainer<T,Tdata,Tlabel> *thetrainer =
+		new supervised_trainer<T,Tdata,Tlabel>(*train, theparam, silent);
+  thetrainer->set_progress_file(job::get_progress_filename());
+  iter = 0;
+  if (conf.exists_true("retrain") && conf.exists("retrain_iteration")) {
+		iter = std::max(0, conf.get_int("retrain_iteration") - 1);
+		thetrainer->set_iteration(iter - 1);
+	}
   return thetrainer;
 }
 
@@ -287,7 +299,7 @@ void test(uint iter, configuration &conf, std::string &conffname,
 template <typename T, typename Tdata, typename Tlabel>
 labeled_datasource<T,Tdata,Tlabel>*
 create_validation_set(configuration &conf, uint &noutputs,
-                      std::string &valdata) {
+                      std::string &valdata, bool silent) {
   bool classification = conf.exists_true("classification");
   valdata = conf.get_string("val");
   std::string vallabels, valclasses, valjitters, valscales;
@@ -300,7 +312,8 @@ create_validation_set(configuration &conf, uint &noutputs,
   labeled_datasource<T,Tdata,Tlabel> *val_ds = NULL;
   if (classification) { // classification task
     class_datasource<T,Tdata,Tlabel> *ds =
-	new class_datasource<T,Tdata,Tlabel>;
+			new class_datasource<T,Tdata,Tlabel>;
+		ds->set_silent(silent);
     ds->init(valdata.c_str(), vallabels.c_str(), valjitters.c_str(),
              valscales.c_str(), valclasses.c_str(), "val", maxval);
     if (conf.exists("limit_classes"))
@@ -331,8 +344,9 @@ create_validation_set(configuration &conf, uint &noutputs,
     val_ds->set_epoch_show(conf.get_uint("epoch_show_modulo"));
   val_ds->keep_outputs(conf.exists_true("keep_outputs"));
   if (conf.exists_true("save_answers")) {
-    eblprint("Forcing datasource to keep outputs in order to save answers.");
-    val_ds->keep_outputs(true);    
+		if (!silent)
+			eblprint("Forcing datasource to keep outputs in order to save answers.");
+    val_ds->keep_outputs(true);
   }
   return val_ds;
 }

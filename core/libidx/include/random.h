@@ -46,7 +46,7 @@ public:
   random();
   //! Constructs a random number generator with seed 'x'.
   //! Use x == 0 to construct a fixed-seed generator.
-  random(int x);
+  random(int x, bool silent = false);
   //! Destructor.
   virtual ~random();
 

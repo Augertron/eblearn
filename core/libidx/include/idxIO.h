@@ -154,7 +154,8 @@ midx<T> load_matrices(const std::string &filename, bool ondemand = true);
 //! Loads a matrix from a csv file.
 template <typename T>
   idx<T> load_csv_matrix(const char *filename, bool ignore_first_line = false,
-			 bool ignore_missing_value_lines = true); 
+												 bool ignore_missing_value_lines = true,
+												 bool ignore_empty_cols = false, bool silent = false);
 
 // saving //////////////////////////////////////////////////////////////////////
 

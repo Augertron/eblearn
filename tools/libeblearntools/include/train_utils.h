@@ -54,11 +54,17 @@ namespace ebl {
 
 // training utilities //////////////////////////////////////////////////////////
 
+template <typename T, typename Tdata, typename Tlabel>
+trainable_module<T,Tdata,Tlabel>*
+create_trainable_module(ddparameter<T> &theparam, configuration &conf,
+												uint noutputs, module_1_1<T> **net,
+												bool silent = false);
 //! This creates a trainable network and returns it.
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T,Tdata,Tlabel>*
 create_trainable_network(ddparameter<T> &theparam, configuration &conf,
-                         uint noutputs, module_1_1<T> **net, uint &iter);
+                         uint noutputs, module_1_1<T> **net, uint &iter,
+												 bool silent = false);
 //! A function that performs tests, saves current weights and display.
 //! \param iteration_seconds An optional elapsed time for the iteration,
 //!   to better estimate the timeout of the training.
@@ -90,7 +96,7 @@ void test(uint iter, configuration &conf, std::string &conffname,
 template <typename T, typename Tdata, typename Tlabel>
 labeled_datasource<T,Tdata,Tlabel>*
 create_validation_set(configuration &conf, uint &noutputs,
-                      std::string &name);
+                      std::string &name, bool silent = false);
 
 //! A function that create/loads a training set given configuration 'conf'.
 //! \param noutputs The number of outputs will be modified according

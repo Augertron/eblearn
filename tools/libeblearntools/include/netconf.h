@@ -61,7 +61,8 @@ module_1_1<T>*
 create_network(parameter<T> &theparam, configuration &conf, intg &thick,
                int noutputs = -1, const char *varname = "arch", int tid = -1,
                std::map<std::string,module_1_1<T>*> *shared = NULL,
-               std::map<std::string,module_1_1<T>*> *loaded = NULL);
+               std::map<std::string,module_1_1<T>*> *loaded = NULL,
+							 bool silent = false);
 
 
 //! Create a module of type 'type' (with full name 'name'),
@@ -75,7 +76,7 @@ module_1_1<T>* create_module(const std::string &name, parameter<T> &theparam,
                              configuration &conf, int &nout, intg &thick,
                              std::map<std::string,module_1_1<T>*> &shared,
                              std::map<std::string,module_1_1<T>*> &loaded,
-                             int tid = -1);
+                             int tid = -1, bool silent = false);
 
 //! Create an ebm1 module of type 'type' (with full name 'name') and returns
 //! it or NULL if an error occured.
@@ -86,7 +87,8 @@ ebm_1<T>* create_ebm1(const std::string &name, configuration &conf);
 //! conf and variable name 'varname'.
 template <typename T, typename Tds1, typename Tds2>
 answer_module<T,Tds1,Tds2>* create_answer(configuration &conf, uint nclasses,
-                                          const char *varname = "answer");
+                                          const char *varname = "answer",
+																					bool silent = false);
 
 //! Create a module of type 'ds_ebm_2' given an existing network 'net'
 //! to train and a configuration variable 'varname'.
@@ -237,7 +239,8 @@ bool EXPORT load_table(configuration &conf, const std::string &module_name,
 
 //! Load mandatory and optional gradient parameters from configuration
 //! 'conf' into gradient parameters object 'gdp'.
-void EXPORT load_gd_param(configuration &conf, gd_param &gdp);
+ void EXPORT load_gd_param(configuration &conf, gd_param &gdp,
+													 bool silent = false);
 
 } // end namespace ebl
 

@@ -271,6 +271,8 @@ template<typename T, typename Tdata> class datasource {
   //! Pretty the progress of current epoch.
   //! \param newline If true, end pretty with a new line.
   virtual void pretty_progress(bool newline = true);
+	//! Turns on or off silent mode.
+	virtual void set_silent(bool silent);
 
   ////////////////////////////////////////////////////////////////
  protected:
@@ -356,6 +358,7 @@ template<typename T, typename Tdata> class datasource {
   double              sample_min_proba; //!< Minimum proba of each sample.
   idxdim              sampledims;       //!< Dimensions of a data sample.
   mfidxdim            samplemfdims;     //!< Dimensions of a data sample.
+	bool                silent;
 };
 
 // labeled_datasource //////////////////////////////////////////////////////////
@@ -495,6 +498,7 @@ class labeled_datasource : public datasource<T, Tdata> {
   idxdim      jitters_maxdim;           //!< Maximum dimensions in jitters matrices.
   idxdim      labeldims;                //!< Dimensions of a label.
   using datasource<T,Tdata>::multimat;
+  using datasource<T,Tdata>::silent;
 };
 
 // class_datasource ////////////////////////////////////////////////////////////
@@ -781,6 +785,7 @@ class class_datasource : public labeled_datasource<T, Tdata, Tlabel> {
   using datasource<T,Tdata>::test_set;
   using datasource<T,Tdata>::shuffle_passes;
   using datasource<T,Tdata>::not_picked;
+  using datasource<T,Tdata>::silent;
 };
 
 // class_node //////////////////////////////////////////////////////////////////

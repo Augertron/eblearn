@@ -49,9 +49,9 @@ random::random() {
 	// no seeding, assumes already seeded
 }
 
-random::random(int x) {
+random::random(int x, bool silent) {
 	init(x);
-	eblprint( "Random seed initialized to " << x << std::endl);
+	if (!silent) eblprint( "Random seed initialized to " << x << std::endl);
 }
 
 random::~random() {

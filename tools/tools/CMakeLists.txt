@@ -24,14 +24,24 @@ endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # compile executable: train
 ################################################################################
-# change target name if debugging	
+# change target name if debugging
 set(TRAIN "train${NAME_EXTRA}")
 add_executable (${TRAIN} src/train.cpp)
 # link executable with external libraries
 target_link_libraries (${TRAIN} idx eblearn eblearntools ${GPROF_LIBRARIES})
 LINK_QT(${TRAIN} idxgui)
 LINK_QT(${TRAIN} eblearngui)
- 
+
+# compile executable: classify
+################################################################################
+# change target name if debugging
+set(CLASSIFY "classify${NAME_EXTRA}")
+add_executable (${CLASSIFY} src/classify.cpp)
+# link executable with external libraries
+target_link_libraries (${CLASSIFY} idx eblearn eblearntools ${GPROF_LIBRARIES})
+LINK_QT(${CLASSIFY} idxgui)
+LINK_QT(${CLASSIFY} eblearngui)
+
 # compile executable: dsfprop
 ################################################################################
 set(DSFPROP "dsfprop${NAME_EXTRA}")

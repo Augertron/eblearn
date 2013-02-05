@@ -277,8 +277,8 @@ namespace ebl {
     // display additional variables
     if (size > 0) {
       for (uint i = 0; i < log_values.size(); ++i) {
-	eblprint( (ds_is_test ? "test_":"") << log_fields[i] << "="
-           << log_values[i] / std::max((double)1, total_values[i]) << " ");
+				eblprint( (ds_is_test ? "test_":"") << log_fields[i] << "="
+									<< log_values[i] / std::max((double)1, total_values[i]) << " ");
       }
     }
     eblprint( std::endl);

@@ -324,6 +324,8 @@ template <class T> class idx : public smart_pointer {
   virtual std::string str() const;
   //! Returns a string with info about idx, such as min/max/mean.
   virtual std::string info();
+  //! Returns a string with all elements organized in csv format.
+  virtual std::string csv(bool flat = false) const;
 
   virtual void printElems() const;
   virtual void printElems(std::ostream& out, bool newline = true) const;
