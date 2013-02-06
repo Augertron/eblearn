@@ -105,6 +105,7 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
 				cout << a.x.at_const(0).csv(true) << endl;
 			}
 		} else { // take inputs from datasource defined in conf
+			ds->seek_begin();
 			do {
 				machine->fprop(*ds, energy);
 				const state<T> &a = machine->compute_answers();
