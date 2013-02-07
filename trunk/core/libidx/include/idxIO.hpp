@@ -382,6 +382,7 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
 				EDEBUG("string to double from: " << tmp);
 				try {
 					m.set((T) string_to_double(tmp), i, j);
+					counts.set(counts.get(j) + 1, j);
 				} eblcatchwarn_extra(missing = true;);
       }
       idx<T> mtmp = m.select(0, i);
