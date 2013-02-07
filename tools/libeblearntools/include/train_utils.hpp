@@ -84,7 +84,8 @@ create_trainable_network(ddparameter<T> &theparam, configuration &conf,
                          uint noutputs, module_1_1<T> **network, uint &iter,
 												 bool silent) {
   trainable_module<T,Tdata,Tlabel> *train =
-		create_trainable_module(theparam, conf, noutputs, network, silent);
+		create_trainable_module<T,Tdata,Tlabel>(theparam, conf, noutputs, network,
+																						silent);
   supervised_trainer<T,Tdata,Tlabel> *thetrainer =
 		new supervised_trainer<T,Tdata,Tlabel>(*train, theparam, silent);
   thetrainer->set_progress_file(job::get_progress_filename());
