@@ -124,6 +124,11 @@ void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, idx<T3> &in3,
 													intg d,
 													idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
 													idx<T3> *out3 = NULL);
+ template <typename T1, typename T2, typename T3, typename T4>
+void idx_shuffle_together(idx<T1> &in1, idx<T2> &in2, idx<T3> &in3,
+													idx<T4> &in4, intg d,
+													idx<T1> *out1 = NULL, idx<T2> *out2 = NULL,
+													idx<T3> *out3 = NULL, idx<T4> *out4 = NULL);
 
 // idx_add (not-in-place) ////////////////////////////////////////////////////
 
