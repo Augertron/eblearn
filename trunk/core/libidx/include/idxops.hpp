@@ -326,6 +326,108 @@ void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, idx<T3> &in3_,
   }
 }
 
+template<class T1, class T2, class T3, class T4>
+void idx_shuffle_together(idx<T1> &in1_, idx<T2> &in2_, idx<T3> &in3_,
+                          idx<T4> &in4_, intg d,
+                          idx<T1> *out1_, idx<T2> *out2_, idx<T3> *out3_,
+													idx<T4> *out4_) {
+  if (!drand_ini)
+    eblwarn( "Warning: random not initialized, call dynamic_init_drand()"
+             << std::endl);
+  // size of dim d must match of in1 and in2 and in3
+  idx_checkdim4_all(in1_, in2_, in3_, in4_, d);
+  // if out exists, use it for output, otherwise create a temporary buffer
+  // and put output back into in.
+  idx<T1> in1, out1;
+  idx<T2> in2, out2;
+  idx<T3> in3, out3;
+  idx<T4> in4, out4;
+  if (out1_) { // use in_ as input and out_ as output
+    if (&in1_ == out1_)
+      eblerror("input and output idx should be different");
+    idx_checknelems2_all(in1_, *out1_);
+    in1 = in1_;
+    out1 = *out1_;
+  } else { // otherwise, use in_ as output and a copy of _in as input
+    idxdim indims(in1_);
+    in1 = idx<T1>(indims);
+    idx_copy(in1_, in1);
+    out1 = in1_;
+  }
+  if (out2_) { // use in_ as input and out_ as output
+    if (&in2_ == out2_)
+      eblerror("input and output idx should be different");
+    idx_checknelems2_all(in2_, *out2_);
+    in2 = in2_;
+    out2 = *out2_;
+  } else { // otherwise, use in_ as output and a copy of _in as input
+    idxdim indims(in2_);
+    in2 = idx<T2>(indims);
+    idx_copy(in2_, in2);
+    out2 = in2_;
+  }
+  if (out3_) { // use in_ as input and out_ as output
+    if (&in3_ == out3_)
+      eblerror("input and output idx should be different");
+    idx_checknelems2_all(in3_, *out3_);
+    in3 = in3_;
+    out3 = *out3_;
+  } else { // otherwise, use in_ as output and a copy of _in as input
+    idxdim indims(in3_);
+    in3 = idx<T3>(indims);
+    idx_copy(in3_, in3);
+    out3 = in3_;
+  }
+  if (out4_) { // use in_ as input and out_ as output
+    if (&in4_ == out4_)
+      eblerror("input and output idx should be different");
+    idx_checknelems2_all(in4_, *out4_);
+    in4 = in4_;
+    out4 = *out4_;
+  } else { // otherwise, use in_ as output and a copy of _in as input
+    idxdim indims(in4_);
+    in4 = idx<T4>(indims);
+    idx_copy(in4_, in4);
+    out4 = in4_;
+  }
+  // for each element of in, put it randomly in out.
+  // if there is a collision, loop until the next available slot
+  idx<T1> tmpi1, tmpo1;
+  idx<T2> tmpi2, tmpo2;
+  idx<T3> tmpi3, tmpo3;
+  idx<T4> tmpi4, tmpo4;
+  idx<bool> assigned(in1.dim(d));
+  idx_fill(assigned, false);
+  intg pos;
+  for (intg i = 0; i < in1.dim(d); ++i) {
+    pos = (intg) drand(0, in1.dim(d) - 1);
+    if (assigned.get(pos)) { // if already assigned, loop until free slot
+      for (intg j = pos + 1; j != pos; ++j) {
+        if (j >= in1.dim(d)) j = 0;
+        if (j == pos) eblerror("no available slot");
+        if (!assigned.get(j)) {
+          pos = j;
+          break ;
+        }
+      }
+    }
+    // copy ith element of in into pos^th element of out
+    tmpi1 = in1.select(d, i);
+    tmpo1 = out1.select(d, pos);
+    idx_copy(tmpi1, tmpo1);
+    tmpi2 = in2.select(d, i);
+    tmpo2 = out2.select(d, pos);
+    idx_copy(tmpi2, tmpo2);
+    tmpi3 = in3.select(d, i);
+    tmpo3 = out3.select(d, pos);
+    idx_copy(tmpi3, tmpo3);
+    tmpi4 = in4.select(d, i);
+    tmpo4 = out4.select(d, pos);
+    idx_copy(tmpi4, tmpo4);
+    assigned.set(true, pos);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////
 // idx_minus
 
