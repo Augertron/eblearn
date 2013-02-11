@@ -245,6 +245,11 @@ int main(int argc, char **argv) { // regular main without gui
 			else // try csv format
 				mat = load_csv_matrix<float>(argv[2], false, false, true, true);
 			inputs = &mat;
+			if (inputs->order() == 1) { // only 1 sample, add the sample dimension
+				idx<float> tmp(1, inputs->dim(0));
+				idx_copy(*inputs, tmp);
+				*inputs = tmp;
+			}
 		}
     // classify
     if (!strcmp(precision, "float"))
