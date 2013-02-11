@@ -302,8 +302,8 @@ midx<T> load_matrices(const std::string &filename, bool ondemand){
 
 template <typename T>
 idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
-											 bool ignore_missing_value_lines, bool ignore_empty_cols,
-											 bool silent) {
+		       bool ignore_missing_value_lines, bool ignore_empty_cols,
+		       bool silent) {
   char sep = ',';
   T default_value = 0;
   // open file
@@ -319,17 +319,17 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
   try {
     while ((ret = fgets(buf, 4096, fp))) {
       if (line == 0 && ignore_first_line) {
-				line++;
-				continue ;
+	line++;
+	continue ;
       }
-      if (line == 1) {
-				std::string s = buf;
-				size_t pos = 0;
-				size_t len = s.size();
-				while (pos < len && ((pos = s.find(sep, pos)) != std::string::npos)) {
-					n++;
-					pos++;
-				}
+      if (line == 0 || line == 1) {
+	std::string s = buf;
+	size_t pos = 0;
+	size_t len = s.size();
+	while (pos < len && ((pos = s.find(sep, pos)) != std::string::npos)) {
+	  n++;
+	  pos++;
+	}
       }
       line++;
       i++;
