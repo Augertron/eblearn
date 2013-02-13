@@ -876,10 +876,13 @@ bool save_csv_matrix(idx<T> &m, const std::string &fname) {
   char separator = ',';
   std::ofstream of(fname.c_str(), std::ofstream::trunc | std::ofstream::out);
   if (m.order() == 1) {
-    idx_bloop1(e, m, T) { of << e.get() << separator << std::endl; }
+    idx_bloop1(e, m, T) { of << e.get() << std::endl; }
   } else if (m.order() == 2) {
     idx_bloop1(v, m, T) {
-      idx_bloop1(e, v, T) { of << e.get() << separator; }
+			for (intg i = 0; i < v.dim(0); i++) {
+				of << v.get(i);
+				if (i != v.dim(0) - 1) of << separator;
+			}
       of << std::endl;
     }
   } else {
