@@ -67,30 +67,30 @@ template <> inline int get_magic_vincent<long>() {return 0x0000; }
 inline std::string get_magic_str(int magic) {
   switch (magic) {
     // standard format
-    case MAGIC_BYTE_MATRIX: 	return "ubyte";
-    case MAGIC_PACKED_MATRIX:	return "packed";
-    case MAGIC_SHORT_MATRIX: 	return "short";
-    case MAGIC_SHORT8_MATRIX: 	return "short8";
-    case MAGIC_ASCII_MATRIX: 	return "ascii";
-    case MAGIC_INTEGER_MATRIX: 	return "int";
-    case MAGIC_FLOAT_MATRIX: 	return "float";
-    case MAGIC_DOUBLE_MATRIX: 	return "double";
-    case MAGIC_LONG_MATRIX:	return "long";
-      // non standard
-    case MAGIC_UINT_MATRIX: 	return "uint";
-    case MAGIC_UINT64_MATRIX: 	return "uint64";
-    case MAGIC_INT64_MATRIX: 	return "int64";
-      // pascal vincent format
-    case MAGIC_BYTE_VINCENT: 	return "byte (pascal vincent)";
-    case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
-    case MAGIC_SHORT_VINCENT: 	return "short (pascal vincent)";
-    case MAGIC_INT_VINCENT: 	return "int (pascal vincent)";
-    case MAGIC_FLOAT_VINCENT: 	return "float (pascal vincent)";
-    case MAGIC_DOUBLE_VINCENT: 	return "double (pascal vincent)";
-    default:
-      std::string s;
-      s << "unknown type (magic: " << reinterpret_cast<void*>(magic) << ")";
-      return s;
+	case MAGIC_BYTE_MATRIX: 	return "ubyte";
+	case MAGIC_PACKED_MATRIX:	return "packed";
+	case MAGIC_SHORT_MATRIX: 	return "short";
+	case MAGIC_SHORT8_MATRIX: 	return "short8";
+	case MAGIC_ASCII_MATRIX: 	return "ascii";
+	case MAGIC_INTEGER_MATRIX: 	return "int";
+	case MAGIC_FLOAT_MATRIX: 	return "float";
+	case MAGIC_DOUBLE_MATRIX: 	return "double";
+	case MAGIC_LONG_MATRIX:	return "long";
+		// non standard
+	case MAGIC_UINT_MATRIX: 	return "uint";
+	case MAGIC_UINT64_MATRIX: 	return "uint64";
+	case MAGIC_INT64_MATRIX: 	return "int64";
+		// pascal vincent format
+	case MAGIC_BYTE_VINCENT: 	return "byte (pascal vincent)";
+	case MAGIC_UBYTE_VINCENT: 	return "ubyte (pascal vincent)";
+	case MAGIC_SHORT_VINCENT: 	return "short (pascal vincent)";
+	case MAGIC_INT_VINCENT: 	return "int (pascal vincent)";
+	case MAGIC_FLOAT_VINCENT: 	return "float (pascal vincent)";
+	case MAGIC_DOUBLE_VINCENT: 	return "double (pascal vincent)";
+	default:
+		std::string s;
+		s << "unknown type (magic: " << reinterpret_cast<void*>(magic) << ")";
+		return s;
   }
 }
 
@@ -106,19 +106,19 @@ inline std::string get_magic_str(int magic) {
 template <class T> inline void reverse_n(T *ptr, int n) {
   char *mptr = (char *) ptr;
   while(n--)
-  {
-    char tmp;
-    char *uptr = mptr + sizeof (T);
-    if (sizeof (T) >= 2)
-    { tmp = mptr[0]; mptr[0]=uptr[-1]; uptr[-1]=tmp; }
-    if (sizeof (T) >= 4)
-    { tmp = mptr[1]; mptr[1]=uptr[-2]; uptr[-2]=tmp; }
-    if (sizeof (T) >= 6)
-    { tmp = mptr[2]; mptr[2]=uptr[-3]; uptr[-3]=tmp; }
-    if (sizeof (T) >= 8)
-    { tmp = mptr[3]; mptr[3]=uptr[-4]; uptr[-4]=tmp; }
-    mptr = uptr;
-  }
+		{
+			char tmp;
+			char *uptr = mptr + sizeof (T);
+			if (sizeof (T) >= 2)
+				{ tmp = mptr[0]; mptr[0]=uptr[-1]; uptr[-1]=tmp; }
+			if (sizeof (T) >= 4)
+				{ tmp = mptr[1]; mptr[1]=uptr[-2]; uptr[-2]=tmp; }
+			if (sizeof (T) >= 6)
+				{ tmp = mptr[2]; mptr[2]=uptr[-3]; uptr[-3]=tmp; }
+			if (sizeof (T) >= 8)
+				{ tmp = mptr[3]; mptr[3]=uptr[-4]; uptr[-4]=tmp; }
+			mptr = uptr;
+		}
 }
 
 template <class T> inline T endian(T ptr) {
@@ -161,7 +161,7 @@ idx<T> load_matrix(const char *filename) {
     fclose(fp);
   } catch(eblexception &e) {
     eblthrow(" while loading " << filename)
-        }
+			}
   return m;
 }
 
@@ -222,36 +222,36 @@ idx<T> load_matrix(FILE *fp, idx<T> *out_) {
     read_matrix_body(fp, *pout);
   } else { // different type, read original type, then copy/cast into out
     switch (magic) {
-      case MAGIC_BYTE_MATRIX:
-      case MAGIC_UBYTE_VINCENT:
-	read_cast_matrix<ubyte>(fp, *pout);
-	break ;
-      case MAGIC_INTEGER_MATRIX:
-      case MAGIC_INT_VINCENT:
-	read_cast_matrix<int>(fp, *pout);
-	break ;
-      case MAGIC_FLOAT_MATRIX:
-      case MAGIC_FLOAT_VINCENT:
-	read_cast_matrix<float>(fp, *pout);
-	break ;
-      case MAGIC_DOUBLE_MATRIX:
-      case MAGIC_DOUBLE_VINCENT:
-	read_cast_matrix<double>(fp, *pout);
-	break ;
-      case MAGIC_LONG_MATRIX:
-	read_cast_matrix<long>(fp, *pout);
-	break ;
-      case MAGIC_UINT_MATRIX:
-	read_cast_matrix<uint>(fp, *pout);
-	break ;
-      case MAGIC_UINT64_MATRIX:
-	read_cast_matrix<uint64>(fp, *pout);
-	break ;
-      case MAGIC_INT64_MATRIX:
-	read_cast_matrix<int64>(fp, *pout);
-	break ;
-      default:
-	eblerror("unknown magic number");
+		case MAGIC_BYTE_MATRIX:
+		case MAGIC_UBYTE_VINCENT:
+			read_cast_matrix<ubyte>(fp, *pout);
+			break ;
+		case MAGIC_INTEGER_MATRIX:
+		case MAGIC_INT_VINCENT:
+			read_cast_matrix<int>(fp, *pout);
+			break ;
+		case MAGIC_FLOAT_MATRIX:
+		case MAGIC_FLOAT_VINCENT:
+			read_cast_matrix<float>(fp, *pout);
+			break ;
+		case MAGIC_DOUBLE_MATRIX:
+		case MAGIC_DOUBLE_VINCENT:
+			read_cast_matrix<double>(fp, *pout);
+			break ;
+		case MAGIC_LONG_MATRIX:
+			read_cast_matrix<long>(fp, *pout);
+			break ;
+		case MAGIC_UINT_MATRIX:
+			read_cast_matrix<uint>(fp, *pout);
+			break ;
+		case MAGIC_UINT64_MATRIX:
+			read_cast_matrix<uint64>(fp, *pout);
+			break ;
+		case MAGIC_INT64_MATRIX:
+			read_cast_matrix<int64>(fp, *pout);
+			break ;
+		default:
+			eblerror("unknown magic number");
     }
   }
   return *pout;
@@ -302,8 +302,8 @@ midx<T> load_matrices(const std::string &filename, bool ondemand){
 
 template <typename T>
 idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
-		       bool ignore_missing_value_lines, bool ignore_empty_cols,
-		       bool silent) {
+											 bool ignore_missing_value_lines, bool ignore_empty_cols,
+											 bool silent) {
   char sep = ',';
   T default_value = 0;
   // open file
@@ -319,17 +319,18 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
   try {
     while ((ret = fgets(buf, 4096, fp))) {
       if (line == 0 && ignore_first_line) {
-	line++;
-	continue ;
+				line++;
+				continue ;
       }
       if (line == 0 || line == 1) {
-	std::string s = buf;
-	size_t pos = 0;
-	size_t len = s.size();
-	while (pos < len && ((pos = s.find(sep, pos)) != std::string::npos)) {
-	  n++;
-	  pos++;
-	}
+				n = 1;
+				std::string s = buf;
+				size_t pos = 0;
+				size_t len = s.size();
+				while (pos < len && ((pos = s.find(sep, pos)) != std::string::npos)) {
+					n++;
+					pos++;
+				}
       }
       line++;
       i++;
@@ -837,7 +838,7 @@ bool save_matrices(std::list<std::string> &filenames,
 
 template <typename T>
 bool save_matrix(std::list<std::string> &filenames,
-		 const std::string &filename) {
+								 const std::string &filename) {
   if (filenames.size() == 0) eblerror("expected a non-empty list");
   FILE *fp = fopen(filename.c_str(), "wb+");
   if (!fp) {
