@@ -145,7 +145,9 @@ bool job::write(bool reset_progress) {
 	// create directories
 	mkdir_full(outdir.c_str());
 	// create configuration file
-	conf.set("job_name", rconf.get_name().c_str());// add config name into conf
+	std::string jname = rconf.get_name();
+	jname = "\"" + jname + "\"";
+	conf.set("job_name", jname.c_str());// add config name into conf
 	// reset progress
 	if (reset_progress) {
 		std::string fn = progress_fname;
@@ -157,9 +159,23 @@ bool job::write(bool reset_progress) {
 			cerr << "failed to remove " << fn << endl;
 		else cout << "removed " << fn << endl;
 	}
-	//    conf.resolve();
-	if (!conf.write(confname.c_str()))
-		return false;
+	// write unresolved conf
+	if (!conf.write(confname.c_str())) return false;
+	// write resolved conf
+	conf.resolve();
+	std::string resolved;
+	resolved << confname << "_resolved";
+	if (!conf.write(resolved.c_str())) return false;
+	// copy stuff into directory
+	if (rconf.exists("meta_copy")) {
+		std::string cmd;
+		std::string cpy = rconf.get_string("meta_copy");
+		cpy = replace_quotes(cpy);
+		cmd << "cp " << cpy << " " << outdir;
+		//eblprint("copying to output directory: " << cmd);
+		int res = std::system(cmd.c_str());
+		if (res < 0) eblwarn("command failed: " << cmd << endl);
+	}
 	// copy classes file into directory
 	if (rconf.exists("train") && rconf.exists("root")
 			&& rconf.exists_true("meta_copy_classes")) {

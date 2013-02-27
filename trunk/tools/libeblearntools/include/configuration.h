@@ -66,7 +66,8 @@ class textlist : public std::list< std::pair<std::string,std::string> > {
   //! replace original line with variable assignment to value, everywhere that
   //! is indicated by a second element equal to varname.
   //! if variable is not found, push it at the end of the list.
-  void update(const std::string &varname, const std::string &value);
+  void update(const std::string &varname, const std::string &value,
+							const std::string &comment);
 
   //! write entire text to out (using new variables if updated).
   void print(std::ostream &out);
@@ -76,6 +77,7 @@ class textlist : public std::list< std::pair<std::string,std::string> > {
 // utility functions
 
 std::string timestamp();
+ std::string replace_quotes(const std::string &s);
 
 // configuration ///////////////////////////////////////////////////////////////
 

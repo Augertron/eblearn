@@ -74,7 +74,8 @@ namespace ebl {
   textlist::~textlist() {
   }
 
-  void textlist::update(const std::string &varname, const std::string &value) {
+void textlist::update(const std::string &varname, const std::string &value,
+											const std::string &comment) {
     bool found = false;
     std::string s;
     s << varname << "=" << value;
@@ -86,7 +87,7 @@ namespace ebl {
       }
     }
     if (!found) {
-      s << " # variable added by metarun";
+      s << " " << comment << " variable added by metarun";
       push_back(pair<std::string,std::string>(s, varname));
     }
   }
@@ -285,13 +286,18 @@ namespace ebl {
                                         bool replquotes, bool silent) {
     std::string s0, s;
     char separator = '=';
-    char comment1 = '#';
+		std::string comment1 = "#";
     std::string comment2 = ";;";
     std::string::size_type pos;
     std::string name, value, line;
     std::string cont = content;
     bool done = false;
     while (cont.size() && !done) {
+			// update comments marker if defined in configuration
+			if (this->exists("meta_comments")) {
+				comment1 = this->get_string("meta_comments");
+				comment1 = replace_quotes(comment1);
+			}
       name = "";
       value = "";
       int line_end = std::min(cont.size(), cont.find_first_of('\n'));
@@ -582,9 +588,11 @@ namespace ebl {
       return false;
     }
     // update all values in original text
+		std::string comment = this->try_get_string("meta_comments", "#");
+		comment = replace_quotes(comment);
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
-      otxt.update(smi->first, smi->second);
+      otxt.update(smi->first, smi->second, comment);
     // write updated text
     otxt.print(of);
     of.close();
@@ -922,6 +930,9 @@ namespace ebl {
       string_map_t new_smap;
       assign_current_smap(new_smap, conf_indices, lmap);
       configuration conf(new_smap, otxt, conf_name, output_dir);
+			shortname = "\"" + shortname + "\"";
+			fullname = "\"" + fullname + "\"";
+			variables = "\"" + variables + "\"";
       conf.set("meta_conf_shortname", shortname.c_str());
       conf.set("meta_conf_fullname", fullname.c_str());
       conf.set("meta_conf_variables", variables.c_str());
