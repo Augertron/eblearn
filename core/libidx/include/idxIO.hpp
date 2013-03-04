@@ -363,7 +363,7 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
 					missing = true;
 				} else {
 					tmp = s.substr(pos0, pos1-pos0);
-					EDEBUG("string to double from: " << tmp);
+					//EDEBUG("string to double from: " << tmp);
 					try {
 						m.set((T) string_to_double(tmp), i, j);
 						counts.set(counts.get(j) + 1, j);
@@ -380,7 +380,7 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
 				missing = true;
       } else {
 				tmp = s.substr(pos0, len-pos0);
-				EDEBUG("string to double from: " << tmp);
+				//EDEBUG("string to double from: " << tmp);
 				try {
 					m.set((T) string_to_double(tmp), i, j);
 					counts.set(counts.get(j) + 1, j);

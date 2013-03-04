@@ -2158,6 +2158,16 @@ void idx_random(idx<T> &m, double v) {
   idx_aloopf1(mm, m, T, { *mm = (T) drand(v); });
 }
 
+// normalization
+
+template <typename T>
+float64 idx_stddev(idx<T> &m) {
+	idx<T> a(m.get_idxdim());
+	// remove mean
+	idx_addc(m, -idx_mean(m), a);
+	return sqrt(idx_sumsqr(a) / a.nelements());
+}
+
 } // end namespace ebl
 
 /*

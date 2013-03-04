@@ -784,6 +784,9 @@ template <typename T> void idx_random(idx<T> &m, double v0, double v1);
 //! Set each element of 'm' to a random value in [-v, v].
 template <typename T> void idx_random(idx<T> &m, double v);
 
+//! Returns the standard deviation of matrix m.
+template <typename T> float64 idx_stddev(idx<T> &m);
+
 } // end namespace ebl
 
 #include "idxops.hpp"

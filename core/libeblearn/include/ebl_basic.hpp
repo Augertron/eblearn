@@ -172,146 +172,167 @@ void linear_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
   DUMP(w.x[0], this->name() << "_linear_module_weights");
 }
 
-// // sparse_linear_module ///////////////////////////////////////////////////////////////
+// sparse_linear_module ///////////////////////////////////////////////////////////////
 
-// template <typename T>
-// sparse_linear_module<T>::sparse_linear_module(parameter<T> *p,
-// 																							idx<intg> &table,
-// 																							const char *name_)
-//     : module_1_1<T>(name_), w(out, in, p) {
-// }
+template <typename T>
+sparse_linear_module<T>::sparse_linear_module(parameter<T> *p,
+																							idx<intg> &table_,
+																							const char *name_)
+	: module_1_1<T>(name_), table(table_), w(table.dim(0), p) {
+	idx<intg> ins = table.select(1, 0);
+	idx<intg> outs = table.select(1, 1);
+	inputs_size = idx_max(ins) + 1;
+	outputs_size = idx_max(outs) + 1;
+}
 
-// template <typename T>
-// sparse_linear_module<T>::~sparse_linear_module() {
-// }
+template <typename T>
+sparse_linear_module<T>::~sparse_linear_module() {
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::fprop1(idx<T> &in, idx<T> &out) {
-//   //!\note The in must be contiguous
-//   //!\note The out must be contiguous
-//   CHECK_CONTIGUOUS2(in, out);
-//   // flatten dimensions starting from second one
-//   idxdim d(in);
-//   d.remove_dim(0);
-//   idx<T> inx(in.getstorage(), 0, in.dim(0), d.nelements());
-//   d.insert_dim(0, w.dim(0));
-//   this->resize_output(in, out, &d); // resize (iff necessary)
-//   idx<T> outx(out.getstorage(), 0, out.dim(0), inx.dim(1));
+template <typename T>
+void sparse_linear_module<T>::fprop1(idx<T> &in, idx<T> &out) {
+  //!\note The in must be contiguous
+  //!\note The out must be contiguous
+  CHECK_CONTIGUOUS2(in, out);
+  // flatten dimensions starting from second one
+  idxdim d(outputs_size);
+  idx<T> inx(in.getstorage(), 0, in.nelements());
+  this->resize_output(in, out, &d); // resize (iff necessary)
+  idx<T> outx(out.getstorage(), 0, outputs_size);
 
-//   // linear combination
-//   idx_m2dotm2(w, inx, outx);
-// }
+  // linear combination according to connection table
+	idx_clear(outx);
+	idx_bloop2(weight, w.x[0], T, t, table, intg) {
+		outx.set(inx.get(t.get(0)) * weight.get(), t.get(1));
+	}
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::bprop1(state<T> &in, state<T> &out) {
-//   DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
-//   idx<T> inx = in.flat(), indx = in.dx[0].flat(), outdx = out.dx[0].flat();
-//   idx<T> twx(w.transpose(0, 1)); // switch dimensions 0 and 1
-//   if (outdx.nelements() != w.dx[0].dim(0))
-//     eblerror("output should have " << w.dx[0].dim(0) << " elements "
-//              << "but has " << outdx.nelements() << " (" << outdx << ")");
+template <typename T>
+void sparse_linear_module<T>::bprop1(state<T> &in, state<T> &out) {
+  DEBUG_CHECK_DX(in); // in debug mode, check backward tensors are allocated
+  idx<T> inx = in.flat(), indx = in.dx[0].flat(), outdx = out.dx[0].flat();
+	intg i, o;
+	idx_bloop3(weight, w.x[0], T, dw, w.dx[0], T, t, table, intg) {
+		i = t.get(0);
+		o = t.get(1);
 
-//   // bprop
-//   idx_m1extm1acc(outdx, inx, w.dx[0]); // backprop to weights
-//   idx_m2dotm1acc(twx, outdx, indx); // backprop to input
-// }
+		// backprop to weights
+		dw.set(dw.get() + outdx.get(o) * inx.get(i));
+		// backprop to input according to connection table
+		indx.set(indx.get(i) + outdx.get(o) * weight.get(), i);
+	}
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::bbprop1(state<T> &in, state<T> &out) {
-//   DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
-//   idx<T> inx = in.flat(), inddx = in.ddx[0].flat(), outddx = out.ddx[0].flat();
-//   idx<T> twx = w.transpose(0, 1); // switch dimensions 0 and 1
-//   if (outddx.nelements() != w.ddx[0].dim(0))
-//     eblerror("output should have " << w.ddx[0].dim(0) << " elements "
-//              << "but has " << outddx.nelements() << " (" << outddx << ")");
+template <typename T>
+void sparse_linear_module<T>::bbprop1(state<T> &in, state<T> &out) {
+  DEBUG_CHECK_DDX(in); // in debug mode, check backward tensors are allocated
+  idx<T> inx = in.flat(), inddx = in.ddx[0].flat(), outddx = out.ddx[0].flat();
+	intg i, o;
+	T tmp;
+	idx_bloop3(weight, w.x[0], T, ddw, w.ddx[0], T, t, table, intg) {
+		i = t.get(0);
+		o = t.get(1);
 
-//   // bbprop
-//   idx_m1squextm1acc(outddx, inx, w.ddx[0]); // backprop to weights
-//   idx_m2squdotm1acc(twx, outddx, inddx); // backprop to input
-// }
+		// backprop to weights
+		tmp = inx.get(i);
+		ddw.set(ddw.get() + outddx.get(o) * tmp * tmp);
+		// backprop to input according to connection table
+		tmp = weight.get();
+		inddx.set(inddx.get(i) + outddx.get(o) * tmp * tmp, i);
+	}
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::forget(forget_param_linear &fp) {
-//   double fanin_ = w.dim(1);
-//   double z = fp.value / pow(fanin_, fp.exponent);
-//   idx_aloop1(lx, w, T) {
-//     *lx = (T) fp.generator.drand(-z, z);
-//   }
-// }
+template <typename T>
+void sparse_linear_module<T>::forget(forget_param_linear &fp) {
+	// compute fanin of table for each output
+	idx<intg> o = table.select(1, 1); // output indices
+	idx<intg> fanins(outputs_size);
+	idx_clear(fanins);
+	{idx_bloop1(e, o, intg) {
+		fanins.set(fanins.get(e.get()) + 1, e.get());
+		}}
+	// loop on table
+	idx_bloop2(e, o, intg, weight, w, T) {
+		double fanin_ = fanins.get(e.get());
+		if (fanin_ == 0) eblerror("unexpected zero-fanin");
+		double z = fp.value / pow(fanin_, fp.exponent);
+		weight.set( (T) fp.generator.drand(-z, z));
+	}
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::normalize() {
-// #ifdef __CBLAS__
-//   norm_columns(w);
-// #else
-//   eblerror("norm_columns not implemented without cblas");
-// #endif
-// }
+template <typename T>
+void sparse_linear_module<T>::normalize() {
+#ifdef __CBLAS__
+  norm_columns(w);
+#else
+  eblerror("norm_columns not implemented without cblas");
+#endif
+}
 
-// template <typename T>
-// fidxdim sparse_linear_module<T>::fprop1_size(fidxdim &isize) {
-//   //! Update output size based on weight dimensions
-//   fidxdim osize = isize;
-//   osize.setdim(0, w.dim(0));
-//   isize = bprop1_size(osize);
-//   return osize;
-// }
+template <typename T>
+fidxdim sparse_linear_module<T>::fprop1_size(fidxdim &isize) {
+  //! Update output size based on weight dimensions
+  fidxdim osize = isize;
+  osize.setdim(0, outputs_size);
+  isize = bprop1_size(osize);
+  return osize;
+}
 
-// template <typename T>
-// fidxdim sparse_linear_module<T>::bprop1_size(const fidxdim &osize) {
-//   fidxdim isize = osize;
-//   isize.setdim(0, w.dim(1));
-//   return isize;
-// }
+template <typename T>
+fidxdim sparse_linear_module<T>::bprop1_size(const fidxdim &osize) {
+  fidxdim isize = osize;
+  isize.setdim(0, inputs_size);
+  return isize;
+}
 
-// template <typename T>
-// module_1_1<T>* sparse_linear_module<T>::copy(parameter<T> *p) {
-//   // new module
-//   sparse_linear_module<T> *l2 =
-//       new sparse_linear_module<T>(p, w.dim(1), w.dim(0), this->name());
-//   // assign same parameter state if no parameters were specified
-//   if (!p) l2->w = w;
-//   return (module_1_1<T>*)l2;
-// }
+template <typename T>
+module_1_1<T>* sparse_linear_module<T>::copy(parameter<T> *p) {
+  // new module
+  sparse_linear_module<T> *l2 =
+      new sparse_linear_module<T>(p, table, this->name());
+  // assign same parameter state if no parameters were specified
+  if (!p) l2->w = w;
+  return (module_1_1<T>*)l2;
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::load_x(idx<T> &weights) {
-//   if (!w.same_dim(weights)) {
-//     // if sizes are the same except for the feature size, load
-//     // into the corresponding slices with a warning
-//     // this allows to load grayscale pretrained weights only
-//     // in a grayscale + color net for example.
-//     idxdim d(w);
-//     d.setdim(0, weights.dim(0));
-//     if (d == weights.get_idxdim()) {
-//       eblwarn("loading weights partly (the first " << d.dim(0)
-//               << " features) from " << weights << " instead of entire weights ("
-//               << w.x[0] << ")");
-//       intg sz = std::min(w.dim(0), weights.dim(0));
-//       idx<T> slices = w.narrow(0, sz, 0);
-//       idx<T> w = weights.narrow(0, sz, 0);
-//       idx_copy(w, slices);
-//     } else
-//       eblthrow("expected same dimension weights but got " << w.x[0] << " and "
-//                << weights << " instead in " << this->name());
-//   } else
-//     idx_copy(weights, w);
-// }
+template <typename T>
+void sparse_linear_module<T>::load_x(idx<T> &weights) {
+  if (!w.same_dim(weights)) {
+    // if sizes are the same except for the feature size, load
+    // into the corresponding slices with a warning
+    // this allows to load grayscale pretrained weights only
+    // in a grayscale + color net for example.
+    idxdim d(w);
+    d.setdim(0, weights.dim(0));
+    if (d == weights.get_idxdim()) {
+      eblwarn("loading weights partly (the first " << d.dim(0)
+              << " features) from " << weights << " instead of entire weights ("
+              << w.x[0] << ")");
+      intg sz = std::min(w.dim(0), weights.dim(0));
+      idx<T> slices = w.narrow(0, sz, 0);
+      idx<T> w = weights.narrow(0, sz, 0);
+      idx_copy(w, slices);
+    } else
+      eblthrow("expected same dimension weights but got " << w.x[0] << " and "
+               << weights << " instead in " << this->name());
+  } else
+    idx_copy(weights, w);
+}
 
-// template <typename T>
-// std::string sparse_linear_module<T>::describe() {
-//   std::string desc;
-//   desc << "linear module " << this->name() << " "
-//        << w.dim(1) << " -> " << w.dim(0);
-//   return desc;
-// }
+template <typename T>
+std::string sparse_linear_module<T>::describe() {
+  std::string desc;
+  desc << "linear module " << this->name() << " "
+       << inputs_size << " -> " << outputs_size;
+  return desc;
+}
 
-// template <typename T>
-// void sparse_linear_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
-//   DUMP(in, this->name() << "_sparse_linear_module_in");
-//   fprop1(in, out);
-//   DUMP(w.x[0], this->name() << "_sparse_linear_module_weights");
-// }
+template <typename T>
+void sparse_linear_module<T>::fprop1_dump(idx<T> &in, idx<T> &out) {
+  DUMP(in, this->name() << "_sparse_linear_module_in");
+  fprop1(in, out);
+  DUMP(w.x[0], this->name() << "_sparse_linear_module_weights");
+}
 
 // convolution_module //////////////////////////////////////////////////////////
 
