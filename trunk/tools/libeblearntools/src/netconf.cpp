@@ -36,69 +36,69 @@ using namespace std;
 
 namespace ebl {
 
-  ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
-  bool load_table(configuration &conf, const std::string &module_name,
-		  idx<intg>& table, intg thickness, intg noutputs) {
-    std::string name = module_name; name << "_table"; // table name
-    std::string name_in = name; name_in << "_in"; // table max input
-    std::string name_out = name; name_out << "_out"; // table max output
+bool load_table(configuration &conf, const std::string &module_name,
+								idx<intg>& table, intg thickness, intg noutputs) {
+	std::string name = module_name; name << "_table"; // table name
+	std::string name_in = name; name_in << "_in"; // table max input
+	std::string name_out = name; name_out << "_out"; // table max output
 
-    if (conf.exists(name)) { // request to load table from file
-      std::string filename = conf.get_string(name.c_str());
-      if (!file_exists(filename))
-	eblerror("cannot find table file declared in variable " << name
-		 << ": " << filename);
-      table = load_matrix<intg>(filename);
-      eblprint("Loaded " << name << " (" << table << ") from " << filename
-               << endl);
-      return true;
-    } else if (conf.exists(name_in) && conf.exists(name_out)) {
-      intg in, out;
-      // special case, if in == "thickness", use current thickness
-      std::string val_in = conf.get_string(name_in);
-      if (!val_in.compare("thickness"))
-	in = thickness;
-      else // regular case, use string as int
-	in = conf.get_int(name_in.c_str());
-      // special case, if out == "noutputs", use current thickness
-      std::string val_out = conf.get_string(name_out);
-      if (!val_out.compare("noutputs"))
-	out = noutputs;
-      else // regular case, use string as int
-	out = conf.get_int(name_out.c_str());
-      // create table
-      table = full_table(in, out);
-      eblprint("Using a full table for " << name << ": "
-               << in << " -> " << out << " (" << table << ")" << std::endl);
-      return true;
-    }
-    eblwarn("Failed to load table " << name << std::endl);
-    return false;
-  }
+	if (conf.exists(name)) { // request to load table from file
+		std::string filename = conf.get_string(name.c_str());
+		if (!file_exists(filename))
+			eblerror("cannot find table file declared in variable " << name
+							 << ": " << filename);
+		table = load_matrix<intg>(filename);
+		eblprint("Loaded " << name << " (" << table << ") from " << filename
+						 << endl);
+		return true;
+	} else if (conf.exists(name_in) && conf.exists(name_out)) {
+		intg in, out;
+		// special case, if in == "thickness", use current thickness
+		std::string val_in = conf.get_string(name_in);
+		if (!val_in.compare("thickness"))
+			in = thickness;
+		else // regular case, use string as int
+			in = conf.get_int(name_in.c_str());
+		// special case, if out == "noutputs", use current thickness
+		std::string val_out = conf.get_string(name_out);
+		if (!val_out.compare("noutputs"))
+			out = noutputs;
+		else // regular case, use string as int
+			out = conf.get_int(name_out.c_str());
+		// create table
+		table = full_table(in, out);
+		eblprint("Using a full table for " << name << ": "
+						 << in << " -> " << out << " (" << table << ")" << std::endl);
+		return true;
+	} else { eblwarn("undefined table variable " << name); };
+	eblwarn("Failed to load table " << name << std::endl);
+	return false;
+}
 
-  ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 void load_gd_param(configuration &conf, gd_param &gdp, bool silent) {
-    // mandatory learning parameters
-    gdp.eta = conf.get_double("eta");
-    // optional learning parameters
-    if (conf.exists("reg_time"))
-      gdp.decay_time = conf.get_intg("reg_time");
-    if (conf.exists("reg_l1"))
-      gdp.decay_l1 = conf.get_double("reg_l1");
-    if (conf.exists("reg_l2"))
-      gdp.decay_l2 = conf.get_double("reg_l2");
-    if (conf.exists("inertia"))
-      gdp.inertia = conf.get_double("inertia");
-    if (conf.exists("anneal_value"))
-      gdp.anneal_value = conf.get_double("anneal_value");
-    if (conf.exists("anneal_period"))
-      gdp.anneal_period = conf.get_intg("anneal_period");
-    if (conf.exists("gradient_threshold"))
-      gdp.gradient_threshold = conf.get_double("gradient_threshold");
-    // printing parameters
-    if (!silent) eblprint(gdp << std::endl);
-  }
+	// mandatory learning parameters
+	gdp.eta = conf.get_double("eta");
+	// optional learning parameters
+	if (conf.exists("reg_time"))
+		gdp.decay_time = conf.get_intg("reg_time");
+	if (conf.exists("reg_l1"))
+		gdp.decay_l1 = conf.get_double("reg_l1");
+	if (conf.exists("reg_l2"))
+		gdp.decay_l2 = conf.get_double("reg_l2");
+	if (conf.exists("inertia"))
+		gdp.inertia = conf.get_double("inertia");
+	if (conf.exists("anneal_value"))
+		gdp.anneal_value = conf.get_double("anneal_value");
+	if (conf.exists("anneal_period"))
+		gdp.anneal_period = conf.get_intg("anneal_period");
+	if (conf.exists("gradient_threshold"))
+		gdp.gradient_threshold = conf.get_double("gradient_threshold");
+	// printing parameters
+	if (!silent) eblprint(gdp << std::endl);
+}
 
 } /* namespace ebl */

@@ -86,32 +86,37 @@ void flat_merge_module<T>::fprop(state<T> &in, state<T> &out) {
   // number of possible windows
   // intg nh = 1 + (intg) ((in0.dim(1) - din.dim(0)) / stride.dim(0));
   // intg nw = 1 + (intg) ((in0.dim(2) - din.dim(1)) / stride.dim(1));
-  intg nh = dref.dim(0), nw = dref.dim(1);
+  intg nh = 1, nw = 1;
+	if (dref.order() > 0) nh = dref.dim(0);
+	if (dref.order() > 1) nw = dref.dim(1);
   // compute new size and resize output if necessary
   for (uint i = 1; i < in.x.size(); ++i) {
     idxdim &d = dins[i];
     fidxdim &s = strides[i];
     idx<T> &input = in.x[i];
     fsize += d.nelements() * input.dim(0);
+
     // check that strides match possible windows
-    intg nh2 = (intg) ceil((input.dim(1) - d.dim(0) + 1)
-                           / std::max(10e-9, (double) s.dim(0)));
-    intg nw2 = (intg) ceil((input.dim(2) - d.dim(1) + 1)
-                           / std::max(10e-9, (double) s.dim(1)));
-    if (nh2 < nh || nw2 < nw) {
-      *(this->mout) << "COUT input " << input << " and window " << d
-                    << " with stride " <<s << " produce " << nh2 << "x" << nw2
-                    << " outputs but expected at least " << nh << "x" << nw
-                    << std::endl;
-      eblerror("input " << input << " and window " << d << " with stride " <<s
-               << " produce " << nh2 << "x" << nw2
-               << " outputs but expected at least " << nh << "x" << nw);
-    } else if (nh2 != nh || nw2 != nw)
-      EDEBUG("warning: input " << input << " and window " << d
-             << " with stride " << s  << " produce " << nh2 << "x" << nw2
-             << ", ignoring extra cells and using only " <<nh << "x" << nw);
-    EDEBUG("input " << i << " " << input << ", min " << idx_min(input)
-           << " max " << idx_max(input));
+		if (input.order() == 3) {
+			intg nh2 = (intg) ceil((input.dim(1) - d.dim(0) + 1)
+														 / std::max(10e-9, (double) s.dim(0)));
+			intg nw2 = (intg) ceil((input.dim(2) - d.dim(1) + 1)
+														 / std::max(10e-9, (double) s.dim(1)));
+			if (nh2 < nh || nw2 < nw) {
+				*(this->mout) << "COUT input " << input << " and window " << d
+											<< " with stride " <<s << " produce " << nh2 << "x" << nw2
+											<< " outputs but expected at least " << nh << "x" << nw
+											<< std::endl;
+				eblerror("input " << input << " and window " << d << " with stride " <<s
+								 << " produce " << nh2 << "x" << nw2
+								 << " outputs but expected at least " << nh << "x" << nw);
+			} else if (nh2 != nh || nw2 != nw)
+				EDEBUG("warning: input " << input << " and window " << d
+							 << " with stride " << s  << " produce " << nh2 << "x" << nw2
+							 << ", ignoring extra cells and using only " <<nh << "x" << nw);
+			EDEBUG("input " << i << " " << input << ", min " << idx_min(input)
+						 << " max " << idx_max(input));
+		}
   }
   LOCAL_TIMING_REPORT("merge check");
   idxdim d(fsize, nh, nw);
@@ -135,7 +140,8 @@ void flat_merge_module<T>::fprop(state<T> &in, state<T> &out) {
     idxdim dd = dins[i];
     intg dd0 = dd.dim(0), dd1 = dd.dim(1);
     fidxdim s = strides[i];
-    float s0 = s.dim(0), s1 = s.dim(1);
+    float s0 = s.dim(0), s1 = 1;
+		if (s.order() > 1) s1 = s.dim(1);
     idx<T> &input = in.x[i];
     if (!input.contiguousp()) eblerror("expected contiguous");
     fsize = dd.nelements() * input.dim(0); // feature size from input
@@ -148,10 +154,15 @@ void flat_merge_module<T>::fprop(state<T> &in, state<T> &out) {
       // select 1 output pixel in the correct feature range
       ow = onarrowed.select(2, 0);
       ow = ow.select(1, h);
-      inarrowed = input.narrow(1, dd0, uh);
-      intg iwmod = inarrowed.mod(2);
+			inarrowed = input;
+			intg iwmod = 1;
+			if (s.order() > 1) {
+				inarrowed = input.narrow(1, dd0, uh);
+				iwmod = inarrowed.mod(2);
+			}
       uw = 0; uw0 = 0;
-      iw = inarrowed.narrow(2, dd1, uw);
+      if (s.order() > 2) inarrowed = inarrowed.narrow(2, dd1, uw);
+			iw = inarrowed;
       for (w = 0, fw = 0; w < nw; ++w, fw += s1) {
         // integer positions
         uw = (uint) fw;
@@ -374,14 +385,15 @@ idxdim flat_merge_module<T>::compute_output_sizes(state<T> &in, uint k,
   idxdim d = dins[k];
   fidxdim &s = strides[k];
   // compute number of outputs for this kernel
-  idxdim dout((intg) ((i.dim(1) - d.dim(0) + 1) / s.dim(0)),
-              (intg) ((i.dim(2) - d.dim(1) + 1) / s.dim(1)));
+  idxdim dout;
+	for (uint j = 1; j < i.order(); ++j)
+		dout.insert_dim(j-1, (intg) ((i.dim(j) - d.dim(j-1) + 1) / s.dim(j-1)));
   std::string msg;
   msg << this->name() << ": in " << to_string(i.x) << " (min: " << idx_min(i)
       << ", max: " << idx_max(i) << ") with window " << d
       << " and stride " << s << " -> " << dout;
   EDEBUG(msg);
-  if (dout.dim(0) <= 0 || dout.dim(1) <= 0)
+  if (i.order() >= 2 && (dout.dim(0) <= 0 || dout.dim(1) <= 0))
     eblerror("input is too small for this network: " << msg);
   return dout;
 }

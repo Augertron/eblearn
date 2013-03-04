@@ -811,6 +811,17 @@ create_module(const std::string &name, parameter<T> &theparam,
 				(bshared_exists? NULL : &theparam, lin, lout, name.c_str());
     thick = lout; // update thickness
   }
+  // sparse_linear /////////////////////////////////////////////////////////////
+  else if (!type.compare("sparse_linear")) {
+    idx<intg> table(1, 1);
+    if (!load_table(conf, name, table, thick, nout)) return NULL;
+    // update thickness
+    idx<intg> tblmax = table.select(1, 1);
+    thick = 1 + idx_max(tblmax);
+    // create module
+		module = (module_1_1<T>*) new sparse_linear_module<T>
+			(bshared_exists? NULL : &theparam, table, name.c_str());
+  }
   // addc ////////////////////////////////////////////////////////////////////
   else if (!type.compare("addc")) {
 #ifdef __CUDA__

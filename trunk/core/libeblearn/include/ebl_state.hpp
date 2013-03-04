@@ -538,7 +538,7 @@ void state<T>::add_x(idx<T> &m) {
 
 template <typename T>
 void state<T>::add_x(idx<T> *m) {
-  x.push_back(m);
+  x.push_back_new(m);
   // make sure the first element of 0 is same as main tensor
   if (x.size() == 1) link_f0();
 }
