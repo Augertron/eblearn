@@ -332,6 +332,15 @@ bool idx<T>::same_dim(const idxdim &d) {
   return true;
 }
 
+template <typename T>
+void idx<T>::remove_trailing_dims() {
+  for (int i = this->order() - 1; i > 0; --i) {
+    if (this->dim(i) == 1) {
+      *((idx<T>*)this) = ((idx<T>*) this)->select(i, 0);
+    } else break ;
+  }
+}
+
 // idx manipulation methods ////////////////////////////////////////////////////
 
 template <typename T> idx<T> idx<T>::select(int d, intg i) {
@@ -765,19 +774,21 @@ template <typename T>
 std::string idx<T>::csv(bool flat) const {
   std::string s;
   char separator = ',';
-  if (this->order() == 1) {
-    for(uint i = 0; i < this->dim(0); ++i) {
-			s << this->get(i) << separator;
+	idx<T> tmp = *this;
+	tmp.remove_trailing_dims();
+  if (tmp.order() == 1) {
+    for(uint i = 0; i < tmp.dim(0); ++i) {
+			s << tmp.get(i) << separator;
 			if (!flat) s << "\n";
 		}
-  } else if (this->order() == 2) {
-    for(uint i = 0; i < this->dim(0); ++i) {
-			for(uint j = 0; j < this->dim(1); ++j) {
-				s << this->get(i, j) << separator;
+  } else if (tmp.order() == 2) {
+    for(uint i = 0; i < tmp.dim(0); ++i) {
+			for(uint j = 0; j < tmp.dim(1); ++j) {
+				s << tmp.get(i, j) << separator;
 			}
       if (!flat) s << "\n";
     }
-  } else eblerror("expected a vector or matrix only: " << *this);
+  } else eblerror("expected a vector or matrix only: " << tmp);
   return s;
 }
 
