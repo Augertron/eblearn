@@ -148,6 +148,8 @@ template <class T> class idx : public smart_pointer {
   virtual void resize_chunk(intg s_chunk, intg s0=-1, intg s1=-1, intg s2=-1,
                             intg s3=-1, intg s4=-1, intg s5=-1, intg s6=-1,
                             intg s7=-1);
+  //! Removes highest order dimensions that are equal to 1.
+  virtual void remove_trailing_dims();
 
   // idx manipulation methods //////////////////////////////////////////////////
 
