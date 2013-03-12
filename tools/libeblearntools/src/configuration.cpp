@@ -78,7 +78,7 @@ void textlist::update(const std::string &varname, const std::string &value,
 											const std::string &comment) {
     bool found = false;
     std::string s;
-    s << varname << "=" << value;
+    s << varname << " = " << value;
     for (list< pair<std::string,std::string> >::iterator i = this->begin();
          i != this->end(); ++i) {
       if (i->second == varname) {
@@ -158,7 +158,7 @@ void textlist::update(const std::string &varname, const std::string &value,
       if (qpos2 == std::string::npos)
         eblerror("unmatched quote in: " << res);
       // resolve both sides of quoted section
-      std::string s0 = res.substr(0, (std::max)((size_t) 0, qpos -1));
+      std::string s0 = res.substr(0, (std::max)((size_t) 0, qpos));
       std::string s1 = res.substr(qpos + 1, qpos2 - 1 - qpos);
       std::string s2 = res.substr(qpos2 + 1);
       res = "";
@@ -387,9 +387,9 @@ void textlist::update(const std::string &varname, const std::string &value,
             eblwarn("unmatched quote in: " << s << std::endl);
             eblerror("unmatched quote");
           }
-          pos = qpos2 + 1; // update pos to skip quoted section
-          //		s = s.substr(pos);
-          //		pos = s.find(' ');
+          //pos = qpos2 + 1; // update pos to skip quoted section
+					//s = s.substr(pos);
+					pos = s.find(' ', qpos2);
           continue ; // try again with updated pos
         }
         // check for single quotes
@@ -405,7 +405,7 @@ void textlist::update(const std::string &varname, const std::string &value,
             eblerror("unmatched single quote");
           }
           pos = qpos2 + 1; // update pos to skip quoted section
-          //		s = s.substr(pos);
+					//s = s.substr(pos);
           //		pos = s.find(' ');
           continue ; // try again with updated pos
         }
@@ -855,7 +855,7 @@ void textlist::update(const std::string &varname, const std::string &value,
     string_map_t::iterator smi = smap.begin();
     for ( ; smi != smap.end(); ++smi)
       if (s.find(smi->first) != std::string::npos)
-        eblprint(smi->first << "=" << smi->second << std::endl);
+        eblprint(smi->first << " = " << smi->second << std::endl);
   }
 
   ////////////////////////////////////////////////////////////////
