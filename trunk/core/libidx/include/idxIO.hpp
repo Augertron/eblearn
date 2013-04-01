@@ -311,13 +311,27 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
   if (!fp) eblthrow("load_csv_matrix failed to open " << filename);
   // read it
   idx<T> m;
-  char *ret = NULL, buf[4096];
+  char *ret = NULL;
   intg line = 0;
   intg n = 1;
   intg i = 0, j = 0;
+	uint buf_size = 4096;
+	char *buf = (char*) malloc(buf_size);
   // figure out geometry
   try {
-    while ((ret = fgets(buf, 4096, fp))) {
+		// test if buffer size is enough
+		bool big_enough = false;
+		while (!big_enough) {
+			ret = fgets(buf, buf_size, fp);
+			if (strlen(buf) == buf_size-1) {
+				buf_size *= 2;
+				free(buf);
+				buf = (char*) malloc(buf_size);
+			} else big_enough = true;
+			fseek(fp, 0, SEEK_SET); // reset point to beginnin of file
+		}
+		// find length of a line
+    while ((ret = fgets(buf, buf_size, fp))) {
       if (line == 0 && ignore_first_line) {
 				line++;
 				continue ;
@@ -343,7 +357,7 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
     fseek(fp, 0, SEEK_SET); // reset fp to beginning
     i = 0;
     line = 0;
-    while ((ret = fgets(buf, 4096, fp))) {
+    while ((ret = fgets(buf, buf_size, fp))) {
       if (line == 0 && ignore_first_line) {
 				line++;
 				continue ;
@@ -426,6 +440,7 @@ idx<T> load_csv_matrix(const char *filename, bool ignore_first_line,
 		}
     fclose(fp);
   } catch(eblexception &e) { eblthrow(" while loading " << filename) }
+	free(buf);
   return m;
 }
 
