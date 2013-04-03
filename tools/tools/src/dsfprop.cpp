@@ -63,9 +63,9 @@ bool dump = false; // Dump weights/buffers of first sample.
 // dataset fproping ////////////////////////////////////////////////////////////
 
 void fprop_and_save(configuration &conf, module_1_1<T> &net,
-		    datasource<T,Tdata> &ds,
-		    string outdir, string data_fname, string arch_name,
-		    uint &counter, uint total_size) {
+										datasource<T,Tdata> &ds,
+										string outdir, string data_fname, string arch_name,
+										uint &counter, uint total_size, string set_name) {
   cout << "Fprop network on " << ds.size() << " samples from " << ds.name()
        << endl;
   ostringstream name, fname;
@@ -79,7 +79,9 @@ void fprop_and_save(configuration &conf, module_1_1<T> &net,
 
   // input/output names
   string output = outdir;
-  output << "/" << ebl::basename(data_fname.c_str()) << "_" << arch_name;
+	if (conf.exists("save_name"))
+		output << conf.get_string("save_name") << "_" << set_name;
+	else output << "/" << ebl::basename(data_fname.c_str()) << "_" << arch_name;
   string outtmp;
   outtmp << output << "_tmp/";
   if (!mkdir_full(outtmp.c_str()))
@@ -119,8 +121,8 @@ void fprop_and_save(configuration &conf, module_1_1<T> &net,
     counter++;
     if (counter % info == 0)
       cout << "Extracted " << counter << " / " << total_size << ", elapsed: "
-	   << textraction.elapsed() << ", ETA: "
-	   << textraction.eta(counter, total_size) << endl;
+					 << textraction.elapsed() << ", ETA: "
+					 << textraction.eta(counter, total_size) << endl;
   }
   cout << "Extraction time: " << textraction.elapsed() << endl;
 
@@ -132,13 +134,13 @@ void fprop_and_save(configuration &conf, module_1_1<T> &net,
     save_matrix<T>(files, out_fname);
     idx<T> allout = load_matrix<T>(out_fname);
     cout << "Saved output to " << out_fname << " (" << allout
-	 << ")" << endl;
+				 << ")" << endl;
   } else {
     cout << "Saving (dynamic) matrix file to " << out_fname << "..." << endl;
     save_matrices<T>(files, out_fname);
     midx<T> allout = load_matrices<T>(out_fname, true);
     cout << "Saved output to " << out_fname << " (" << allout
-	 << ")" << endl;
+				 << ")" << endl;
   }
   // delete temporary files
   list<string>::iterator fi = files.begin();
@@ -160,15 +162,15 @@ bool parse_args(int argc, char **argv) {
   for (int i = 2; i < argc; ++i) {
     try {
       if (strcmp(argv[i], "-dump") == 0) {
-	dump = true;
+				dump = true;
       } else throw 2;
     } catch (int err) {
       cerr << "input error: ";
       switch (err) {
-        case 0: cerr << "expecting string after " << argv[i-1]; break;
-        case 1: cerr << "expecting integer after " << argv[i-1]; break;
-        case 2: cerr << "unknown parameter " << argv[i-1]; break;
-        default: cerr << "undefined error";
+			case 0: cerr << "expecting string after " << argv[i-1]; break;
+			case 1: cerr << "expecting integer after " << argv[i-1]; break;
+			case 2: cerr << "unknown parameter " << argv[i-1]; break;
+			default: cerr << "undefined error";
       }
       cerr << endl << endl;
       return false;
@@ -206,7 +208,13 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       cout << "Using random seed " << dynamic_init_drand(argc, argv) << endl;
       timer gtimer;
       gtimer.start(); // total running time
-      configuration conf(argv[1]); // configuration file
+      configuration conf(argv[1], true, true, false); // configuration file
+      if (!conf.exists("current_dir")) {
+				string dir;
+				dir << dirname(argv[1]) << "/";
+				cout << "setting current_dir to: " << dir << endl;
+				conf.set("current_dir", dir.c_str());
+      }
       conf.set("run_type", "fprop"); // tell conf that we are in fprop mode
       conf.resolve();
       string input_root = conf.get_string("root");
@@ -224,7 +232,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       test_ds = create_validation_set<T,Tdata,Tlabel>(conf, noutputs, valdata);
       if (!conf.exists_true("test_only"))
         train_ds =
-            create_training_set<T,Tdata,Tlabel>(conf, noutputs, traindata);
+					create_training_set<T,Tdata,Tlabel>(conf, noutputs, traindata);
 
       // create network ////////////////////////////////////////////////////////
       answer_module<bbsds> *answer = create_answer<bbsds>(conf, noutputs);
@@ -236,9 +244,9 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       //! create the network weights, network and trainer
       parameter<T> theparam;// create trainable parameter
       intg inthick = conf.exists("input_thickness") ?
-          conf.get_int("input_thickness") : -1;
+				conf.get_int("input_thickness") : -1;
       module_1_1<T> *net =
-          create_network<T>(theparam, conf, inthick, noutputs, "arch");
+				create_network<T>(theparam, conf, inthick, noutputs, "arch");
       //! initialize the network weights
       bool fixed_random = conf.try_get_bool("fixed_randomization", false);
       forget_param_linear fgp(1, 0.5, !fixed_random);
@@ -256,7 +264,8 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       outdir << "/features/";
       mkdir_full(outdir);
       cout << "Saving outputs to " << outdir << endl;
-      string arch_name = conf.get_string("arch_name");
+      string arch_name = "arch";
+			if (conf.exists("arch_name")) arch_name = conf.get_string("arch_name");
       if (conf.exists("meta_conf_shortname"))
         arch_name = conf.get_string("meta_conf_variables");
       string weights_name = outdir;
@@ -271,10 +280,10 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       uint counter = 0;
       if (test_ds)
         fprop_and_save(conf, *net, *test_ds, outdir, valdata, arch_name,
-                       counter, total_size);
+                       counter, total_size, "val");
       if (!dump && train_ds)
         fprop_and_save(conf, *net, *train_ds, outdir, traindata, arch_name,
-                       counter, total_size);
+                       counter, total_size, "train");
 
       //free variables
       if (net) delete net;
