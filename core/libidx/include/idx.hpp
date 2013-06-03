@@ -778,13 +778,15 @@ std::string idx<T>::csv(bool flat) const {
 	tmp.remove_trailing_dims();
   if (tmp.order() == 1) {
     for(uint i = 0; i < tmp.dim(0); ++i) {
-			s << tmp.get(i) << separator;
+			s << tmp.get(i);
+			if (i < tmp.dim(0) - 1) s << separator;
 			if (!flat) s << "\n";
 		}
   } else if (tmp.order() == 2) {
     for(uint i = 0; i < tmp.dim(0); ++i) {
 			for(uint j = 0; j < tmp.dim(1); ++j) {
-				s << tmp.get(i, j) << separator;
+				s << tmp.get(i, j);
+				if (i < tmp.dim(1) - 1 || j < tmp.dim(1) - 1) s << separator;
 			}
       if (!flat) s << "\n";
     }

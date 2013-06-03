@@ -406,6 +406,8 @@ class trainable_module {
   //! Assuming the answer module dsmod is of class_answer type, return
   //! the target corresponding to 'label' found in this module.
   virtual idx<T> get_target(const Tds2 &label);
+  //! Returns the input that was last used, if running in ds mode.
+  virtual state<T>& get_in1();
   //! Returns the name of this module.
   virtual const char* name();
   //! Returns a string describing this module and its parameters.

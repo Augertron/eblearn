@@ -55,6 +55,12 @@
 #include <google/profiler.h>
 #endif
 
+// global variables
+string conffname = "";
+string csv_filename = "";
+bool return_gradients = false;
+int gradients_target = -1;
+
 // classify ////////////////////////////////////////////////////////////////////
 
 template <typename T, typename Tdata, typename Tlabel>
@@ -84,7 +90,7 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
     module_1_1<T> *net = NULL;
     trainable_module<T,Tdata,Tlabel> *machine =
         create_trainable_module<T,Tdata,Tlabel>(theparam, conf, noutputs,
-																								&net, silent);
+																								&net, silent, true);
     // find out if jitter module is present
     jitter_module<T> *jitt = NULL;
     jitt = arch_find(net, jitt);
@@ -95,14 +101,39 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
     load_gd_param(conf, gdp, silent);
 
 		// inference
-		state<T> energy, dummy(noutputs);
+		state<T> energy, target(noutputs);
+
+		// compute gradients of input with respect to target class
+		if (return_gradients) {
+			idx<T> targets = create_target_matrix<T>(noutputs, 1.0);
+			idx<T> t = targets.select(0, gradients_target); // target class
+			idx_copy(t, target.x[0]);
+		}
+
 		if (inputs) { // take inputs from input matrix
 			idx_bloop1(e, *inputs, Tdata) {
 				state<T> s(e.get_idxdim());
 				idx_copy(e, s.x[0]);
-				machine->fprop(s, dummy, energy);
+				machine->fprop(s, target, energy);
 				const state<T> &a = machine->compute_answers();
-				cout << a.x.at_const(0).csv(true) << endl;
+				cout << a.x.at_const(0).csv(true);
+
+				// compute/print gradients of input with respect to target class
+				if (return_gradients) {
+					target.resize_dx();
+					s.resize_dx();
+					s.zero_dx();
+					target.zero_dx();
+					energy.resize_dx();
+					energy.dx[0].set(1.0); // d(E)/dE is always 1
+					theparam.zero_dx();
+					// bprop
+					machine->bprop(s, target, energy);
+					idx<T> gradients = s.dx.at_const(0);
+					// print gradients
+					cout << "," << gradients.csv(true);
+				}
+				cout << endl;
 			}
 		} else { // take inputs from datasource defined in conf
 			ds->seek_begin();
@@ -110,6 +141,18 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
 				machine->fprop(*ds, energy);
 				const state<T> &a = machine->compute_answers();
 				cout << a.x.at_const(0).csv(true) << endl;
+
+				// compute/print gradients of input with respect to target class
+				if (return_gradients) {
+					eblerror("not implemented");
+					energy.resize_dx();
+					energy.dx[0].set(1.0); // d(E)/dE is always 1
+					theparam.zero_dx();
+					machine->bprop(*ds, energy);
+					state<T> &in1 = machine->get_in1();
+					cout << "gradients " << in1.dx.at_const(0).csv(true) << endl;
+				}
+
 			} while (ds->next());
 		}
 
@@ -202,6 +245,41 @@ int select_data_type(configuration &conf, string &conffname,
   return -1;
 }
 
+
+// parse command line input
+bool parse_args(int argc, char **argv) {
+  // Read arguments from shell input
+  if (argc < 3) {
+    cerr << "input error: expecting arguments." << endl;
+    return false;
+  }
+  // if requesting help, print usage
+  if ((strcmp(argv[1], "-help") == 0) ||
+      (strcmp(argv[1], "-h") == 0))
+    return false;
+  // loop over arguments
+	conffname = argv[1];
+  for (int i = 2; i < argc; ++i) {
+		if (strcmp(argv[i], "-gradients") == 0) {
+      return_gradients = true;
+			++i;
+			if (i >= argc) eblerror("expected integer");
+			gradients_target = atoi(argv[i]);
+    } else if (i == 2) {
+			csv_filename = argv[i];
+		} else {
+      cerr << "input error: unknown parameter: " << argv[i] << endl;
+      return false;
+    }
+  }
+  return true;
+}
+
+// print command line usage
+void print_usage() {
+	cout << "Usage: ./classify <config file> [input matrix] [OPTIONS]" << endl;
+}
+
 // main ////////////////////////////////////////////////////////////////////////
 
 #ifdef __GUI__
@@ -212,15 +290,15 @@ int main(int argc, char **argv) { // regular main without gui
 #ifdef __GPROF__
   ProfilerStart("eblearn_train_google_perftools_profiler_dump");
 #endif
-  if (argc != 2 && argc != 3) {
-    cout << "Usage: ./classify <config file> [input matrix]" << endl;
-    eblerror("config file not specified");
+  // parse arguments
+  if (!parse_args(argc, argv)) {
+    print_usage();
+    return -1;
   }
 #ifdef __LINUX__
   feenableexcept(FE_DIVBYZERO | FE_INVALID); // enable float exceptions
 #endif
   try {
-    string conffname = argv[1];
     if (!file_exists(conffname.c_str()))
       eblerror("configuration file not found: " << conffname);
     configuration conf(conffname, true, true, false); // configuration file
@@ -239,11 +317,11 @@ int main(int argc, char **argv) { // regular main without gui
 		// open passed matrix if present
 		idx<float> mat;
 		idx<float> *inputs = NULL;
-		if (argc > 2) {
-			if (is_matrix(argv[2]))
-				mat = load_matrix<float>(argv[2]);
+		if (csv_filename.size() > 0) {
+			if (is_matrix(csv_filename.c_str()))
+				mat = load_matrix<float>(csv_filename);
 			else // try csv format
-				mat = load_csv_matrix<float>(argv[2], false, false, true, true);
+				mat = load_csv_matrix<float>(csv_filename.c_str(), false, false, true, true);
 			inputs = &mat;
 			if (inputs->order() == 1) { // only 1 sample, add the sample dimension
 				idx<float> tmp(1, inputs->dim(0));

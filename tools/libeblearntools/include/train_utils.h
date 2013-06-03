@@ -58,7 +58,7 @@ template <typename T, typename Tdata, typename Tlabel>
 trainable_module<T,Tdata,Tlabel>*
 create_trainable_module(ddparameter<T> &theparam, configuration &conf,
 												uint noutputs, module_1_1<T> **net,
-												bool silent = false);
+												bool silent = false, bool expect_loading = false);
 //! This creates a trainable network and returns it.
 template <typename T, typename Tdata, typename Tlabel>
 supervised_trainer<T,Tdata,Tlabel>*
