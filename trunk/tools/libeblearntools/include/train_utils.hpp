@@ -40,7 +40,8 @@ namespace ebl {
 template <typename T, typename Tdata, typename Tlabel>
 trainable_module<T,Tdata,Tlabel> *
 create_trainable_module(ddparameter<T> &theparam, configuration &conf,
-												uint noutputs, module_1_1<T> **network, bool silent) {
+												uint noutputs, module_1_1<T> **network, bool silent,
+												bool expect_loading) {
   answer_module<T,Tdata,Tlabel> *answer =
 		create_answer<T,Tdata,Tlabel>(conf, noutputs, "answer", silent);
   if (!answer) eblerror("no answer module found");
@@ -69,6 +70,7 @@ create_trainable_module(ddparameter<T> &theparam, configuration &conf,
 			string_to_stringvector(conf.get_string("retrain_weights"));
     theparam.load_x(w);
   } else {
+		if (expect_loading) eblerror("expected to load a trained network");
     if (!silent) std::cout << "Initializing weights from random." << std::endl;
     machine->forget(fgp);
   }

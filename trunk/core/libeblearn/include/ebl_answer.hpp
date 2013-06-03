@@ -1065,6 +1065,11 @@ get_target(const Tds2 &label) {
 }
 
 template <typename T, typename Tds1, typename Tds2>
+state<T>& trainable_module<T,Tds1,Tds2>::get_in1() {
+	return in1;
+}
+
+template <typename T, typename Tds1, typename Tds2>
 const char *trainable_module<T,Tds1,Tds2>::name() {
   return mod_name.c_str();
 }
