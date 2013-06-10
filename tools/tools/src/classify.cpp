@@ -175,8 +175,10 @@ int select_label_type(configuration &conf, string &conffname,
 											idx<Tdata> *inputs) {
   string labels_fname = conf.get_string("val_labels");
   string type;
+	int t = MAGIC_INTEGER_MATRIX; // default type
+	if (file_exists(labels_fname)) get_matrix_type(labels_fname.c_str(), type);
   try {
-    switch (get_matrix_type(labels_fname.c_str(), type)) {
+    switch (t) {
     // case MAGIC_BYTE_MATRIX:
     // case MAGIC_UBYTE_VINCENT:
     //   return train<Tdata, ubyte>(conf, conffname);
@@ -213,8 +215,10 @@ int select_data_type(configuration &conf, string &conffname,
 										 idx<float> *inputs) {
   string data_fname = conf.get_string("val");
   string type;
+	int t = MAGIC_FLOAT_MATRIX; // default type
+	if (file_exists(data_fname)) get_matrix_type(data_fname.c_str(), type);
   try {
-    switch (get_matrix_type(data_fname.c_str(), type)) {
+    switch (t) {
     // case MAGIC_BYTE_MATRIX:
     // case MAGIC_UBYTE_VINCENT:
     //   return select_label_type<ubyte>(conf, conffname);
