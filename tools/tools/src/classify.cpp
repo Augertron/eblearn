@@ -76,16 +76,8 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
     if (conf.exists("ipp_cores")) ipp_cores = conf.get_uint("ipp_cores");
     ipp_init(ipp_cores, silent); // limit IPP (if available) to 1 core
 
-    // load datasets
-    uint noutputs = 0;
-    labeled_datasource<T,Tdata,Tlabel> *ds = NULL;
-    string valdata, traindata;
-    ds = create_validation_set<T,Tdata,Tlabel>(conf, noutputs, valdata,
-																							 silent);
-    if (conf.exists_true("add_features_dimension")) {
-      ds->add_features_dimension();
-    }
     // create the trainable network
+		uint noutputs = conf.try_get_uint("noutputs", 0);
     ddparameter<T> theparam(1, silent);
     module_1_1<T> *net = NULL;
     trainable_module<T,Tdata,Tlabel> *machine =
@@ -136,6 +128,15 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
 				cout << endl;
 			}
 		} else { // take inputs from datasource defined in conf
+			// load datasets
+			labeled_datasource<T,Tdata,Tlabel> *ds = NULL;
+			string valdata, traindata;
+			ds = create_validation_set<T,Tdata,Tlabel>(conf, noutputs, valdata,
+																								 silent);
+			if (conf.exists_true("add_features_dimension")) {
+				ds->add_features_dimension();
+			}
+
 			ds->seek_begin();
 			do {
 				machine->fprop(*ds, energy);
