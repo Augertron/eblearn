@@ -265,7 +265,9 @@ bool parse_args(int argc, char **argv) {
 			++i;
 			if (i >= argc) eblerror("expected integer");
 			gradients_target = atoi(argv[i]);
-    } else if (i == 2) {
+    } else if (strcmp(argv[i], "-csv") == 0) {
+			++i;
+			if (i >= argc) eblerror("expected string");
 			csv_filename = argv[i];
 		} else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
@@ -277,7 +279,10 @@ bool parse_args(int argc, char **argv) {
 
 // print command line usage
 void print_usage() {
-	cout << "Usage: ./classify <config file> [input matrix] [OPTIONS]" << endl;
+	cout << "Usage: ./classify <config file> [OPTIONS]" << endl
+			 << "Options:" << endl
+			 << "  -csv <input matrix> " << endl
+			 << "  -gradients <class index> " << endl;
 }
 
 // main ////////////////////////////////////////////////////////////////////////
