@@ -60,13 +60,14 @@ string conffname = "";
 string csv_filename = "";
 bool return_gradients = false;
 int gradients_target = -1;
+bool verbose = false;
 
 // classify ////////////////////////////////////////////////////////////////////
 
 template <typename T, typename Tdata, typename Tlabel>
 int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
   try {
-		bool silent = true;
+		bool silent = !verbose;
     timer titer, gtimer;
     gtimer.start(); // total running time
     string shortname = ebl::basename(conffname.c_str());
@@ -274,6 +275,9 @@ bool parse_args(int argc, char **argv) {
 			++i;
 			if (i >= argc) eblerror("expected string");
 			csv_filename = argv[i];
+    } else if (strcmp(argv[i], "-verbose") == 0) {
+			++i;
+			verbose = true;
 		} else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -287,7 +291,8 @@ void print_usage() {
 	cout << "Usage: ./classify <config file> [OPTIONS]" << endl
 			 << "Options:" << endl
 			 << "  -csv <input matrix> " << endl
-			 << "  -gradients <class index> " << endl;
+			 << "  -gradients <class index> " << endl
+			 << "  -verbose" << endl;
 }
 
 // main ////////////////////////////////////////////////////////////////////////
