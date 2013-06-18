@@ -69,6 +69,8 @@ create_trainable_module(ddparameter<T> &theparam, configuration &conf,
     std::vector<std::string> w =
 			string_to_stringvector(conf.get_string("retrain_weights"));
     theparam.load_x(w);
+		if (!silent)
+			std::cout << "forward weights: " << theparam.x[0].info() << std::endl;
   } else {
 		if (expect_loading) eblerror("expected to load a trained network");
     if (!silent) std::cout << "Initializing weights from random." << std::endl;
