@@ -107,6 +107,7 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
 			idx_bloop1(e, *inputs, Tdata) {
 				state<T> s(e.get_idxdim());
 				idx_copy(e, s.x[0]);
+				if (return_gradients) {	s.resize_dx(); }
 				machine->fprop(s, target, energy);
 				const state<T> &a = machine->compute_answers();
 				cout << a.x.at_const(0).csv(true);
