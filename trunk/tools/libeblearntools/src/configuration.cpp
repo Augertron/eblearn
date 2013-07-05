@@ -453,10 +453,37 @@ void textlist::update(const std::string &varname, const std::string &value,
                      int combination_id, bool no_conf_id,
                      uint conf_combinations,
                      std::string &fullname, std::string &shortname,
-                     std::string &variables) {
+                     std::string &variables, std::string &conf_name,
+										 std::string &exclude) {
     string_list_map_t::iterator lmi = lmap.begin();
     std::vector<size_t>::iterator ci = conf_indices.begin();
     ostringstream name;
+
+		// variable exclusion: if specified, do not count a variable in conf count
+		// but instead vary it in the conf_name part of the name
+		if (lmap.find(exclude) != lmap.end() && lmap[exclude].size() > 1) {
+			std::vector<std::string> exclude_vector = lmap[exclude];
+			// divide combinations by number of excluded
+			uint nexclude = exclude_vector.size();
+			conf_combinations /= nexclude;
+			// change combination id
+			combination_id = 0;
+			string_list_map_t::iterator rmi = lmap.begin();
+			std::vector<size_t>::iterator ri = conf_indices.begin();
+			size_t i = conf_indices.size() - 1;
+			std::string exclude_value;
+			uint total_size = 1;
+			for ( ; rmi != lmap.end(); ++rmi, ++ri, i--)
+				if (rmi->second.size() > 1) {
+					if (rmi->first.compare(exclude) != 0) {
+						combination_id += *ri * total_size;
+						total_size *= rmi->second.size();
+					} else
+						exclude_value = rmi->second[*ri];
+				}
+			// add excluded to conf_name
+			conf_name << "_" << exclude << "_" << exclude_value;
+		}
 
     // short name
     name << "conf" << setfill('0')
@@ -470,9 +497,11 @@ void textlist::update(const std::string &varname, const std::string &value,
     bool first = true;
     for ( ; lmi != lmap.end(); ++lmi, ++ci)
       if (lmi->second.size() > 1) {
-        if (first) first = false;
-        else variables << "_";
-        variables << lmi->first << "_" << lmi->second[*ci];
+				if (lmi->first.compare(exclude) != 0) {
+					if (first) first = false;
+					else variables << "_";
+					variables << lmi->first << "_" << lmi->second[*ci];
+				}
       }
     fullname << "_" << variables;
   }
@@ -925,7 +954,8 @@ void textlist::update(const std::string &varname, const std::string &value,
       std::string conf_name = name;
       std::string shortname, fullname, variables;
       set_conf_name(conf_indices, lmap, i, exists_true("meta_no_conf_id"),
-                    conf_combinations, fullname, shortname, variables);
+                    conf_combinations, fullname, shortname, variables, conf_name,
+										exclude_name);
       conf_name << "_" << fullname;
       string_map_t new_smap;
       assign_current_smap(new_smap, conf_indices, lmap);
@@ -964,5 +994,9 @@ void textlist::update(const std::string &varname, const std::string &value,
       }
     }
   }
+
+  void meta_configuration::set_exclude(const std::string &name) {
+		exclude_name = name;
+	}
 
 } // namespace ebl
