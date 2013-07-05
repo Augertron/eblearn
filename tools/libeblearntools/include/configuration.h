@@ -323,6 +323,7 @@ private:
   std::vector<size_t>	conf_indices;
   int			conf_combinations;
   std::vector<configuration> confs;
+	std::string exclude_name;
 
 public:
   meta_configuration();
@@ -347,6 +348,9 @@ public:
 
   //! print a summary of all possible combinations.
   virtual void pretty_combinations();
+
+	//! Set the name of variable to exclude from conf naming.
+	virtual void set_exclude(const std::string &name);
 };
 
 } // end namespace ebl

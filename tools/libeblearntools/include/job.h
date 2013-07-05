@@ -212,7 +212,8 @@ namespace ebl {
 															 const char *resume_name = NULL,
 															 bool resumedir = false,
 															 bool nomax = false, int maxjobs = -1,
-															 const std::string *extra = NULL);
+															 const std::string *extra = NULL,
+															 const std::string *exclude = NULL);
     //! Enable recursive copy of this path into jobs folders.
     virtual void set_copy(const std::string &path);
     //! Prepare all jobs (create folders and copy/create files).

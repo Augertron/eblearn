@@ -531,7 +531,7 @@ job_manager::~job_manager() {
 bool job_manager::read_metaconf(const char *fname, const std::string *tstamp,
 																const char *resume_name,
 																bool resumedir, bool nomax, int maxjobs,
-																const string *extra) {
+																const string *extra, const string *exclude) {
 	mconf_fullfname = fname;
 	mconf_fname = basename(mconf_fullfname.c_str());
 	// read meta configuration
@@ -544,6 +544,7 @@ bool job_manager::read_metaconf(const char *fname, const std::string *tstamp,
 	// set resolved elements into unresolved mconf
 	mconf.set_output_dir(rmconf.get_output_dir());
 	mconf.set_name(rmconf.get_name());
+	if (exclude && !exclude->empty()) mconf.set_exclude(*exclude);
 
 	// determine all possible configurations, based on conf or existing dirs
 	vector<configuration> confs;

@@ -56,6 +56,7 @@ int     maxjobs					= -1;   // max concurrent number of jobs
 bool    reset_progress	= false;				// ignore existing progress in target dir
 bool    force_start			= false;				// ignore timeout wait if true.
 string  extra           = ""; // extra configuration
+string  exclude           = ""; // excluded variable
 
 // parse command line input
 bool parse_args(int argc, char **argv) {
@@ -114,6 +115,13 @@ bool parse_args(int argc, char **argv) {
 				return false;
       }
       extra << argv[i] << "\n";
+    } else if (strcmp(argv[i], "-exclude") == 0) {
+      ++i;
+      if (i >= argc) {
+				cerr << "input error: expecting string after -exclude." << endl;
+				return false;
+      }
+      exclude << argv[i];
     } else {
       cerr << "input error: unknown parameter: " << argv[i] << endl;
       return false;
@@ -158,6 +166,8 @@ void print_usage() {
   cout << "  -extra <string>" << endl
        << "      Adds extra variables at end of configuration." << endl
 			 << "      example: -extra \"a=1\" -extra \"b=2\"" << endl;
+  cout << "  -exclude <string>" << endl
+       << "      Excludes a variable from being in configuration names." << endl;
 }
 
 int main(int argc, char **argv) {
@@ -202,7 +212,7 @@ int main(int argc, char **argv) {
   else { 
     jm->read_metaconf(metaconf.c_str(), &manual_tstamp, 
 											(resume_name.empty() ? NULL : resume_name.c_str()), 
-											resumedir, false, maxjobs, &extra);
+											resumedir, false, maxjobs, &extra, &exclude);
     jm->set_copy(copy_path);
     if (resume_other) jm->initialize_other(other_directory);
     // jm->prepare(reset_progress);    

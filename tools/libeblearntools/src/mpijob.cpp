@@ -161,7 +161,8 @@ namespace ebl {
 
   bool mpijob_manager::read_metaconf(const char *fname, const std::string *tstamp,
 																		 const char *resume_name, bool resumedir,
-																		 bool nomax, int maxjobs, const string *extra) {
+																		 bool nomax, int maxjobs, const string *extra,
+																		 const string *exclude) {
     if (is_master()) { // only read metaconf if we are the master
       job_manager::read_metaconf(fname, tstamp, resume_name, resumedir, true,
 																 maxjobs, extra);
