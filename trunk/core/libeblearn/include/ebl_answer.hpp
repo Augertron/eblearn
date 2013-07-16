@@ -149,8 +149,8 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
     // 	targets.set(-1.0, 0, 0); // negative: -1.0
     // 	targets.set( 1.0, 1, 0); // positive:  1.0
     // } else {
-    targets.sset((T) 1.0, 0); // positive:  1.0
-    targets.sset((T)-1.0, 1); // negative: -1.0
+    targets.sset((T)-1.0, 0); // negative: -1.0
+    targets.sset((T) 1.0, 1); // positive:  1.0
     // }
   }
   // target factor
@@ -192,6 +192,10 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
 		if (!silent)
 			eblprint( "Using max confidence formula with normalization ratio "
 								<< conf_ratio << std::endl);
+		break ;
+	case confidence_raw:
+		conf_ratio = (target_max - target_min) * 2;
+		conf_shift = -target_min;
 		break ;
 	default:
 		eblerror("confidence type " << conf_type << " undefined");
@@ -235,63 +239,13 @@ void class_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
     inx = tmp;
   }
   // loop on features (dimension 0) to set class and confidence
-  int classid;
-  T conf, max2;
-  idx_1loop2(ii, inx, T, oo, outx, T, {
-      if (binary_target) {
-        T t0 = targets.gget(0);
-        T t1 = targets.gget(1);
-        T a = ii.gget();
-        if (std::fabs((double) a - t0) < std::fabs((double) a - t1)) {
-          oo.set((T) 0, 0); // class 0
-          oo.set((T) (2 - std::fabs((double) a - t0)) / 2, 1); // conf
-        } else {
-          oo.set((T) 1, 0); // class 1
-          oo.set((T) (2 - std::fabs((double) a - t1)) / 2, 1); // conf
-        }
-      } else if (single_output >= 0) {
-        oo.set((T) single_output, 0); // all answers are the same class
-        oo.set((T) ((ii.get(single_output) - target_min) / target_range), 1);
-      } else { // 1-of-n target
-        // set class answer
-        if (force_class >= 0) classid = force_class;
-        else classid = idx_indexmax(ii);
-        oo.set((T) classid, 0);
-        // set confidence
-        intg p;
-        bool ini = false;
-        switch (conf_type) {
-				case confidence_sqrdist: // squared distance to target
-					target = targets.select(0, classid);
-					conf = (T) (1.0 - ((idx_sqrdist(target, ii) - conf_shift)
-														 / conf_ratio));
-					oo.set(conf, 1);
-					break ;
-				case confidence_single: // simply return class' out (normalized)
-					conf = (T) ((ii.get(classid) - conf_shift) / conf_ratio);
-					oo.set(conf, 1);
-					break ;
-				case confidence_max: // distance with 2nd max answer
-					conf = std::max(target_min, std::min(target_max, ii.get(classid)));
-					for (p = 0; p < ii.dim(0); ++p) {
-						if (p != classid) {
-							if (!ini) {
-								max2 = ii.get(p);
-								ini = true;
-							} else {
-								if (ii.get(p) > max2)
-									max2 = ii.get(p);
-							}
-						}
-					}
-					max2 = std::max(target_min, std::min(target_max, max2));
-					oo.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
-					break ;
-				default:
-					eblerror("confidence type " << conf_type << " undefined");
-        }
-      }
-    });
+	if (inx.true_order() == 1)
+		fprop_class_conf(inx, outx);
+	else {
+		idx_1loop2(ii, inx, T, oo, outx, T, {
+				fprop_class_conf(ii, oo);
+			});
+	}
   // // confidence smoothing
   // idx<T> c = outx.select(0, 1);
   // uint hpad = (uint) (smoothing_kernel.dim(0) / 2);
@@ -319,6 +273,73 @@ void class_answer<T,Tds1,Tds2>::fprop1(idx<T> &in, idx<T> &out) {
 
 template <typename T, typename Tds1, typename Tds2>
 void class_answer<T,Tds1,Tds2>::
+fprop_class_conf(idx<T> &in, idx<T> &out) {
+  int classid;
+  T conf, max2;
+	if (binary_target) {
+		T t0 = targets.gget(0);
+		T t1 = targets.gget(1);
+		T a = in.gget();
+		if (std::fabs((double) a - t0) < std::fabs((double) a - t1)) {
+			out.set((T) 0, 0); // class 0
+			out.set((T) (2 - std::fabs((double) a - t0)) / 2, 1); // conf
+		} else {
+			out.set((T) 1, 0); // class 1
+			out.set((T) (2 - std::fabs((double) a - t1)) / 2, 1); // conf
+		}
+		if (conf_type == confidence_raw) // raw output to confidence
+			out.set((T) ((a - t0) / (t1 - t0)), 1); // conf
+	} else if (single_output >= 0) {
+		out.set((T) single_output, 0); // all answers are the same class
+		out.set((T) ((in.get(single_output) - target_min) / target_range), 1);
+	} else { // 1-of-n target
+		// set class answer
+		if (force_class >= 0) classid = force_class;
+		else classid = idx_indexmax(in);
+		out.set((T) classid, 0);
+		// set confidence
+		intg p;
+		bool ini = false;
+		switch (conf_type) {
+		case confidence_sqrdist: // squared distance to target
+			target = targets.select(0, classid);
+			conf = (T) (1.0 - ((idx_sqrdist(target, in) - conf_shift)
+												 / conf_ratio));
+			out.set(conf, 1);
+			break ;
+		case confidence_single: // simply return class' out (normalized)
+			conf = (T) ((in.get(classid) - conf_shift) / conf_ratio);
+			out.set(conf, 1);
+			break ;
+		case confidence_max: // distance with 2nd max answer
+			conf = std::max(target_min, std::min(target_max, in.get(classid)));
+			for (p = 0; p < in.dim(0); ++p) {
+				if (p != classid) {
+					if (!ini) {
+						max2 = in.get(p);
+						ini = true;
+					} else {
+						if (in.get(p) > max2)
+							max2 = in.get(p);
+					}
+				}
+			}
+			max2 = std::max(target_min, std::min(target_max, max2));
+			out.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
+			break ;
+		case confidence_raw: // raw
+			conf = (T) (((in.get(1) - target_min) - (in.get(0) - target_min))
+									/ conf_ratio) + conf_shift;
+			out.set(conf, 1);
+			break ;
+		default:
+			eblerror("confidence type " << conf_type << " undefined");
+		}
+	}
+}
+
+template <typename T, typename Tds1, typename Tds2>
+void class_answer<T,Tds1,Tds2>::
 fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // get label, i.e. input 2
   ds.fprop_label(last_label);
@@ -327,7 +348,7 @@ fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out) {
   // output size
   idxdim d(ds.sample_dims()), dt(target.get_idxdim());
   d.setdims(1);
-  for (uint i = 0; i < dt.order(); ++i)
+  for (uint i = 0; i < dt.order() && i < d.order(); ++i)
     d.setdim(i, dt.dim(i));
   // resize out if necessary
   if (out.x.size() == 0) out.add_x(new idx<T>(d));
