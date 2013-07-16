@@ -57,9 +57,13 @@ namespace ebl {
 //!   yielding [-1,1] confidence range. The advantage over the sqrdist is that
 //!   it doesn't matter how well other classes match their target other than
 //!   the maximum one, only how much this one stands out.
+//! raw (3): only in binary mode or 2-class, map the raw output to the conf
+//!   range [0,1] regardless of the decision, 0 meaning high confidence
+//!   in class 0 and 1 meaning high confidence in class 1.
 enum t_confidence { confidence_sqrdist = 0,
                     confidence_single	 = 1,
-                    confidence_max	 = 2 };
+                    confidence_max	   = 2,
+                    confidence_raw	   = 3 };
 
 // answer modules //////////////////////////////////////////////////////////////
 
@@ -147,6 +151,8 @@ class class_answer : public answer_module<T,Tds1,Tds2> {
   //! Produce a vector of answers given input 'in'. 'out' contains answers
   //! in this order: class id and confidence.
   virtual void fprop1(idx<T> &in, idx<T> &out);
+  //! Fprop class and confidence for just one element.
+  virtual void fprop_class_conf(idx<T> &in, idx<T> &out);
   //! Custom transformation of flow 2: datasource's labels are converted
   //! to target vectors and placed in 'out'.
   virtual void fprop_ds2(labeled_datasource<T,Tds1,Tds2> &ds, state<T> &out);

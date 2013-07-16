@@ -97,7 +97,7 @@ void tanh_module<T>::fprop1(idx<T> &in, idx<T> &out) {
   this->resize_output(in, out); // resize iff necessary
   this->resize_output(in, tmp); // resize iff necessary
   idx_tanh(in, out);
-  if (alpha != 0) idx_dotcacc(out, (T) alpha, out);
+  if (alpha != 0) idx_dotcacc(in, (T) alpha, out);
 }
 
 template <typename T>
