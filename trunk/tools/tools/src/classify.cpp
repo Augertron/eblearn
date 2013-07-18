@@ -98,8 +98,7 @@ int classify(configuration &conf, string &conffname, idx<Tdata> *inputs) {
 
 		// compute gradients of input with respect to target class
 		if (return_gradients) {
-			idx<T> targets = create_target_matrix<T>(noutputs, 1.0);
-			idx<T> t = targets.select(0, gradients_target); // target class
+			idx<T> t = machine->get_target(gradients_target); // target class
 			idx_copy(t, target.x[0]);
 		}
 

@@ -141,7 +141,7 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
   targets = create_target_matrix<T>(nclasses, (T)1.0);
   // binary target
   if (binary_target) {
-    if (nclasses != 2)
+    if (nclasses != 2 && nclasses != 1)
       eblerror("expecting 2 classes only when binary_target is on");
     targets = idx<T>(2, 1, 1);
     // int neg_id = ds.get_class_id("bg"); // negative class
