@@ -195,7 +195,7 @@ class_answer(uint nclasses, double target_factor, bool binary_target_,
 		break ;
 	case confidence_raw:
 		conf_ratio = (target_max - target_min) * 2;
-		conf_shift = -target_min;
+		conf_shift = target_max - target_min;
 		break ;
 	default:
 		eblerror("confidence type " << conf_type << " undefined");
@@ -328,9 +328,11 @@ fprop_class_conf(idx<T> &in, idx<T> &out) {
 			out.set((T) (((conf - max2) - conf_shift) / conf_ratio), 1);
 			break ;
 		case confidence_raw: // raw
-			conf = (T) (((in.get(1) - target_min) - (in.get(0) - target_min))
-									/ conf_ratio) + conf_shift;
+			conf = (T) (((in.get(1) - target_min) + (target_min - in.get(0)))
+									+ conf_shift) / conf_ratio;
 			out.set(conf, 1);
+			// std::cout << "0: " << in.get(0) << " 1: " << in.get(1) << " conf " << conf
+			// 					 << " decision " << classid << std::endl;
 			break ;
 		default:
 			eblerror("confidence type " << conf_type << " undefined");
