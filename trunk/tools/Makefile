@@ -31,7 +31,8 @@ LIB_INSTALL=$(INSTALL_DIR)/lib/
 BIN_INSTALL=$(INSTALL_DIR)/bin
 
 INCLUDES="../core/libidx/include/*" "../core/libeblearn/include/*" \
-"libidxgui/include/*" "libeblearngui/include/*" "libeblearntools/include/*"
+"libidxgui/include/*" "libeblearngui/include/*" "tools/include/*" \
+"libeblearntools/include/*"
 LIBS=libidx.${LIB_EXT} libidxgui.${LIB_EXT} libeblearn.${LIB_EXT} \
 		       libeblearngui.${LIB_EXT} libeblearntools.${LIB_EXT}
 BINS=train detect classify dscompile dssplit dsmerge matshow dsdisplay narrow \
