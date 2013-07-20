@@ -605,7 +605,7 @@ void print_usage() {
        << "   Number of jitters to take among all possible ones." << endl;
   cout << "  -jitter_translation <step,hmin,hmax,wmin,wmax>" << endl
        << "   Range of translations for jitters in pixels." << endl;
-  cout << "  -jitter_roration <nsteps,range (in degrees)>" << endl
+  cout << "  -jitter_rotation <nsteps,range (in degrees)>" << endl
        << "   Steps and range of rotation jitter, e.g. 10,90" << endl;
   cout << "  -jitter_scale <nsteps,min_scale,max_scale>" << endl
        << "   Steps and range of scale jitter, e.g. 10,.8,1.2" << endl;
