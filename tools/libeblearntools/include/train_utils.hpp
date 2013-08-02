@@ -134,12 +134,14 @@ void test_and_save(uint iter, configuration &conf, std::string &conffname,
   // (save after test so that the right saved matrix is associated
   // with latest test in logs).
   wfname.str(""); wfname << wname.str() << ".mat";
-  if (conf.exists_false("save_weights"))
-    std::cout << "Not saving weights (save_weights set to 0)." << std::endl;
-  else {
+	int save_weights = conf.get_int("save_weights");
+	if (save_weights > 0 && (save_weights == 1 || iter >= save_weights)) {
     std::cout << "saving net to " << wfname.str() << std::endl;
     theparam.save_x(wfname.str().c_str()); // save trained network
     std::cout << "saved=" << wfname.str() << std::endl;
+	} else {
+    std::cout << "Not saving weights (save_weights set to "
+							<< save_weights << ")." << std::endl;
   }
 	std::cout << "save_pattern=" << wname.str() << std::endl;
 
@@ -198,13 +200,15 @@ void test(uint iter, configuration &conf, std::string &conffname,
   eblprint("Testing on " << test_ds.size() << " samples...");
   uint maxtest = conf.exists("max_testing") ? conf.get_uint("max_testing") :0;
   ttest.start();
+	int save_answers = conf.get_int("save_answers");
   if (!conf.exists_true("no_training_test")) {
     // test
     thetrainer.test(train_ds, trainmeter, infp, maxtest);
     // save answers
     std::string fname;
     fname << basename << "_" << train_ds.name() << "_answers.csv";
-    if (conf.exists_true("save_answers")) train_ds.save_answers(fname);
+    if (save_answers > 0 && (save_answers == 1 || iter >= save_answers))
+				train_ds.save_answers(fname);
   }
   if (!conf.exists_true("no_testing_test")) {
     // test
@@ -212,7 +216,8 @@ void test(uint iter, configuration &conf, std::string &conffname,
     // save answers
     std::string fname;
     fname << basename << "_" << test_ds.name() << "_answers.csv";
-    if (conf.exists_true("save_answers")) test_ds.save_answers(fname);    
+    if (save_answers > 0 && (save_answers == 1 || iter >= save_answers))
+			test_ds.save_answers(fname);
   }
   std::cout << "testing_time="; ttest.pretty_elapsed(); std::cout << std::endl;
   // detection test
