@@ -380,38 +380,22 @@ svector<T>::iterator::~iterator() {
 
 template <class T>
 T& svector<T>::iterator::operator*() {
-#if __WINDOWS__ == 1
-  return **(this->_Ptr);
-#else
-  return **(this->_M_current);
-#endif
+    return *(std::vector<T*>::iterator::operator*());
 }
 
 template <class T>
 T* svector<T>::iterator::operator->() {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr);
-#else
-  return *(this->_M_current);
-#endif
+  return std::vector<T*>::iterator::operator*();
 }
 
 template <class T>
 T* svector<T>::iterator::ptr() {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr);
-#else
-  return *(this->_M_current);
-#endif
+  return std::vector<T*>::iterator::operator*();
 }
 
 template <class T>
 bool svector<T>::iterator::exists() const {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr) != NULL;
-#else
-  return *(this->_M_current) != NULL;
-#endif
+  return std::vector<T*>::iterator::operator*() != NULL;
 }
 
 // svector const_iterator ////////////////////////////////////////////////////
@@ -438,38 +422,22 @@ svector<T>::const_iterator::~const_iterator() {
 
 template <class T>
 const T& svector<T>::const_iterator::operator*() const {
-#if __WINDOWS__ == 1
-  return **(this->_Ptr);
-#else
-  return **(this->_M_current);
-#endif
+  return *(std::vector<T*>::const_iterator::operator*());
 }
 
 template <class T>
 const T* svector<T>::const_iterator::operator->() const {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr);
-#else
-  return *(this->_M_current);
-#endif
+  return std::vector<T*>::const_iterator::operator*();
 }
 
 template <class T>
 const T* svector<T>::const_iterator::ptr() const {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr);
-#else
-  return *(this->_M_current);
-#endif
+  return std::vector<T*>::const_iterator::operator*();
 }
 
 template <class T>
 bool svector<T>::const_iterator::exists() const {
-#if __WINDOWS__ == 1
-  return *(this->_Ptr) != NULL;
-#else
-  return *(this->_M_current) != NULL;
-#endif
+  return std::vector<T*>::const_iterator::operator*() != NULL;
 }
 
 // printing //////////////////////////////////////////////////////////////////
