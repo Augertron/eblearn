@@ -200,7 +200,7 @@ void test(uint iter, configuration &conf, std::string &conffname,
   eblprint("Testing on " << test_ds.size() << " samples...");
   uint maxtest = conf.exists("max_testing") ? conf.get_uint("max_testing") :0;
   ttest.start();
-	int save_answers = conf.get_int("save_answers");
+	int save_answers = conf.try_get_int("save_answers", 0);
   if (!conf.exists_true("no_training_test")) {
     // test
     thetrainer.test(train_ds, trainmeter, infp, maxtest);
