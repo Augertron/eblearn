@@ -1449,6 +1449,7 @@ bool load_module(configuration &conf, module_1_1<T> &m,
   std::vector<std::string> filenames =
 		string_to_stringvector(conf.get_string(name.c_str()));
   idx<T> w = load_matrix<T>(filenames, 0);
+	w.remove_trailing_dims();
   m.load_x(w);
   eblprint("Loaded weights " << w << " into " << module_name << " from "
 					 << filenames << " (dims " << w << " min " << idx_min(w) << " max "
