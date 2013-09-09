@@ -48,10 +48,10 @@
 # SET(IPP_LIBRARIES_DIR "/home/pierre/ipp/sharedlib/")
 
 ################################################################################
-#SET(Boost_FOUND TRUE)
-#SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
-#SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
-#SET(Boost_MINOR_VERSION 35)
+SET(Boost_FOUND TRUE)
+SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
+SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
+SET(Boost_MINOR_VERSION 35)
 
 # SET(CPPUNIT_FOUND TRUE)
 # SET(CPPUNIT_INCLUDE_DIR "C:/eblinstall/cppunit-1.12.1/include")
@@ -80,8 +80,8 @@ IF ($ENV{USEMPI})
 #  SET(MPI_LIBRARIES "/share/apps/openmpi/1.3.3/intel/lib/")
 set(MPI_INCLUDE_PATH "/share/apps/openmpi/1.4.3/intel/include")
 set(MPI_LIBRARIES "/share/apps/openmpi/1.4.3/intel/lib")
-set(Boost_INCLUDE_DIRS "/share/apps/boost/1.44.0/intel/all/include")
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS}) 
+# set(Boost_INCLUDE_DIRS "/share/apps/boost/1.44.0/intel/all/include")
+# INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS}) 
 
 ENDIF ($ENV{USEMPI})
 

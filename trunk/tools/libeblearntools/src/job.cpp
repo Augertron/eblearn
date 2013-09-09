@@ -677,7 +677,7 @@ void job_manager::prepare(bool reset_progress) {
 		if (copy_path.size()) {
 			cout << "Copying " << copy_path << " to " << jobs[i]->get_root() << endl;
 			cmd = "";
-			cmd << "cp -R " << copy_path << " " << jobs[i]->get_root();
+			cmd << "cp -RL " << copy_path << " " << jobs[i]->get_root();
 			if (std::system(cmd.c_str()))
 				cerr << "warning: failed to execute: " << cmd << endl;
 		}
