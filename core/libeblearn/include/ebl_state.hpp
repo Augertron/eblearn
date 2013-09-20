@@ -586,19 +586,29 @@ void state<T>::deep_copy(midx<T2> &s) {
   idx<T2> tmp;
   int i;
   switch (s.order()) {
-    case 0:
-      tmp = s.mget();
-      add_x(new idx<T>(tmp.get_idxdim()));
+  case 0: {
+    tmp = s.mget();
+    // add_x(new idx<T>(tmp.get_idxdim()));
+    //TODO: svector::push_back_new() creates an internal copy, we need to clean this from memory.
+    //      Implement a way of just accepting the pointer, convert to smart_ptr and avoid double allocation and copying
+    idx<T> *tmp2 = new idx<T>(tmp.get_idxdim());
+    add_x(tmp2);
+    delete tmp2;
+    idx_copy(tmp, *(x.at_ptr(0)));
+  }
+    break ;
+  case 1:
+    for (i = 0; i < s.dim(0); ++i) {
+      tmp = s.mget(i);
+      //TODO: svector::push_back_new() creates an internal copy, we need to clean this from memory.
+      //      Implement a way of just accepting the pointer, convert to smart_ptr and avoid double allocation and copying
+      idx<T> *tmp2 = new idx<T>(tmp.get_idxdim());
+      add_x(tmp2);
+      delete tmp2;
       idx_copy(tmp, *(x.at_ptr(0)));
-      break ;
-    case 1:
-      for (i = 0; i < s.dim(0); ++i) {
-        tmp = s.mget(i);
-        add_x(new idx<T>(tmp.get_idxdim()));
-        idx_copy(tmp, *(x.at_ptr(0)));
-      }
-      break ;
-    default: eblerror("not implemented");
+    }
+    break ;
+  default: eblerror("not implemented");
   }
 }
 
