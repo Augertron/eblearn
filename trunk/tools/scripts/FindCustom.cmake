@@ -48,10 +48,10 @@
 # SET(IPP_LIBRARIES_DIR "/home/pierre/ipp/sharedlib/")
 
 ################################################################################
-SET(Boost_FOUND TRUE)
-SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
-SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
-SET(Boost_MINOR_VERSION 35)
+# SET(Boost_FOUND TRUE)
+# SET(Boost_INCLUDE_DIRS "$ENV{HOME}/installed/boost/include")
+# SET(Boost_LIBRARY_DIRS "$ENV{HOME}/installed/boost/lib")
+# SET(Boost_MINOR_VERSION 35)
 
 # SET(CPPUNIT_FOUND TRUE)
 # SET(CPPUNIT_INCLUDE_DIR "C:/eblinstall/cppunit-1.12.1/include")
