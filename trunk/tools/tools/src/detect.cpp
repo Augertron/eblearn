@@ -87,7 +87,7 @@ MAIN_QTHREAD(int, argc, char **, argv) { // macro to enable multithreaded gui
       if (conf.exists_true("show_conf") && !silent) conf.pretty();
       // output synchronization
       bool sync = conf.exists_true("sync_outputs");
-      mutex out_mutex;
+      ebl::mutex out_mutex;
       mutex_ostream mutout(std::cout, &out_mutex, "Thread M");
       mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
       ostream &mout = sync ? mutout : cout;
