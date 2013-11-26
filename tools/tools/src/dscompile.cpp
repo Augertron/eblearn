@@ -90,7 +90,9 @@ bool		ignore_difficult = false;
 bool		ignore_bbox      = false;
 bool		ignore_truncated = false;
 bool		ignore_occluded  = false;
-bool		shuffle		 = false;
+namespace ebl {
+  bool		shuffle		 = false;
+}
 bool		scale_mode	 = false;
 vector<double>  scales;
 bool		fovea_mode = false;
@@ -252,7 +254,7 @@ bool parse_args(int argc, char **argv) {
       } else if (strcmp(argv[i], "-ignore_occluded") == 0) {
 	ignore_occluded = true;
       } else if (strcmp(argv[i], "-shuffle") == 0) {
-	shuffle = true;
+        ebl::shuffle = true;
       } else if (strcmp(argv[i], "-usepose") == 0) {
 	usepose = true;
       } else if (strcmp(argv[i], "-useparts") == 0) {
@@ -755,7 +757,7 @@ void compile() {
     ds->extract();
   }
   // shuffle
-  if (shuffle) ds->shuffle();
+  if (ebl::shuffle) ds->shuffle();
   // save dataset
   if (save_set && !scale_mode) {
     if (force_label) ds->set_unique_label(label);
@@ -800,7 +802,7 @@ MAIN_QTHREAD(int, argc, char**, argv) {
       cout << "  preprocessing: " << (preprocessing ? "yes" : "no") << endl;
       cout << "  display: " << (display ? "yes" : "no") << endl;
       cout << "  display sleep: " << sleep_delay << " ms." << endl;
-      cout << "  shuffling: " << (shuffle ? "yes" : "no") << endl;
+      cout << "  shuffling: " << (ebl::shuffle ? "yes" : "no") << endl;
       cout << "  usepose: " << (usepose ? "yes" : "no") << endl;
       cout << "  useparts: " << (useparts ? "yes" : "no") << endl;
       cout << "  partsonly: " << (partsonly ? "yes" : "no") << endl;
