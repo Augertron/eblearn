@@ -43,7 +43,7 @@ void detector_test::test_face() {
     conf.set("current_dir", root.c_str());
     conf.set("ebl", ebl.c_str());
     conf.resolve(true);
-    mutex mut;
+    ebl::mutex mut;
     detection_thread<t_net> dt(conf, &mut, "detection thread");
     bboxes bboxes;
     idx<ubyte> detframe;
