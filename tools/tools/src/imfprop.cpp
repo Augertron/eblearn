@@ -83,7 +83,7 @@ int main(int argc, char **argv) { // regular main without gui
     string outdir = conf.try_get_string("out", "./");
     // output synchronization
     bool sync = !conf.exists_false("sync_outputs");
-    mutex out_mutex;
+    ebl::mutex out_mutex;
     mutex_ostream mutout(std::cout, &out_mutex, "Thread M");
     mutex_ostream muterr(std::cerr, &out_mutex, "Thread M");
     ostream &mout = sync ? mutout : cout;
